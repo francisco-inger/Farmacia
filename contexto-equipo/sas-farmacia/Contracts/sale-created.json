@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SaleCreatedContract",
+  "description": "Event schema published by POS module when a sale is completed. Consumed by Inventory and Invoicing.",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_type",
+    "sale_id",
+    "branch_id",
+    "cashier_id",
+    "items",
+    "total_cents",
+    "currency",
+    "created_at"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique event identifier (UUID v4)"
+    },
+    "event_type": {
+      "type": "string",
+      "const": "sale.created"
+    },
+    "sale_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique sale identifier (UUID v4)"
+    },
+    "branch_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Pharmacy branch identifier"
+    },
+    "cashier_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Cashier staff member ID"
+    },
+    "patient_id": {
+      "type": ["string", "null"],
+      "format": "uuid",
+      "description": "Optional patient/customer ID"
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["product_id", "quantity", "unit_price_cents", "subtotal_cents"],
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "product_name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "unit_price_cents": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "subtotal_cents": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "tax_cents": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "total_cents": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Total amount in DOP cents (e.g. 15000 = RD$150.00)"
+    },
+    "currency": {
+      "type": "string",
+      "default": "DOP"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 UTC timestamp"
+    }
+  }
+}

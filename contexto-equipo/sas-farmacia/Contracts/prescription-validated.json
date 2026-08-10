@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PrescriptionValidatedContract",
+  "description": "Event schema published when a medical prescription is verified. Consumed by POS and Invoicing.",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_type",
+    "prescription_id",
+    "patient_id",
+    "doctor_license",
+    "medications",
+    "status",
+    "validated_at"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "type": "string",
+      "const": "prescription.validated"
+    },
+    "prescription_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "patient_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "doctor_license": {
+      "type": "string",
+      "description": "Medical license identifier"
+    },
+    "medications": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["product_id", "dosage", "duration_days"],
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "dosage": {
+            "type": "string"
+          },
+          "duration_days": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["active", "dispensed", "expired"]
+    },
+    "validated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

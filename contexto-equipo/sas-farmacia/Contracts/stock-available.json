@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StockAvailableContract",
+  "description": "Event schema published by Inventory module when stock levels change. Consumed by POS and Chatbot.",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_type",
+    "product_id",
+    "branch_id",
+    "stock_quantity",
+    "min_threshold",
+    "is_critical",
+    "updated_at"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "type": "string",
+      "const": "stock.available_updated"
+    },
+    "product_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "product_name": {
+      "type": "string"
+    },
+    "sku": {
+      "type": "string"
+    },
+    "branch_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "stock_quantity": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "min_threshold": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "is_critical": {
+      "type": "boolean"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Orquestador Central & API Gateway — SaaS Farmacia</title>
+  <meta name="description" content="Dashboard ejecutivo consolidado y motor de orquestación de eventos inter-módulos para SaaS Farmacia.">
+  <link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header Navbar -->
+    <header class="navbar">
+      <div class="brand-section">
+        <div class="brand-logo">SF</div>
+        <div class="brand-title">
+          <h1>SaaS Farmacia</h1>
+          <span>Orquestador Central & API Gateway</span>
+        </div>
+      </div>
+
+      <div class="nav-controls">
+        <div class="branch-select-container">
+          <label for="branchSelect">📍 Sucursal Activa:</label>
+          <select id="branchSelect" class="branch-select">
+            <!-- Populated dynamically -->
+          </select>
+        </div>
+
+        <div class="status-badge">
+          <span class="status-dot"></span>
+          <span>Gateway Online</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Metric Cards Grid -->
+      <section class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Ventas Consolidadas del Día</span>
+            <div class="metric-icon">💰</div>
+          </div>
+          <div id="valSalesTotal" class="metric-value">RD$ 48,500.00</div>
+          <div id="valSalesCount" class="metric-sub trend-up">↑ 142 ventas procesadas</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Stock Crítico Inter-Módulo</span>
+            <div class="metric-icon">⚠️</div>
+          </div>
+          <div id="valCriticalStock" class="metric-value" style="color: var(--color-warning);">3 ítems</div>
+          <div class="metric-sub">Sincronizado con Inventario & POS</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Citas del Día (Servicios)</span>
+            <div class="metric-icon">📅</div>
+          </div>
+          <div id="valAppointments" class="metric-value">28 agendadas</div>
+          <div class="metric-sub">Personal asignado vía RR.HH.</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-title">Tráfico en Bus de Eventos</span>
+            <div class="metric-icon">⚡</div>
+          </div>
+          <div id="valEventsCount" class="metric-value" style="color: var(--color-primary);">0 msgs</div>
+          <div class="metric-sub">Orquestación activa entre 11 módulos</div>
+        </div>
+      </section>
+
+      <!-- Main Dashboard Grid -->
+      <section class="dashboard-grid">
+        <!-- Left Column: Event Bus & Topology -->
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+          <!-- Event Bus Simulator Panel -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <h2 class="panel-title">
+                <span>🔄</span>
+                <span>Motor de Eventos Inter-Módulos</span>
+              </h2>
+              <span id="currentBranchBadge" style="font-size: 0.8rem; font-weight:600; color: var(--color-primary);">
+                Sucursal Santo Domingo Centro
+              </span>
+            </div>
+
+            <div class="panel-body">
+              <p style="font-size: 0.875rem; color: var(--color-text-muted); margin-bottom: 1rem;">
+                Prueba la coordinación en tiempo real entre los 11 módulos generando eventos simulados:
+              </p>
+
+              <div class="simulator-actions">
+                <button id="btnSimulateSale" class="btn btn-primary">
+                  <span>🛒</span> Simular Venta (POS)
+                </button>
+                <button id="btnSimulateStock" class="btn btn-outline">
+                  <span>📦</span> Simular Baja Stock (Inventario)
+                </button>
+                <button id="btnSimulateStaff" class="btn btn-outline">
+                  <span>👨‍⚕️</span> Simular Personal (RR.HH.)
+                </button>
+                <button id="btnClearLog" class="btn btn-outline" style="margin-left: auto;">
+                  <span>🗑️</span> Limpiar
+                </button>
+              </div>
+
+              <!-- Live Event Stream Feed -->
+              <div id="eventLogContainer" class="event-log-container">
+                <div style="color: #64748B; padding: 0.5rem;">Esperando eventos en el bus... Haz clic en un botón de prueba arriba.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modules Topology Table Panel -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <h2 class="panel-title">
+                <span>🌐</span>
+                <span>Topología de Módulos Registrados en API Gateway</span>
+              </h2>
+            </div>
+            <div class="panel-body" style="padding: 0;">
+              <table class="modules-table">
+                <thead>
+                  <tr>
+                    <th>Módulo</th>
+                    <th>Ruta Gateway</th>
+                    <th>Estado</th>
+                    <th>Responsable</th>
+                  </tr>
+                </thead>
+                <tbody id="modulesTableBody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: AI Automation & Contracts Inspector -->
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+          <!-- AI Insights Panel -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <h2 class="panel-title">
+                <span>🤖</span>
+                <span>Sugerencias de Automatización con IA</span>
+              </h2>
+            </div>
+            <div class="panel-body">
+              <p style="font-size: 0.825rem; color: var(--color-text-muted); margin-bottom: 1rem;">
+                El Orquestador analiza el tráfico cross-módulo para proponer automatizaciones inteligentes:
+              </p>
+              <div id="aiInsightsContainer">
+                <!-- Rendered dynamically -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Contracts Schema Inspector -->
+          <div class="panel-card">
+            <div class="panel-header">
+              <h2 class="panel-title">
+                <span>📄</span>
+                <span>Visor de Contratos (`contracts/`)</span>
+              </h2>
+            </div>
+            <div class="panel-body">
+              <div class="contract-tabs">
+                <button class="tab-btn active" data-contract="sale-created">sale-created.json</button>
+                <button class="tab-btn" data-contract="prescription-validated">prescription-validated.json</button>
+                <button class="tab-btn" data-contract="staff-availability">staff-availability.json</button>
+                <button class="tab-btn" data-contract="stock-available">stock-available.json</button>
+              </div>
+
+              <pre id="jsonViewer" class="json-viewer">// Cargando esquema de contrato...</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="./src/dashboard-ui.js"></script>
+</body>
+</html>

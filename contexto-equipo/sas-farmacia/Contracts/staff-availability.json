@@ -1,0 +1,57 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "StaffAvailabilityContract",
+  "description": "Event schema published by HR module regarding staff shifts and availability. Consumed by Services module.",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_type",
+    "staff_id",
+    "branch_id",
+    "role",
+    "shift_start",
+    "shift_end",
+    "is_available",
+    "updated_at"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "event_type": {
+      "type": "string",
+      "const": "staff.availability_updated"
+    },
+    "staff_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "staff_name": {
+      "type": "string"
+    },
+    "branch_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "role": {
+      "type": "string",
+      "enum": ["pharmacist", "nurse", "cashier", "administrator"]
+    },
+    "shift_start": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "shift_end": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "is_available": {
+      "type": "boolean"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

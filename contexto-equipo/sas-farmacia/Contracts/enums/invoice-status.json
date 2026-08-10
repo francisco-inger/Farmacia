@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InvoiceStatusEnum",
+  "description": "Shared enum for invoice fiscal statuses (Invoicing, POS, Orchestrator)",
+  "type": "string",
+  "enum": ["draft", "issued", "voided"]
+}

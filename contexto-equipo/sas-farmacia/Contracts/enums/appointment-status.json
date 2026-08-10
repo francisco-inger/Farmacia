@@ -1,0 +1,7 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AppointmentStatusEnum",
+  "description": "Shared enum for patient clinical appointments (Services, HR, Orchestrator)",
+  "type": "string",
+  "enum": ["scheduled", "in_progress", "completed", "cancelled", "no_show"]
+}
