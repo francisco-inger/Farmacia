@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SaaS Farmacia — Sistema General de Gestión</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700&display=swap');
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #FAFAF8;
+      color: #1F2933;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    
+    .nav-bar {
+      background: #FFFFFF;
+      border-bottom: 1px solid #E4E7EB;
+      padding: 16px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 1px 3px rgba(31, 41, 51, 0.05);
+    }
+    
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-family: 'Sora', sans-serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: #0E8F7E;
+    }
+    
+    .module-selector {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .module-btn {
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: 1px solid #E4E7EB;
+      background: #FFFFFF;
+      color: #1F2933;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .module-btn.active {
+      background: #0E8F7E;
+      color: white;
+      border-color: #0E8F7E;
+    }
+    
+    .module-btn:hover:not(.active) {
+      background: #E6F4F1;
+      color: #0A6B5E;
+    }
+
+    .main-frame {
+      flex: 1;
+      width: 100%;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="nav-bar">
+    <div class="brand">
+      <span>🏥</span> SaaS Farmacia — Portal Principal del Proyecto
+    </div>
+    <nav class="module-selector">
+      <a href="modules/inventario/index.html" target="content-iframe" class="module-btn active" onclick="setActive(this)">
+        📦 Módulo Inventario y Vencimientos (Ana María)
+      </a>
+      <a href="#" class="module-btn" style="opacity: 0.6; cursor: not-allowed;" onclick="alert('Módulo POS en desarrollo por Marcos')">
+        🛒 Módulo POS / Ventas (Marcos)
+      </a>
+      <a href="#" class="module-btn" style="opacity: 0.6; cursor: not-allowed;" onclick="alert('Módulo Facturación en desarrollo por Pedro')">
+        🧾 Módulo Facturación (Pedro)
+      </a>
+    </nav>
+  </header>
+
+  <!-- Embedded module iframe to render Ana María's module directly in the main server window -->
+  <iframe name="content-iframe" id="content-iframe" src="modules/inventario/index.html" class="main-frame"></iframe>
+
+  <script>
+    function setActive(el) {
+      document.querySelectorAll('.module-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+    }
+  </script>
+</body>
+</html>
