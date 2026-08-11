@@ -36,11 +36,15 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
+const { runIntegracionesMigrations } = require('./db/migrations/002_integraciones');
+const integracionesRoutes = require('./modules/integraciones/integraciones.routes');
+
 // Initialize Database
 console.log('📦 Inicializando base de datos...');
 try {
   const db = getDb();
   runMigrations();
+  runIntegracionesMigrations();
   // Check if users exist, if not, run seed
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
   if (userCount === 0) {
@@ -74,6 +78,8 @@ app.use('/api/notificaciones', notificacionesRoutes);
 app.use('/api/ai', iaRoutes);
 app.use('/api/ia', iaRoutes);
 app.use('/api/settings', configuracionRoutes);
+app.use('/api/integraciones', integracionesRoutes);
+app.use('/api/integrations', integracionesRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

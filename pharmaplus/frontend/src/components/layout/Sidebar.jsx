@@ -4,7 +4,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { 
   Home, ShoppingCart, Package, Pill, Users, FileText, Activity,
   ShoppingBag, Truck, Receipt, UserCog, DollarSign, UsersRound,
-  ShieldAlert, BarChart3, Settings, LogOut, BotMessageSquare, Bell
+  ShieldAlert, BarChart3, Settings, LogOut, BotMessageSquare, Bell, Network
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen }) => {
@@ -25,6 +25,7 @@ const Sidebar = ({ isOpen }) => {
         { path: '/inventario', icon: Package, label: 'Inventario', roles: ['admin', 'cajero'] },
         { path: '/productos', icon: Pill, label: 'Productos', roles: ['admin', 'cajero'] },
         { path: '/clientes', icon: Users, label: 'Clientes', roles: ['admin', 'cajero'] },
+        { path: '/integraciones', icon: Network, label: 'Integraciones Externas', roles: ['admin', 'cajero'], badge: 'Nuevo' },
         { path: '/recetas', icon: FileText, label: 'Recetas', roles: ['admin', 'cajero'] },
         { path: '/servicios', icon: Activity, label: 'Gestión de Servicios', roles: ['admin', 'cajero'] },
         { path: '/compras', icon: ShoppingBag, label: 'Compras', roles: ['admin'] },
