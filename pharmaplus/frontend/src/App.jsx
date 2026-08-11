@@ -23,6 +23,7 @@ import Compras from './modules/compras/Compras';
 import Proveedores from './modules/proveedores/Proveedores';
 import Configuracion from './modules/configuracion/Configuracion';
 import RRHH from './modules/rrhh/RRHH';
+import Caja from './modules/cajas/Caja';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
@@ -60,7 +61,7 @@ const AppRoutes = () => {
         <Route path="proveedores" element={<Proveedores />} />
         <Route path="facturacion" element={<Facturacion />} />
         <Route path="rrhh" element={<ProtectedRoute allowedRoles={['admin']}><RRHH /></ProtectedRoute>} />
-        <Route path="cajas" element={<div className="p-6"><h1>Cajas (En desarrollo)</h1></div>} />
+        <Route path="cajas" element={<Caja />} />
         
         {/* Admin only routes */}
         <Route path="usuarios" element={<ProtectedRoute allowedRoles={['admin']}><div className="p-6"><h1>Usuarios (En desarrollo)</h1></div></ProtectedRoute>} />
