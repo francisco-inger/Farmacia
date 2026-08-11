@@ -21,6 +21,7 @@ import Recetas from './modules/recetas/Recetas';
 import Servicios from './modules/servicios/Servicios';
 import Compras from './modules/compras/Compras';
 import Proveedores from './modules/proveedores/Proveedores';
+import Configuracion from './modules/configuracion/Configuracion';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
@@ -64,7 +65,7 @@ const AppRoutes = () => {
         <Route path="usuarios" element={<ProtectedRoute allowedRoles={['admin']}><div className="p-6"><h1>Usuarios (En desarrollo)</h1></div></ProtectedRoute>} />
         <Route path="auditoria" element={<ProtectedRoute allowedRoles={['admin']}><div className="p-6"><h1>Auditoría (En desarrollo)</h1></div></ProtectedRoute>} />
         <Route path="reportes" element={<ProtectedRoute allowedRoles={['admin']}><div className="p-6"><h1>Reportes (En desarrollo)</h1></div></ProtectedRoute>} />
-        <Route path="configuracion" element={<ProtectedRoute allowedRoles={['admin']}><div className="p-6"><h1>Configuración (En desarrollo)</h1></div></ProtectedRoute>} />
+        <Route path="configuracion" element={<ProtectedRoute allowedRoles={['admin']}><Configuracion /></ProtectedRoute>} />
       </Route>
 
       <Route path="/unauthorized" element={<div className="flex flex-col h-screen items-center justify-center gap-4"><h1>Acceso Denegado</h1><p>No tienes permiso para ver esta página.</p></div>} />
