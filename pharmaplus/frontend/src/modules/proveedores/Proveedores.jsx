@@ -472,7 +472,7 @@ const Proveedores = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Proveedores</h1>
-          <p className="text-sm text-slate-500">Gestiona la información de tus proveedores</p>
+          <p className="text-sm text-slate-500">Gestiona la información de tus Proveedores</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -481,7 +481,7 @@ const Proveedores = () => {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input
               type="text"
-              placeholder="Buscar proveedor por nombre, RNC o teléfono..."
+              placeholder="Buscar Proveedor por nombre, RNC o teléfono..."
               className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all shadow-sm"
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
@@ -490,7 +490,7 @@ const Proveedores = () => {
               onClick={() => setIsScanModalOpen(true)}
               className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 cursor-pointer transition-colors" 
               size={18} 
-              title="Escanear RNC o tarjeta de proveedor" 
+              title="Escanear RNC o tarjeta de Proveedor" 
             />
           </div>
 
@@ -509,7 +509,7 @@ const Proveedores = () => {
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all shadow-md shadow-emerald-600/20 active:scale-95"
           >
             <Plus size={18} />
-            <span>Nuevo proveedor</span>
+            <span>Nuevo Proveedor</span>
           </button>
         </div>
       </div>
@@ -809,7 +809,7 @@ const Proveedores = () => {
             
             {/* Header */}
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-              <h3 className="font-bold text-slate-800 text-base">Detalle del proveedor</h3>
+              <h3 className="font-bold text-slate-800 text-base">Detalle del Proveedor</h3>
               <button className="p-1 rounded-lg text-slate-400 hover:text-slate-700 transition-colors">
                 <MoreVertical size={18} />
               </button>
@@ -871,7 +871,7 @@ const Proveedores = () => {
                   </div>
 
                   <div className="pt-2 flex justify-between">
-                    <span className="text-slate-400 font-medium">Tipo de proveedor</span>
+                    <span className="text-slate-400 font-medium">Tipo de Proveedor</span>
                     <span className="font-semibold text-slate-800">{selectedSupplier.type}</span>
                   </div>
 
@@ -898,7 +898,7 @@ const Proveedores = () => {
                     className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 hover:border-emerald-200 bg-white hover:bg-emerald-50/50 text-slate-700 text-xs font-semibold transition-all shadow-2xs active:scale-95"
                   >
                     <Edit3 size={14} />
-                    <span>Editar proveedor</span>
+                    <span>Editar Proveedor</span>
                   </button>
 
                   <button
@@ -910,15 +910,15 @@ const Proveedores = () => {
                     }`}
                   >
                     {selectedSupplier.is_active === 1 ? <Trash2 size={14} /> : <Check size={14} />}
-                    <span>{selectedSupplier.is_active === 1 ? 'Desactivar proveedor' : 'Activar proveedor'}</span>
+                    <span>{selectedSupplier.is_active === 1 ? 'Desactivar Proveedor' : 'Activar Proveedor'}</span>
                   </button>
                 </div>
               </>
             ) : (
               <div className="py-12 text-center text-slate-400">
                 <Building2 size={36} className="mx-auto mb-2 opacity-40" />
-                <p className="font-medium text-slate-600 text-xs">Ningún proveedor seleccionado</p>
-                <p className="text-[11px] text-slate-400 mt-1">Selecciona un proveedor de la tabla para ver sus detalles</p>
+                <p className="font-medium text-slate-600 text-xs">Ningún Proveedor seleccionado</p>
+                <p className="text-[11px] text-slate-400 mt-1">Selecciona un Proveedor de la tabla para ver sus detalles</p>
               </div>
             )}
 
