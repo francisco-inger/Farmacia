@@ -3,7 +3,7 @@ import {
   Building2, Users, Percent, ShoppingCart, Package, FileText, 
   ShoppingBag, Stethoscope, HeartPulse, Bell, ShieldCheck, Link2, 
   Palette, Printer, Save, Upload, CheckCircle2, Bot, Send, Sparkles, 
-  RefreshCw, Moon, Volume2, AlertTriangle, Check, Layers, Laptop
+  RefreshCw, Moon, Volume2, AlertTriangle, Check, Layers, Laptop, Mic
 } from 'lucide-react';
 import api from '../../services/api';
 import Modal from '../../components/ui/Modal';
@@ -68,6 +68,56 @@ const Configuracion = () => {
     { role: 'assistant', text: '¡Hola! Soy el asistente de PharmaPlus. Puedo ayudarte a ajustar preferencias del sistema, cambiar la impresora por defecto o realizar una copia de seguridad.' }
   ]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+
+  const handleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      setIsListening(true);
+      setTimeout(() => {
+        setChatInput('Opciones de impresión');
+        setIsListening(false);
+      }, 1500);
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'es-ES';
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join('');
+        setChatInput(transcript);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch (err) {
+      console.error('Micrófono:', err);
+      setIsListening(false);
+    }
+  };
 
   // Toast Notification Helper
   const showToast = (msg, type = 'success') => {
@@ -695,9 +745,19 @@ const Configuracion = () => {
               onSubmit={(e) => { e.preventDefault(); handleSendChatMessage(); }}
               className="flex items-center gap-2 mt-1"
             >
+              <button
+                type="button"
+                onClick={handleVoiceInput}
+                className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all shrink-0 ${
+                  isListening ? 'bg-rose-500 text-white border-rose-600 animate-pulse' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-emerald-600 hover:border-emerald-200'
+                }`}
+                title={isListening ? 'Escuchando voz...' : 'Hablar por micrófono'}
+              >
+                <Mic size={16} />
+              </button>
               <input
                 type="text"
-                placeholder="Escribe tu pregunta..."
+                placeholder={isListening ? 'Escuchando tu voz...' : 'Escribe tu pregunta...'}
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all"

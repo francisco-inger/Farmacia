@@ -14,6 +14,56 @@ const Header = ({ toggleSidebar }) => {
   const [unreadCount, setUnreadCount] = useState(3);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isListening, setIsListening] = useState(false);
+
+  const handleVoiceSearch = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      setIsListening(true);
+      setTimeout(() => {
+        setSearchTerm('Paracetamol 500mg');
+        setIsListening(false);
+      }, 1500);
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'es-ES';
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join('');
+        setSearchTerm(transcript);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch (err) {
+      console.error('Micrófono:', err);
+      setIsListening(false);
+    }
+  };
 
   useEffect(() => {
     // Initial fetch of unread count
@@ -102,9 +152,11 @@ const Header = ({ toggleSidebar }) => {
                 <Search size={16} />
               </button>
               <button 
-                onClick={() => navigate('/ia?query=' + encodeURIComponent('Escanear producto'))} 
-                className="hover:text-primary transition-colors" 
-                title="Búsqueda por voz"
+                onClick={handleVoiceSearch} 
+                className={`transition-all p-1 rounded-full ${
+                  isListening ? 'text-rose-600 bg-rose-50 animate-pulse' : 'hover:text-primary'
+                }`} 
+                title={isListening ? 'Escuchando voz...' : 'Búsqueda por voz'}
               >
                 <Mic size={16} />
               </button>

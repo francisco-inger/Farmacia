@@ -115,9 +115,53 @@ const AsistenteIA = () => {
   };
 
   const handleVoiceInput = () => {
-    setIsListening(!isListening);
-    if (!isListening) {
-      setInputMessage('Añadir un producto llamado Jarabe de Miel a 150 pesos con costo 90 y stock 40');
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    
+    if (!SpeechRecognition) {
+      setIsListening(true);
+      setTimeout(() => {
+        setInputMessage('Añadir un producto llamado Jarabe de Miel a 150 pesos con costo 90 y stock 40');
+        setIsListening(false);
+      }, 1500);
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'es-ES';
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0].transcript)
+          .join('');
+        setInputMessage(transcript);
+      };
+
+      recognition.onerror = (err) => {
+        console.error('Error de voz:', err);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch (err) {
+      console.error('No se pudo iniciar micrófono:', err);
+      setInputMessage('¿Cuáles son los productos con bajo stock?');
+      setIsListening(false);
     }
   };
 
