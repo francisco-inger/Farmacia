@@ -35,9 +35,10 @@ async function login(req, res) {
     VALUES (?, ?, ?, ?, ?, ?)
   `).run(user.id, user.name, 'LOGIN', 'auth', `Inicio de sesión exitoso desde ${req.ip}`, req.ip);
 
+  const jwtSecret = process.env.JWT_SECRET || 'pharmaplus_secret_key_2026';
   const token = jwt.sign(
     { userId: user.id, email: user.email, role: user.role_name },
-    process.env.JWT_SECRET,
+    jwtSecret,
     { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
   );
 

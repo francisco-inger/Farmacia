@@ -10,6 +10,8 @@ node_modules/
 # Databases
 *.db
 *.sqlite
+*.db-shm
+*.db-wal
 pharmaplus.db
 **/pharmaplus.db
 

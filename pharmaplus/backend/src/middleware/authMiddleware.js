@@ -10,7 +10,8 @@ function authMiddleware(req, res, next) {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const jwtSecret = process.env.JWT_SECRET || 'pharmaplus_secret_key_2026';
+    const decoded = jwt.verify(token, jwtSecret);
     const db = getDb();
     const user = db.prepare(`
       SELECT u.id, u.name, u.email, u.is_active, u.role_id, r.name as role_name
