@@ -1,0 +1,10 @@
+const express = require('express');
+const ctrl = require('./cajas.controller');
+const { authMiddleware } = require('../../middleware/authMiddleware');
+const router = express.Router();
+router.get('/', authMiddleware, ctrl.getAll);
+router.post('/open', authMiddleware, ctrl.openCash);
+router.post('/:id/close', authMiddleware, ctrl.closeCash);
+router.get('/:id/movements', authMiddleware, ctrl.getMovements);
+router.post('/:id/movements', authMiddleware, ctrl.addMovement);
+module.exports = router;

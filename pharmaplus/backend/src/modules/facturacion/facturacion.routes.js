@@ -1,0 +1,11 @@
+const express = require('express');
+const ctrl = require('./facturacion.controller');
+const { authMiddleware } = require('../../middleware/authMiddleware');
+const { requireAdmin } = require('../../middleware/roleMiddleware');
+const router = express.Router();
+router.get('/', authMiddleware, ctrl.getAll);
+router.get('/ncf', authMiddleware, ctrl.getNcfSequences);
+router.get('/:id', authMiddleware, ctrl.getById);
+router.post('/', authMiddleware, ctrl.createInvoice);
+router.post('/:id/cancel', authMiddleware, requireAdmin, ctrl.cancelInvoice);
+module.exports = router;

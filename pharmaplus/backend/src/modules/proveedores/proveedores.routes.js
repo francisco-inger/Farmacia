@@ -1,0 +1,11 @@
+const express = require('express');
+const ctrl = require('./proveedores.controller');
+const { authMiddleware } = require('../../middleware/authMiddleware');
+const { requireAdmin } = require('../../middleware/roleMiddleware');
+const router = express.Router();
+router.get('/', authMiddleware, ctrl.getAll);
+router.get('/:id', authMiddleware, ctrl.getById);
+router.post('/', authMiddleware, requireAdmin, ctrl.create);
+router.put('/:id', authMiddleware, requireAdmin, ctrl.update);
+router.delete('/:id', authMiddleware, requireAdmin, ctrl.remove);
+module.exports = router;

@@ -1,0 +1,10 @@
+const express = require('express');
+const ctrl = require('./reportes.controller');
+const { authMiddleware } = require('../../middleware/authMiddleware');
+const { requireAdmin } = require('../../middleware/roleMiddleware');
+const router = express.Router();
+router.get('/sales', authMiddleware, requireAdmin, ctrl.getSalesReport);
+router.get('/inventory', authMiddleware, requireAdmin, ctrl.getInventoryReport);
+router.get('/top-products', authMiddleware, requireAdmin, ctrl.getTopProducts);
+router.get('/cash', authMiddleware, requireAdmin, ctrl.getCashReport);
+module.exports = router;

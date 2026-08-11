@@ -1,0 +1,12 @@
+const express = require('express');
+const ctrl = require('./usuarios.controller');
+const { authMiddleware } = require('../../middleware/authMiddleware');
+const { requireAdmin } = require('../../middleware/roleMiddleware');
+const router = express.Router();
+router.get('/', authMiddleware, requireAdmin, ctrl.getAll);
+router.get('/roles', authMiddleware, ctrl.getRoles);
+router.post('/', authMiddleware, requireAdmin, ctrl.create);
+router.put('/:id', authMiddleware, requireAdmin, ctrl.update);
+router.post('/:id/reset-password', authMiddleware, requireAdmin, ctrl.resetPassword);
+router.post('/:id/toggle-active', authMiddleware, requireAdmin, ctrl.toggleActive);
+module.exports = router;

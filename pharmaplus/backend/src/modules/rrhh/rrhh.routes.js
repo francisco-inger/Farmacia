@@ -1,0 +1,11 @@
+const express = require('express');
+const ctrl = require('./rrhh.controller');
+const { authMiddleware } = require('../../middleware/authMiddleware');
+const { requireAdmin } = require('../../middleware/roleMiddleware');
+const router = express.Router();
+router.get('/', authMiddleware, ctrl.getEmployees);
+router.get('/:id', authMiddleware, ctrl.getById);
+router.post('/', authMiddleware, requireAdmin, ctrl.create);
+router.put('/:id', authMiddleware, requireAdmin, ctrl.update);
+router.post('/attendance', authMiddleware, requireAdmin, ctrl.registerAttendance);
+module.exports = router;

@@ -1,0 +1,13 @@
+const express = require('express');
+const { getAll, getById, create, update, remove, getCategories, createCategory } = require('./productos.controller');
+const { authMiddleware } = require('../../middleware/authMiddleware');
+const { requireAdmin } = require('../../middleware/roleMiddleware');
+const router = express.Router();
+router.get('/', authMiddleware, getAll);
+router.get('/categories', authMiddleware, getCategories);
+router.get('/:id', authMiddleware, getById);
+router.post('/', authMiddleware, requireAdmin, create);
+router.put('/:id', authMiddleware, requireAdmin, update);
+router.delete('/:id', authMiddleware, requireAdmin, remove);
+router.post('/categories', authMiddleware, requireAdmin, createCategory);
+module.exports = router;

@@ -1,0 +1,10 @@
+const express = require('express');
+const ctrl = require('./compras.controller');
+const { authMiddleware } = require('../../middleware/authMiddleware');
+const { requireAdmin } = require('../../middleware/roleMiddleware');
+const router = express.Router();
+router.get('/', authMiddleware, ctrl.getAll);
+router.get('/:id', authMiddleware, ctrl.getById);
+router.post('/', authMiddleware, requireAdmin, ctrl.create);
+router.post('/:id/receive', authMiddleware, requireAdmin, ctrl.receivePurchase);
+module.exports = router;
