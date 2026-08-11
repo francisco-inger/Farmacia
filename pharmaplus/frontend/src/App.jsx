@@ -20,6 +20,7 @@ import Facturacion from './modules/facturacion/Facturacion';
 import Recetas from './modules/recetas/Recetas';
 import Servicios from './modules/servicios/Servicios';
 import Compras from './modules/compras/Compras';
+import Proveedores from './modules/proveedores/Proveedores';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
@@ -54,7 +55,7 @@ const AppRoutes = () => {
         <Route path="recetas" element={<Recetas />} />
         <Route path="servicios" element={<Servicios />} />
         <Route path="compras" element={<Compras />} />
-        <Route path="proveedores" element={<div className="p-6"><h1>Proveedores (En desarrollo)</h1></div>} />
+        <Route path="proveedores" element={<Proveedores />} />
         <Route path="facturacion" element={<Facturacion />} />
         <Route path="rrhh" element={<div className="p-6"><h1>Recursos Humanos (En desarrollo)</h1></div>} />
         <Route path="cajas" element={<div className="p-6"><h1>Cajas (En desarrollo)</h1></div>} />
