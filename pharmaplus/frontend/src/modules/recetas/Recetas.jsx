@@ -402,13 +402,13 @@ const Recetas = () => {
             <input
               type="text"
               placeholder="Buscar por paciente, receta, médico o código..."
-              className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all shadow-sm"
+              className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all shadow-sm"
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
             />
             <ScanLine 
               onClick={() => setIsScanModalOpen(true)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 cursor-pointer transition-colors" 
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 cursor-pointer transition-colors" 
               size={18} 
               title="Escanear receta médica" 
             />
@@ -419,14 +419,14 @@ const Recetas = () => {
             onClick={() => setIsScanModalOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold transition-all shadow-sm active:scale-95"
           >
-            <ScanLine size={18} className="text-indigo-600" />
+            <ScanLine size={18} className="text-emerald-600" />
             <span>Escanear receta</span>
           </button>
 
           {/* New Recipe Button */}
           <button
             onClick={() => setIsNewRecipeModalOpen(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-all shadow-md shadow-indigo-600/20 active:scale-95"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all shadow-md shadow-emerald-600/20 active:scale-95"
           >
             <Plus size={18} />
             <span>Nueva receta</span>
@@ -443,7 +443,7 @@ const Recetas = () => {
               onClick={() => { setActiveTab(tab); setPage(1); }}
               className={`px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
                 activeTab === tab
-                  ? 'bg-indigo-600 text-white shadow-sm'
+                  ? 'bg-emerald-600 text-white shadow-sm'
                   : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
@@ -487,7 +487,7 @@ const Recetas = () => {
                     <tr>
                       <td colSpan="7" className="py-12 text-center text-slate-400">
                         <div className="inline-flex items-center gap-2">
-                          <RefreshCw className="animate-spin text-indigo-600" size={20} />
+                          <RefreshCw className="animate-spin text-emerald-600" size={20} />
                           <span>Cargando recetas médicas...</span>
                         </div>
                       </td>
@@ -509,7 +509,7 @@ const Recetas = () => {
                           key={r.id}
                           onClick={() => setSelectedRecipe(r)}
                           className={`cursor-pointer transition-colors group hover:bg-slate-50/80 ${
-                            isSelected ? 'bg-indigo-50/40 border-l-4 border-l-indigo-600' : ''
+                            isSelected ? 'bg-emerald-50/40 border-l-4 border-l-emerald-600' : ''
                           }`}
                         >
                           {/* Receta N° & Barcode */}
@@ -558,7 +558,7 @@ const Recetas = () => {
 
                           {/* Arrow Chevron */}
                           <td className="py-3.5 px-3 text-right">
-                            <ChevronRight size={18} className={`transition-transform ${isSelected ? 'text-indigo-600 translate-x-0.5' : 'text-slate-300 group-hover:text-slate-500'}`} />
+                            <ChevronRight size={18} className={`transition-transform ${isSelected ? 'text-emerald-600 translate-x-0.5' : 'text-slate-300 group-hover:text-slate-500'}`} />
                           </td>
                         </tr>
                       );
@@ -590,7 +590,7 @@ const Recetas = () => {
                     onClick={() => setPage(pNum)}
                     className={`w-7 h-7 rounded-lg font-medium transition-all ${
                       pNum === page
-                        ? 'bg-indigo-600 text-white font-semibold shadow-sm'
+                        ? 'bg-emerald-600 text-white font-semibold shadow-sm'
                         : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                     }`}
                   >

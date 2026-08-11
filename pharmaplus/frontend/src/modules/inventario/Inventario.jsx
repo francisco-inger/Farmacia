@@ -315,11 +315,11 @@ const Inventario = () => {
             <input
               type="text"
               placeholder="Buscar producto por nombre, código o categoría..."
-              className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all shadow-sm"
+              className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all shadow-sm"
               value={searchTerm}
               onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
             />
-            <ScanLine className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer hover:text-indigo-600 transition-colors" size={18} title="Escanear código de barras" />
+            <ScanLine className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer hover:text-emerald-600 transition-colors" size={18} title="Escanear código de barras" />
           </div>
 
           {/* Filter Button */}
@@ -327,21 +327,21 @@ const Inventario = () => {
             onClick={() => setShowFiltersModal(!showFiltersModal)}
             className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all shadow-sm ${
               selectedCategory || filterLowStock 
-                ? 'bg-indigo-50 border-indigo-200 text-indigo-700 font-semibold' 
+                ? 'bg-emerald-50 border-emerald-200 text-emerald-700 font-semibold' 
                 : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
             }`}
           >
             <Filter size={18} />
             <span>Filtros</span>
             {(selectedCategory || filterLowStock) && (
-              <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
+              <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
             )}
           </button>
 
           {/* New Product Button */}
           <button
             onClick={openNewProductModal}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-medium text-sm transition-all shadow-md shadow-indigo-600/20 hover:shadow-indigo-600/30 active:scale-95"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-sm transition-all shadow-md shadow-emerald-600/20 hover:shadow-emerald-600/30 active:scale-95"
           >
             <Plus size={18} />
             <span>Nuevo producto</span>
@@ -351,12 +351,12 @@ const Inventario = () => {
 
       {/* ─── FILTERS MODAL / EXPANDABLE PANEL ───────────────────────────────── */}
       {showFiltersModal && (
-        <div className="bg-white border border-indigo-100 rounded-2xl p-4 shadow-md flex flex-wrap items-center justify-between gap-4 animate-fade-in">
+        <div className="bg-white border border-emerald-100 rounded-2xl p-4 shadow-md flex flex-wrap items-center justify-between gap-4 animate-fade-in">
           <div className="flex flex-wrap items-center gap-4">
             <div>
               <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-1">Categoría</label>
               <select
-                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                 value={selectedCategory}
                 onChange={(e) => { setSelectedCategory(e.target.value); setPage(1); }}
               >
@@ -385,7 +385,7 @@ const Inventario = () => {
           {(selectedCategory || filterLowStock) && (
             <button
               onClick={() => { setSelectedCategory(''); setFilterLowStock(false); setPage(1); }}
-              className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline"
+              className="text-xs font-semibold text-emerald-600 hover:text-emerald-800 underline"
             >
               Limpiar Filtros
             </button>
@@ -419,7 +419,7 @@ const Inventario = () => {
                     <tr>
                       <td colSpan="7" className="py-12 text-center text-slate-400">
                         <div className="inline-flex items-center gap-2">
-                          <RefreshCw className="animate-spin text-indigo-600" size={20} />
+                          <RefreshCw className="animate-spin text-emerald-600" size={20} />
                           <span>Cargando inventario...</span>
                         </div>
                       </td>
@@ -442,7 +442,7 @@ const Inventario = () => {
                           key={p.id}
                           onClick={() => setSelectedProduct(p)}
                           className={`cursor-pointer transition-colors group hover:bg-slate-50/80 ${
-                            isSelected ? 'bg-indigo-50/40 border-l-4 border-l-indigo-600' : ''
+                            isSelected ? 'bg-emerald-50/40 border-l-4 border-l-emerald-600' : ''
                           }`}
                         >
                           {/* Producto Thumbnail + Title */}
@@ -455,7 +455,7 @@ const Inventario = () => {
                                   <Package size={18} className="text-slate-400" />
                                 )}
                               </div>
-                              <span className="font-semibold text-slate-800 line-clamp-1 group-hover:text-indigo-600 transition-colors">
+                              <span className="font-semibold text-slate-800 line-clamp-1 group-hover:text-emerald-600 transition-colors">
                                 {p.name}
                               </span>
                             </div>
@@ -490,7 +490,7 @@ const Inventario = () => {
 
                           {/* Arrow Action */}
                           <td className="py-3.5 px-3 text-right">
-                            <ChevronRight size={18} className={`transition-transform ${isSelected ? 'text-indigo-600 translate-x-0.5' : 'text-slate-300 group-hover:text-slate-500'}`} />
+                            <ChevronRight size={18} className={`transition-transform ${isSelected ? 'text-emerald-600 translate-x-0.5' : 'text-slate-300 group-hover:text-slate-500'}`} />
                           </td>
                         </tr>
                       );
@@ -525,7 +525,7 @@ const Inventario = () => {
                     onClick={() => setPage(pNum)}
                     className={`w-7 h-7 rounded-lg font-medium transition-all ${
                       pNum === page
-                        ? 'bg-indigo-600 text-white font-semibold shadow-sm'
+                        ? 'bg-emerald-600 text-white font-semibold shadow-sm'
                         : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
                     }`}
                   >
@@ -547,7 +547,7 @@ const Inventario = () => {
                 <select
                   value={limit}
                   onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
-                  className="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  className="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 >
                   <option value={8}>8 por página</option>
                   <option value={15}>15 por página</option>
@@ -558,10 +558,10 @@ const Inventario = () => {
           </div>
 
           {/* ─── CHATBOT PHARMAPLUS WIDGET AT BOTTOM ──────────────────────────── */}
-          <div className="bg-white rounded-2xl border border-indigo-100 shadow-sm p-4 flex flex-col gap-3 relative overflow-hidden">
+          <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm p-4 flex flex-col gap-3 relative overflow-hidden">
             {/* Header */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-purple-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
                 <Bot size={22} />
               </div>
               <div>
@@ -587,7 +587,7 @@ const Inventario = () => {
                 <button
                   key={idx}
                   onClick={() => handleSendChatMessage(chip)}
-                  className="px-3 py-1.5 rounded-xl border border-indigo-100 bg-indigo-50/50 hover:bg-indigo-100 text-indigo-700 text-xs font-medium transition-all hover:scale-105 active:scale-95"
+                  className="px-3 py-1.5 rounded-xl border border-emerald-100 bg-emerald-50/50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition-all hover:scale-105 active:scale-95"
                 >
                   {chip}
                 </button>
@@ -602,7 +602,7 @@ const Inventario = () => {
                     key={i}
                     className={`p-2.5 rounded-xl ${
                       msg.role === 'user'
-                        ? 'bg-indigo-600 text-white ml-8 font-medium'
+                        ? 'bg-emerald-600 text-white ml-8 font-medium'
                         : 'bg-white text-slate-700 border border-slate-200 mr-8 shadow-2xs'
                     }`}
                   >
@@ -611,7 +611,7 @@ const Inventario = () => {
                 ))}
                 {chatLoading && (
                   <div className="text-slate-400 italic text-[11px] flex items-center gap-1.5">
-                    <Sparkles size={12} className="animate-spin text-indigo-600" />
+                    <Sparkles size={12} className="animate-spin text-emerald-600" />
                     <span>Procesando consulta...</span>
                   </div>
                 )}
@@ -628,12 +628,12 @@ const Inventario = () => {
                 placeholder="Escribe tu pregunta..."
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-600 transition-all"
+                className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all"
               />
               <button
                 type="submit"
                 disabled={!chatInput.trim() || chatLoading}
-                className="w-9 h-9 rounded-xl bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white flex items-center justify-center transition-all shrink-0 shadow-sm shadow-indigo-600/30"
+                className="w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white flex items-center justify-center transition-all shrink-0 shadow-sm shadow-emerald-600/30"
               >
                 <Send size={16} />
               </button>
@@ -657,7 +657,7 @@ const Inventario = () => {
                   <div className="absolute right-0 top-full mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-lg p-1 hidden group-hover:block z-10">
                     <button
                       onClick={() => openAdjustModal(selectedProduct)}
-                      className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg font-medium flex items-center gap-2"
+                      className="w-full text-left px-3 py-2 text-xs text-slate-700 hover:bg-emerald-50 hover:text-emerald-600 rounded-lg font-medium flex items-center gap-2"
                     >
                       <Layers size={14} />
                       <span>Ajustar inventario</span>
@@ -735,7 +735,7 @@ const Inventario = () => {
                       <span className="text-slate-800 font-semibold">{selectedProduct.min_stock} unidades</span>
                       <button 
                         onClick={() => openEditProductModal(selectedProduct)} 
-                        className="text-slate-300 hover:text-indigo-600 transition-colors"
+                        className="text-slate-300 hover:text-emerald-600 transition-colors"
                         title="Editar stock mínimo"
                       >
                         <Edit3 size={12} />
@@ -752,7 +752,7 @@ const Inventario = () => {
                       </span>
                       <button 
                         onClick={() => openEditProductModal(selectedProduct)} 
-                        className="text-slate-300 hover:text-indigo-600 transition-colors"
+                        className="text-slate-300 hover:text-emerald-600 transition-colors"
                         title="Editar precio"
                       >
                         <Edit3 size={12} />
@@ -769,7 +769,7 @@ const Inventario = () => {
                       </span>
                       <button 
                         onClick={() => openEditProductModal(selectedProduct)} 
-                        className="text-slate-300 hover:text-indigo-600 transition-colors"
+                        className="text-slate-300 hover:text-emerald-600 transition-colors"
                         title="Editar precio de compra"
                       >
                         <Edit3 size={12} />
@@ -799,7 +799,7 @@ const Inventario = () => {
                 <div className="pt-2 grid grid-cols-2 gap-3">
                   <button
                     onClick={() => openEditProductModal(selectedProduct)}
-                    className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 hover:border-indigo-200 bg-white hover:bg-indigo-50/50 text-slate-700 hover:text-indigo-700 text-xs font-semibold transition-all shadow-2xs"
+                    className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 hover:border-emerald-200 bg-white hover:bg-emerald-50/50 text-slate-700 hover:text-emerald-700 text-xs font-semibold transition-all shadow-2xs"
                   >
                     <Edit3 size={14} />
                     <span>Editar producto</span>
