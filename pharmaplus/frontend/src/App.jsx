@@ -17,6 +17,14 @@ import Clientes from './modules/clientes/Clientes';
 import POS from './modules/pos/POS';
 import AsistenteIA from './modules/ia/AsistenteIA';
 import Integraciones from './modules/integraciones/Integraciones';
+import Facturacion from './modules/facturacion/Facturacion';
+import Recetas from './modules/recetas/Recetas';
+import Servicios from './modules/servicios/Servicios';
+import Compras from './modules/compras/Compras';
+import Proveedores from './modules/proveedores/Proveedores';
+import Configuracion from './modules/configuracion/Configuracion';
+import RRHH from './modules/rrhh/RRHH';
+import Caja from './modules/cajas/Caja';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
@@ -49,13 +57,13 @@ const AppRoutes = () => {
         <Route path="integraciones" element={<Integraciones />} />
         
         {/* Placeholder routes for all modules to prevent 404s while building */}
-        <Route path="recetas" element={<div className="p-6"><h1>Recetas (En desarrollo)</h1></div>} />
-        <Route path="servicios" element={<div className="p-6"><h1>Servicios (En desarrollo)</h1></div>} />
-        <Route path="compras" element={<div className="p-6"><h1>Compras (En desarrollo)</h1></div>} />
-        <Route path="proveedores" element={<div className="p-6"><h1>Proveedores (En desarrollo)</h1></div>} />
-        <Route path="facturacion" element={<div className="p-6"><h1>Facturación (En desarrollo)</h1></div>} />
-        <Route path="rrhh" element={<div className="p-6"><h1>Recursos Humanos (En desarrollo)</h1></div>} />
-        <Route path="cajas" element={<div className="p-6"><h1>Cajas (En desarrollo)</h1></div>} />
+        <Route path="recetas" element={<Recetas />} />
+        <Route path="servicios" element={<Servicios />} />
+        <Route path="compras" element={<Compras />} />
+        <Route path="proveedores" element={<Proveedores />} />
+        <Route path="facturacion" element={<Facturacion />} />
+        <Route path="rrhh" element={<ProtectedRoute allowedRoles={['admin']}><RRHH /></ProtectedRoute>} />
+        <Route path="cajas" element={<Caja />} />
         
         {/* Admin only routes */}
         <Route path="usuarios" element={<ProtectedRoute allowedRoles={['admin']}><div className="p-6"><h1>Usuarios (En desarrollo)</h1></div></ProtectedRoute>} />

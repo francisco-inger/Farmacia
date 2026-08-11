@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Search, Plus, Filter, Package, AlertTriangle, ChevronRight, ChevronLeft, 
   Trash2, Edit3, Bot, Send, ScanLine, MoreVertical, CheckCircle2, XCircle, 
@@ -10,6 +11,7 @@ import { AuthContext } from '../../context/AuthContext';
 
 const Inventario = () => {
   const { user } = useContext(AuthContext);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -21,6 +23,15 @@ const Inventario = () => {
   const [total, setTotal] = useState(0);
   const [filterLowStock, setFilterLowStock] = useState(false);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
+
+  // Check URL query parameters for filter=low_stock
+  useEffect(() => {
+    const filterParam = searchParams.get('filter');
+    if (filterParam === 'low_stock') {
+      setFilterLowStock(true);
+      setShowFiltersModal(true);
+    }
+  }, [searchParams]);
 
   // Modals
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -390,6 +401,22 @@ const Inventario = () => {
               Limpiar Filtros
             </button>
           )}
+        </div>
+      )}
+
+      {/* ─── LOW STOCK FILTER ALERT BANNER ─────────────────────────────────── */}
+      {filterLowStock && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-800 px-4 py-3 rounded-2xl flex items-center justify-between gap-3 text-xs font-semibold animate-fade-in shadow-2xs">
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={18} className="text-rose-600 shrink-0" />
+            <span>Mostrando únicamente productos con Stock Bajo o Crítico (Requerida reposición urgente de existencias)</span>
+          </div>
+          <button
+            onClick={() => { setFilterLowStock(false); setSearchParams({}); setPage(1); }}
+            className="px-3 py-1 bg-white hover:bg-rose-100 border border-rose-300 text-rose-700 rounded-xl text-xs font-bold transition-all shrink-0"
+          >
+            Ver todos los productos
+          </button>
         </div>
       )}
 

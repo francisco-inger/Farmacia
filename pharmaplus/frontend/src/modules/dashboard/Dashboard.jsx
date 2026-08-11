@@ -170,21 +170,22 @@ const Dashboard = () => {
           </div>
 
           <div 
-            onClick={() => navigate('/inventario')}
-            className="card p-4 flex flex-col justify-between border-danger/30 bg-danger-light/20 hover:border-danger transition-all cursor-pointer group"
+            onClick={() => navigate('/inventario?filter=low_stock')}
+            className="card p-4 flex flex-col justify-between border-rose-200 bg-rose-50/60 hover:bg-rose-50 hover:border-rose-300 transition-all cursor-pointer group shadow-2xs"
+            title="Ver productos con stock bajo"
           >
             <div className="flex items-center gap-3">
-              <div className="bg-white border border-danger/30 w-10 h-10 rounded-xl flex items-center justify-center text-danger shadow-xs group-hover:scale-105 transition-transform">
+              <div className="bg-white border border-rose-200 w-10 h-10 rounded-xl flex items-center justify-center text-rose-600 shadow-2xs group-hover:scale-105 transition-transform shrink-0">
                 <TriangleAlert size={20} />
               </div>
               <div>
-                <p className="text-xs font-semibold text-muted">Stock bajo</p>
-                <h3 className="text-lg font-bold text-danger leading-tight">{s.low_stock}</h3>
+                <p className="text-xs font-semibold text-slate-500">Stock bajo</p>
+                <h3 className="text-xl font-extrabold text-rose-600 leading-tight">{s.low_stock}</h3>
               </div>
             </div>
-            <div className="mt-2 flex items-center justify-between text-[10px]">
-              <span className="text-danger font-bold">Requiere reposición</span>
-              <span className="text-danger font-bold group-hover:underline">Revisar →</span>
+            <div className="mt-3 pt-2 border-t border-rose-200/60 flex items-center justify-between text-[11px] font-bold text-rose-700 whitespace-nowrap gap-1">
+              <span className="truncate">Requiere reposición</span>
+              <span className="group-hover:underline shrink-0 flex items-center gap-0.5">Revisar &rarr;</span>
             </div>
           </div>
 
@@ -233,29 +234,35 @@ const Dashboard = () => {
 
           {/* Category Chart */}
           <div className="card min-h-[300px] flex flex-col p-4">
-            <h3 className="font-bold text-sm text-main mb-4">Ventas por categoría</h3>
+            <h3 className="font-bold text-sm text-main mb-2">Ventas por categoría</h3>
             <div className="flex-1 w-full flex items-center justify-center min-h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                   <Pie
                     data={c.sales_by_category || []}
-                    cx="40%"
-                    cy="50%"
-                    innerRadius={45}
-                    outerRadius={70}
-                    paddingAngle={2}
+                    cx="50%"
+                    cy="42%"
+                    innerRadius={40}
+                    outerRadius={65}
+                    paddingAngle={3}
                     dataKey="total"
                   >
                     {(c.sales_by_category || []).map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
+                  <RechartsTooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', fontSize: '11px' }} 
+                    formatter={(val) => [formatCurrency(val), 'Ventas']} 
+                  />
                   <Legend 
-                    layout="vertical" verticalAlign="middle" align="right"
-                    wrapperStyle={{ fontSize: '11px' }}
+                    layout="horizontal" 
+                    verticalAlign="bottom" 
+                    align="center"
+                    wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
                     iconType="circle"
                     iconSize={8}
-                    formatter={(value) => <span className="text-muted font-medium ml-1">{value}</span>}
+                    formatter={(value) => <span className="text-slate-600 font-semibold ml-1">{value}</span>}
                   />
                 </PieChart>
               </ResponsiveContainer>
