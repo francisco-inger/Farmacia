@@ -17,6 +17,7 @@ import Clientes from './modules/clientes/Clientes';
 import POS from './modules/pos/POS';
 import AsistenteIA from './modules/ia/AsistenteIA';
 import Facturacion from './modules/facturacion/Facturacion';
+import Recetas from './modules/recetas/Recetas';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
@@ -48,7 +49,7 @@ const AppRoutes = () => {
         <Route path="ia" element={<AsistenteIA />} />
         
         {/* Placeholder routes for all modules to prevent 404s while building */}
-        <Route path="recetas" element={<div className="p-6"><h1>Recetas (En desarrollo)</h1></div>} />
+        <Route path="recetas" element={<Recetas />} />
         <Route path="servicios" element={<div className="p-6"><h1>Servicios (En desarrollo)</h1></div>} />
         <Route path="compras" element={<div className="p-6"><h1>Compras (En desarrollo)</h1></div>} />
         <Route path="proveedores" element={<div className="p-6"><h1>Proveedores (En desarrollo)</h1></div>} />
