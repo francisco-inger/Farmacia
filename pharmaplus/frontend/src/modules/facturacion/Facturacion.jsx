@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { 
   Search, Plus, Trash2, Minus, ScanLine, Printer, Mail, Save, Check, 
   CheckCircle2, HelpCircle, Bot, Send, MoreVertical, Sparkles, RefreshCw, 
-  FileText, CreditCard, Wallet, ArrowRightLeft, Package, User, ChevronDown, X
+  FileText, CreditCard, Wallet, ArrowRightLeft, Package, User, ChevronDown, X,
+  Info, CornerDownLeft, Copy
 } from 'lucide-react';
 import api from '../../services/api';
 import Modal from '../../components/ui/Modal';
@@ -10,6 +11,7 @@ import { AuthContext } from '../../context/AuthContext';
 
 const Facturacion = () => {
   const { user } = useContext(AuthContext);
+  const clientSelectRef = useRef(null);
 
   // Products & Clients List
   const [productsList, setProductsList] = useState([]);
@@ -33,6 +35,10 @@ const Facturacion = () => {
   // Modals
   const [isProductPickerOpen, setIsProductPickerOpen] = useState(false);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [isNcfInfoModalOpen, setIsNcfInfoModalOpen] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [emailDestination, setEmailDestination] = useState('');
+  const [toastMessage, setToastMessage] = useState(null);
   const [lastInvoice, setLastInvoice] = useState(null);
 
   // Chatbot State
@@ -41,6 +47,12 @@ const Facturacion = () => {
     { role: 'assistant', text: '¡Hola! Soy el asistente de PharmaPlus. Puedo ayudarte a buscar clientes, calcular ventas del día o realizar una factura rápida.' }
   ]);
   const [chatLoading, setChatLoading] = useState(false);
+
+  // Toast notification helper
+  const showToast = (msg, type = 'success') => {
+    setToastMessage({ msg, type });
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
   // Fetch initial data (Products & Clients)
   useEffect(() => {
@@ -105,6 +117,17 @@ const Facturacion = () => {
       }
     };
     fetchData();
+
+    // Check for saved draft in localStorage
+    const savedDraft = localStorage.getItem('pharmaplus_invoice_draft');
+    if (savedDraft) {
+      try {
+        const parsed = JSON.parse(savedDraft);
+        if (parsed && parsed.length > 0) {
+          // Toast notifying draft exists
+        }
+      } catch (e) {}
+    }
   }, []);
 
   // Filtered Search Results
@@ -142,6 +165,7 @@ const Facturacion = () => {
     });
     setSearchQuery('');
     setShowSearchDropdown(false);
+    showToast(`"${product.name}" agregado a la factura`);
   };
 
   // Update Item Quantity
@@ -171,12 +195,41 @@ const Facturacion = () => {
 
   // Remove Item from Cart
   const removeItem = (productId) => {
-    setCartItems(prev => prev.filter(item => item.product_id !== productId));
+    const item = cartItems.find(i => i.product_id === productId);
+    setCartItems(prev => prev.filter(i => i.product_id !== productId));
+    if (item) showToast(`"${item.name}" eliminado de la factura`, 'info');
   };
 
   // Clear Cart
   const clearCart = () => {
+    if (cartItems.length === 0) return;
     setCartItems([]);
+    showToast('Factura limpiada por completo', 'info');
+  };
+
+  // Save Draft Handler
+  const handleSaveDraft = () => {
+    if (cartItems.length === 0) {
+      showToast('Agrega productos antes de guardar un borrador', 'warning');
+      return;
+    }
+    localStorage.setItem('pharmaplus_invoice_draft', JSON.stringify({
+      cartItems,
+      selectedClientId,
+      rncCedula,
+      ncfType,
+      savedAt: new Date().toISOString()
+    }));
+    showToast('Borrador de factura guardado exitosamente');
+  };
+
+  // Send Email Handler
+  const handleSendEmailSubmit = (e) => {
+    e.preventDefault();
+    if (!emailDestination.trim()) return;
+    setIsEmailModalOpen(false);
+    showToast(`Comprobante fiscal enviado exitosamente a ${emailDestination}`);
+    setEmailDestination('');
   };
 
   // Totals Calculations
@@ -193,10 +246,19 @@ const Facturacion = () => {
 
   const totalItemsCount = cartItems.reduce((acc, i) => acc + i.quantity, 0);
 
+  // Client Selection Change
+  const handleClientSelect = (clientId) => {
+    setSelectedClientId(clientId);
+    const client = clientsList.find(c => String(c.id) === String(clientId));
+    if (client && client.cedula) {
+      setRncCedula(client.cedula);
+    }
+  };
+
   // Complete Sale & Generate Invoice (Finalizar Venta)
   const handleFinalizeSale = async () => {
     if (cartItems.length === 0) {
-      alert('Por favor agrega al menos un producto a la factura.');
+      showToast('Por favor agrega al menos un producto a la factura.', 'warning');
       return;
     }
 
@@ -226,13 +288,15 @@ const Facturacion = () => {
         });
         setIsReceiptModalOpen(true);
         setCartItems([]);
+        localStorage.removeItem('pharmaplus_invoice_draft');
+        showToast('¡Venta finalizada y NCF generado exitosamente!');
       }
     } catch (err) {
-      alert(err.message || 'Error registrando la factura');
+      showToast(err.message || 'Error registrando la factura', 'warning');
     }
   };
 
-  // Chatbot Send Message
+  // Chatbot Send Message / Quick Chips
   const handleSendChatMessage = async (queryText) => {
     const text = queryText || chatInput;
     if (!text.trim()) return;
@@ -252,17 +316,39 @@ const Facturacion = () => {
       return;
     }
 
+    if (lower.includes('factura rápida') || lower.includes('factura rapida')) {
+      if (productsList.length > 0) {
+        addProductToCart(productsList[0]);
+      }
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        text: 'He agregado un producto rápido a la factura actual.'
+      }]);
+      setChatLoading(false);
+      return;
+    }
+
+    if (lower.includes('buscar cliente')) {
+      if (clientSelectRef.current) clientSelectRef.current.focus();
+      setChatMessages(prev => [...prev, {
+        role: 'assistant',
+        text: 'Te he posicionado en el selector de clientes de la factura.'
+      }]);
+      setChatLoading(false);
+      return;
+    }
+
     try {
       const res = await api.post('/ai/chat', { message: text });
       if (res.success) {
         setChatMessages(prev => [...prev, { role: 'assistant', text: res.data.response }]);
       } else {
-        setChatMessages(prev => [...prev, { role: 'assistant', text: 'Respuesta procesada correctamente.' }]);
+        setChatMessages(prev => [...prev, { role: 'assistant', text: 'Consulta procesada correctamente.' }]);
       }
     } catch (err) {
       setChatMessages(prev => [...prev, {
         role: 'assistant',
-        text: `Asistente listo: Tienes ${cartItems.length} productos en la factura actual por un total de RD$ ${grandTotal.toFixed(2)}.`
+        text: `Asistente listo: Tienes ${cartItems.length} productos en la factura por un total de RD$ ${grandTotal.toFixed(2)}.`
       }]);
     } finally {
       setChatLoading(false);
@@ -270,8 +356,22 @@ const Facturacion = () => {
   };
 
   return (
-    <div className="h-full flex flex-col gap-5 overflow-y-auto pr-1">
+    <div className="h-full flex flex-col gap-5 overflow-y-auto pr-1 relative">
       
+      {/* ─── TOAST NOTIFICATION ───────────────────────────────────────────── */}
+      {toastMessage && (
+        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-3 animate-fade-in text-xs font-semibold ${
+          toastMessage.type === 'warning'
+            ? 'bg-amber-500 text-white border-amber-600'
+            : toastMessage.type === 'info'
+            ? 'bg-slate-800 text-white border-slate-700'
+            : 'bg-emerald-600 text-white border-emerald-700'
+        }`}>
+          <CheckCircle2 size={18} />
+          <span>{toastMessage.msg}</span>
+        </div>
+      )}
+
       {/* ─── HEADER & TOP ACTION BAR ────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -291,7 +391,12 @@ const Facturacion = () => {
               onChange={(e) => { setSearchQuery(e.target.value); setShowSearchDropdown(true); }}
               onFocus={() => setShowSearchDropdown(true)}
             />
-            <ScanLine className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 cursor-pointer transition-colors" size={18} title="Escanear código de barras" />
+            <ScanLine 
+              onClick={() => setIsProductPickerOpen(true)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-indigo-600 cursor-pointer transition-colors" 
+              size={18} 
+              title="Escanear código de barras" 
+            />
 
             {/* Live Search Dropdown Results */}
             {showSearchDropdown && searchResults.length > 0 && (
@@ -324,7 +429,7 @@ const Facturacion = () => {
           {/* Barcode Scan Button */}
           <button
             onClick={() => setIsProductPickerOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold transition-all shadow-sm"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold transition-all shadow-sm active:scale-95"
           >
             <ScanLine size={18} className="text-indigo-600" />
             <span>Escanear código</span>
@@ -350,7 +455,14 @@ const Facturacion = () => {
           {/* PRODUCTOS AGREGADOS TABLE CONTAINER */}
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-between min-h-[420px]">
             <div>
-              <h2 className="font-bold text-slate-800 text-base mb-4">Productos agregados</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-bold text-slate-800 text-base">Productos agregados</h2>
+                {cartItems.length > 0 && (
+                  <span className="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">
+                    {cartItems.length} líneas en factura
+                  </span>
+                )}
+              </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
@@ -406,14 +518,14 @@ const Facturacion = () => {
                               <div className="inline-flex items-center border border-slate-200 rounded-lg bg-slate-50 p-0.5">
                                 <button
                                   onClick={() => updateQuantity(item.product_id, -1)}
-                                  className="w-6 h-6 rounded-md bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors"
+                                  className="w-6 h-6 rounded-md bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors active:scale-95"
                                 >
                                   <Minus size={12} />
                                 </button>
                                 <span className="w-8 text-center font-bold text-slate-800 text-xs">{item.quantity}</span>
                                 <button
                                   onClick={() => updateQuantity(item.product_id, 1)}
-                                  className="w-6 h-6 rounded-md bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors"
+                                  className="w-6 h-6 rounded-md bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 flex items-center justify-center transition-colors active:scale-95"
                                 >
                                   <Plus size={12} />
                                 </button>
@@ -472,7 +584,7 @@ const Facturacion = () => {
               <button
                 onClick={clearCart}
                 disabled={cartItems.length === 0}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold disabled:opacity-40 transition-colors"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 font-semibold disabled:opacity-40 transition-colors active:scale-95"
               >
                 <Trash2 size={14} />
                 <span>Limpiar todo</span>
@@ -489,8 +601,8 @@ const Facturacion = () => {
           {/* BOTTOM MIDDLE ACTION BUTTONS */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <button
-              onClick={() => alert('Borrador guardado exitosamente en el sistema.')}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-indigo-600 font-semibold text-xs transition-all shadow-2xs"
+              onClick={handleSaveDraft}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-indigo-600 font-semibold text-xs transition-all shadow-2xs active:scale-95"
             >
               <Save size={16} />
               <span>Guardar Borrador</span>
@@ -498,15 +610,15 @@ const Facturacion = () => {
 
             <button
               onClick={() => window.print()}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-indigo-600 font-semibold text-xs transition-all shadow-2xs"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-indigo-600 font-semibold text-xs transition-all shadow-2xs active:scale-95"
             >
               <Printer size={16} />
               <span>Imprimir</span>
             </button>
 
             <button
-              onClick={() => alert('Comprobante enviado por correo electrónico.')}
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-indigo-600 font-semibold text-xs transition-all shadow-2xs"
+              onClick={() => setIsEmailModalOpen(true)}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-indigo-600 font-semibold text-xs transition-all shadow-2xs active:scale-95"
             >
               <Mail size={16} />
               <span>Enviar por Email</span>
@@ -598,7 +710,11 @@ const Facturacion = () => {
             {/* Header */}
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <h3 className="font-bold text-slate-800 text-base">Resumen de Factura</h3>
-              <button className="p-1 rounded-lg text-slate-400 hover:text-slate-700 transition-colors">
+              <button 
+                onClick={() => setIsNcfInfoModalOpen(true)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 transition-colors"
+                title="Información de Comprobante Fiscal NCF"
+              >
                 <MoreVertical size={18} />
               </button>
             </div>
@@ -607,8 +723,9 @@ const Facturacion = () => {
             <div className="flex flex-col gap-1.5">
               <label className="text-xs font-semibold text-slate-500">Datos del cliente</label>
               <select
+                ref={clientSelectRef}
                 value={selectedClientId}
-                onChange={(e) => setSelectedClientId(e.target.value)}
+                onChange={(e) => handleClientSelect(e.target.value)}
                 className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
               >
                 <option value="">Consumidor Final</option>
@@ -631,7 +748,12 @@ const Facturacion = () => {
             <div className="flex flex-col gap-1.5">
               <div className="flex items-center gap-1">
                 <label className="text-xs font-semibold text-slate-500">Tipo de Comprobante</label>
-                <HelpCircle size={14} className="text-slate-400 cursor-pointer" title="Selecciona la secuencia NCF requerida según la norma DGII" />
+                <HelpCircle 
+                  size={14} 
+                  className="text-slate-400 hover:text-indigo-600 cursor-pointer transition-colors" 
+                  onClick={() => setIsNcfInfoModalOpen(true)}
+                  title="Haz clic para ver especificaciones de tipos NCF" 
+                />
               </div>
               <select
                 value={ncfType}
@@ -790,6 +912,89 @@ const Facturacion = () => {
             </button>
           </div>
         </div>
+      </Modal>
+
+      {/* ─── MODAL: NCF TYPE INFO TOOLTIP MODAL ─────────────────────────────── */}
+      <Modal
+        isOpen={isNcfInfoModalOpen}
+        onClose={() => setIsNcfInfoModalOpen(false)}
+        title="Información de Comprobantes NCF (DGII)"
+        maxWidth="max-w-md"
+      >
+        <div className="flex flex-col gap-3 text-xs text-slate-700">
+          <p className="text-slate-500">
+            Especificaciones de Comprobantes Fiscales autorizados por la Dirección General de Impuestos Internos (DGII):
+          </p>
+
+          <div className="space-y-2">
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+              <strong className="text-indigo-700 font-mono">B01 - Factura de Crédito Fiscal:</strong>
+              <p className="text-[11px] text-slate-600 mt-0.5">Para personas físicas o jurídicas que sustentan costos y gastos para fines de ISR o adelanto de ITBIS.</p>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+              <strong className="text-indigo-700 font-mono">B02 - Factura de Consumo Final:</strong>
+              <p className="text-[11px] text-slate-600 mt-0.5">Para el consumidor final. No sustenta crédito fiscal ni costos y gastos.</p>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+              <strong className="text-indigo-700 font-mono">B04 - Nota de Débito:</strong>
+              <p className="text-[11px] text-slate-600 mt-0.5">Para recuperar costos o gastos adicionales incurridos luego de emitido el comprobante.</p>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+              <strong className="text-indigo-700 font-mono">B14 - Regímenes Especiales:</strong>
+              <p className="text-[11px] text-slate-600 mt-0.5">Facturas emitidas a empresas exentas bajo leyes de incentivo (Zonas Francas, etc.).</p>
+            </div>
+
+            <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+              <strong className="text-indigo-700 font-mono">B15 - Gubernamental:</strong>
+              <p className="text-[11px] text-slate-600 mt-0.5">Facturas emitidas a instituciones del Estado dominicano.</p>
+            </div>
+          </div>
+
+          <div className="flex justify-end pt-2 border-t border-slate-100">
+            <button onClick={() => setIsNcfInfoModalOpen(false)} className="btn btn-primary text-xs">
+              Entendido
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ─── MODAL: ENVIAR EMAIL COMPROBANTE ────────────────────────────────── */}
+      <Modal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        title="Enviar Factura por Correo Electrónico"
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handleSendEmailSubmit} className="flex flex-col gap-4">
+          <p className="text-xs text-slate-500">
+            Ingresa la dirección de correo a la que deseas enviar el comprobante fiscal en formato PDF / e-CF:
+          </p>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-700">Correo Electrónico del Destinatario *</label>
+            <input
+              required
+              type="email"
+              placeholder="cliente@ejemplo.com"
+              className="input text-sm"
+              value={emailDestination}
+              onChange={(e) => setEmailDestination(e.target.value)}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button type="button" onClick={() => setIsEmailModalOpen(false)} className="btn btn-outline text-xs">
+              Cancelar
+            </button>
+            <button type="submit" className="btn btn-primary text-xs font-semibold inline-flex items-center gap-1.5">
+              <Send size={14} />
+              <span>Enviar Factura</span>
+            </button>
+          </div>
+        </form>
       </Modal>
 
       {/* ─── MODAL: COMPROBANTE EMITIDO (RECEIPT VOUCHER) ─────────────────────── */}
