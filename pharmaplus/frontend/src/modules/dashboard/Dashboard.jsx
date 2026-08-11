@@ -234,29 +234,35 @@ const Dashboard = () => {
 
           {/* Category Chart */}
           <div className="card min-h-[300px] flex flex-col p-4">
-            <h3 className="font-bold text-sm text-main mb-4">Ventas por categoría</h3>
+            <h3 className="font-bold text-sm text-main mb-2">Ventas por categoría</h3>
             <div className="flex-1 w-full flex items-center justify-center min-h-[220px]">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
+                <PieChart margin={{ top: 10, right: 10, bottom: 10, left: 10 }}>
                   <Pie
                     data={c.sales_by_category || []}
-                    cx="40%"
-                    cy="50%"
-                    innerRadius={45}
-                    outerRadius={70}
-                    paddingAngle={2}
+                    cx="50%"
+                    cy="42%"
+                    innerRadius={40}
+                    outerRadius={65}
+                    paddingAngle={3}
                     dataKey="total"
                   >
                     {(c.sales_by_category || []).map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
+                  <RechartsTooltip 
+                    contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', fontSize: '11px' }} 
+                    formatter={(val) => [formatCurrency(val), 'Ventas']} 
+                  />
                   <Legend 
-                    layout="vertical" verticalAlign="middle" align="right"
-                    wrapperStyle={{ fontSize: '11px' }}
+                    layout="horizontal" 
+                    verticalAlign="bottom" 
+                    align="center"
+                    wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }}
                     iconType="circle"
                     iconSize={8}
-                    formatter={(value) => <span className="text-muted font-medium ml-1">{value}</span>}
+                    formatter={(value) => <span className="text-slate-600 font-semibold ml-1">{value}</span>}
                   />
                 </PieChart>
               </ResponsiveContainer>
