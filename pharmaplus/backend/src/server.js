@@ -27,6 +27,7 @@ const reportesRoutes = require('./modules/reportes/reportes.routes');
 const notificacionesRoutes = require('./modules/notificaciones/notificaciones.routes');
 const iaRoutes = require('./modules/ia/ia.routes');
 const configuracionRoutes = require('./modules/configuracion/configuracion.routes');
+const integracionesRoutes = require('./modules/integraciones/integraciones.routes');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -56,24 +57,40 @@ try {
 app.use('/api/auth', authRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/products', productosRoutes);
+app.use('/api/productos', productosRoutes);
 app.use('/api/inventory', inventarioRoutes);
+app.use('/api/inventario', inventarioRoutes);
 app.use('/api/clients', clientesRoutes);
+app.use('/api/clientes', clientesRoutes);
 app.use('/api/pos', posRoutes);
 app.use('/api/purchases', comprasRoutes);
+app.use('/api/compras', comprasRoutes);
 app.use('/api/suppliers', proveedoresRoutes);
+app.use('/api/proveedores', proveedoresRoutes);
 app.use('/api/recipes', recetasRoutes);
+app.use('/api/recetas', recetasRoutes);
 app.use('/api/services', serviciosRoutes);
+app.use('/api/servicios', serviciosRoutes);
 app.use('/api/invoices', facturacionRoutes);
+app.use('/api/facturacion', facturacionRoutes);
 app.use('/api/employees', rrhhRoutes);
+app.use('/api/rrhh', rrhhRoutes);
 app.use('/api/cash-registers', cajasRoutes);
+app.use('/api/cajas', cajasRoutes);
 app.use('/api/users', usuariosRoutes);
+app.use('/api/usuarios', usuariosRoutes);
 app.use('/api/audit', auditoriaRoutes);
+app.use('/api/auditoria', auditoriaRoutes);
 app.use('/api/reports', reportesRoutes);
+app.use('/api/reportes', reportesRoutes);
 app.use('/api/notifications', notificacionesRoutes);
 app.use('/api/notificaciones', notificacionesRoutes);
 app.use('/api/ai', iaRoutes);
 app.use('/api/ia', iaRoutes);
 app.use('/api/settings', configuracionRoutes);
+app.use('/api/configuracion', configuracionRoutes);
+app.use('/api/integrations', integracionesRoutes);
+app.use('/api/integraciones', integracionesRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

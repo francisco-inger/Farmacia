@@ -24,6 +24,9 @@ import Proveedores from './modules/proveedores/Proveedores';
 import Configuracion from './modules/configuracion/Configuracion';
 import RRHH from './modules/rrhh/RRHH';
 import Caja from './modules/cajas/Caja';
+import Integraciones from './modules/integraciones/Integraciones';
+import Usuarios from './modules/usuarios/Usuarios';
+import Reportes from './modules/reportes/Reportes';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
@@ -62,11 +65,12 @@ const AppRoutes = () => {
         <Route path="facturacion" element={<Facturacion />} />
         <Route path="rrhh" element={<ProtectedRoute allowedRoles={['admin']}><RRHH /></ProtectedRoute>} />
         <Route path="cajas" element={<Caja />} />
+        <Route path="integraciones" element={<Integraciones />} />
         
         {/* Admin only routes */}
-        <Route path="usuarios" element={<ProtectedRoute allowedRoles={['admin']}><div className="p-6"><h1>Usuarios (En desarrollo)</h1></div></ProtectedRoute>} />
+        <Route path="usuarios" element={<ProtectedRoute allowedRoles={['admin']}><Usuarios /></ProtectedRoute>} />
         <Route path="auditoria" element={<ProtectedRoute allowedRoles={['admin']}><div className="p-6"><h1>Auditoría (En desarrollo)</h1></div></ProtectedRoute>} />
-        <Route path="reportes" element={<ProtectedRoute allowedRoles={['admin']}><div className="p-6"><h1>Reportes (En desarrollo)</h1></div></ProtectedRoute>} />
+        <Route path="reportes" element={<ProtectedRoute allowedRoles={['admin']}><Reportes /></ProtectedRoute>} />
         <Route path="configuracion" element={<ProtectedRoute allowedRoles={['admin']}><Configuracion /></ProtectedRoute>} />
       </Route>
 
