@@ -109,21 +109,41 @@ const Clientes = () => {
 
   return (
     <div className="h-full flex flex-col gap-4">
-      {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="relative flex-1 sm:max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
-          <input 
-            type="text" 
-            placeholder="Buscar por nombre, cédula o teléfono..." 
-            className="input pl-9"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+      {/* Unified Header Card */}
+      <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <img 
+            src="/modules/clientes.png" 
+            alt="Clientes" 
+            className="w-14 h-14 rounded-2xl object-cover border border-emerald-100 shadow-sm shrink-0"
+            onError={(e) => { e.target.style.display = 'none'; }}
           />
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Clientes</h1>
+              <span className="bg-emerald-50 text-[#16a085] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
+                Directorio de Pacientes
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium">Administra información de contacto, historial de compras y puntos de clientes</p>
+          </div>
         </div>
-        <button onClick={() => openModal()} className="btn btn-primary w-full sm:w-auto">
-          <Plus size={18} /> Nuevo Cliente
-        </button>
+
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-72">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
+            <input 
+              type="text" 
+              placeholder="Buscar por nombre, cédula o teléfono..." 
+              className="input pl-9"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <button onClick={() => openModal()} className="btn btn-primary w-full sm:w-auto">
+            <Plus size={18} /> Nuevo Cliente
+          </button>
+        </div>
       </div>
 
       {/* Table Area */}

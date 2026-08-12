@@ -7,27 +7,44 @@ async function runSeed() {
 
   // ─── ROLES ───────────────────────────────────────────────────────────────
   const roles = [
-    { name: 'admin', description: 'Administrador del sistema con acceso total' },
-    { name: 'cajero', description: 'Cajero con acceso al POS y consultas' },
-    { name: 'farmaceutico', description: 'Farmacéutico con acceso a recetas e inventario' },
-    { name: 'supervisor', description: 'Supervisor con acceso extendido' },
-    { name: 'almacen', description: 'Encargado de almacén e inventario' },
+    { name: 'Administrador', description: 'Acceso total y configuración del sistema' },
+    { name: 'Cajero', description: 'Acceso a ventas POS, clientes y cobros en caja' },
+    { name: 'Farmacéutico', description: 'Dispensación de recetas y verificación médica' },
+    { name: 'Supervisor', description: 'Supervisión de operaciones, cierres y reportes' },
+    { name: 'Encargado de Inventario', description: 'Gestión de stock, reabastecimiento y kardex' },
+    { name: 'Compras', description: 'Órdenes de compra y contacto con suplidores' },
+    { name: 'Contabilidad', description: 'Facturación fiscal, auditoría y reportes impositivos' },
+    { name: 'admin', description: 'Administrador legacy' },
+    { name: 'cajero', description: 'Cajero legacy' }
   ];
   const insertRole = db.prepare(`INSERT OR IGNORE INTO roles (name, description) VALUES (?, ?)`);
   roles.forEach(r => insertRole.run(r.name, r.description));
 
   // ─── USUARIOS ─────────────────────────────────────────────────────────────
-  const adminHash = await bcrypt.hash('admin123', rounds);
-  const cajeroHash = await bcrypt.hash('cajero123', rounds);
-  const adminRole = db.prepare(`SELECT id FROM roles WHERE name = 'admin'`).get();
-  const cajeroRole = db.prepare(`SELECT id FROM roles WHERE name = 'cajero'`).get();
+  const defaultHash = await bcrypt.hash('pharmaplus123', rounds);
+  const getRoleId = (roleName) => db.prepare(`SELECT id FROM roles WHERE name = ? OR name LIKE ?`).get(roleName, `%${roleName}%`)?.id || 1;
+
+  const sampleUsers = [
+    { name: 'Ana Cajera', email: 'ana.cajera@pharmaplus.com', phone: '809-555-1234', role: 'Cajero', is_active: 1 },
+    { name: 'Juan Martínez', email: 'juan.martinez@pharmaplus.com', phone: '809-555-5678', role: 'Farmacéutico', is_active: 1 },
+    { name: 'Laura Sánchez', email: 'laura.sanchez@pharmaplus.com', phone: '809-555-9012', role: 'Administrador', is_active: 1 },
+    { name: 'Carlos Rodríguez', email: 'carlos.rodriguez@pharmaplus.com', phone: '809-555-3456', role: 'Supervisor', is_active: 1 },
+    { name: 'María Vargas', email: 'maria.vargas@pharmaplus.com', phone: '809-555-7890', role: 'Encargado de Inventario', is_active: 1 },
+    { name: 'Pedro Díaz', email: 'pedro.diaz@pharmaplus.com', phone: '809-555-2345', role: 'Compras', is_active: 1 },
+    { name: 'Andrés Mejía', email: 'andres.mejia@pharmaplus.com', phone: '809-555-6789', role: 'Contabilidad', is_active: 0 },
+    { name: 'Sofía Ramírez', email: 'sofia.ramirez@pharmaplus.com', phone: '809-555-0123', role: 'Cajero', is_active: 1 },
+    { name: 'Admin Farmacia', email: 'admin@pharmaplus.do', phone: '809-000-0001', role: 'Administrador', is_active: 1 },
+    { name: 'Juan Pérez (Cajero)', email: 'cajero@pharmaplus.do', phone: '809-000-0002', role: 'Cajero', is_active: 1 }
+  ];
 
   const insertUser = db.prepare(`
-    INSERT OR IGNORE INTO users (name, email, password_hash, role_id, phone)
-    VALUES (?, ?, ?, ?, ?)
+    INSERT OR IGNORE INTO users (name, email, password_hash, role_id, phone, is_active)
+    VALUES (?, ?, ?, ?, ?, ?)
   `);
-  insertUser.run('Admin Farmacia', 'admin@pharmaplus.do', adminHash, adminRole.id, '809-000-0001');
-  insertUser.run('Juan Pérez (Cajero)', 'cajero@pharmaplus.do', cajeroHash, cajeroRole.id, '809-000-0002');
+
+  sampleUsers.forEach(u => {
+    insertUser.run(u.name, u.email, defaultHash, getRoleId(u.role), u.phone, u.is_active);
+  });
 
   // ─── CATEGORÍAS ──────────────────────────────────────────────────────────
   const categories = [

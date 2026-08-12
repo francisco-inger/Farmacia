@@ -1,29 +1,19 @@
 const express = require('express');
-const router = express.Router();
-const integracionesController = require('./integraciones.controller');
+const ctrl = require('./integraciones.controller');
 const { authMiddleware } = require('../../middleware/authMiddleware');
+const router = express.Router();
 
-// Documentación OpenAPI libre de auth para explorador de Swagger
-router.get('/docs/openapi', integracionesController.getOpenApiSpec);
+router.get('/connectors', authMiddleware, ctrl.getConnectors);
+router.post('/verify-coverage', authMiddleware, ctrl.verifyCoverage);
+router.post('/sync-catalog', authMiddleware, ctrl.syncCatalog);
 
-// Aplicar autenticación JWT a los demás endpoints
-router.use(authMiddleware);
+router.get('/webhooks', authMiddleware, ctrl.getWebhooks);
+router.post('/webhooks', authMiddleware, ctrl.createWebhook);
+router.delete('/webhooks/:id', authMiddleware, ctrl.deleteWebhook);
+router.post('/webhooks/:id/test', authMiddleware, ctrl.testWebhook);
 
-// Rutas de Conectores
-router.get('/connectors', integracionesController.getConnectors);
-router.patch('/connectors/:connectorId/status', integracionesController.updateConnectorStatus);
-router.post('/connectors/:connectorId/sync', integracionesController.syncLabCatalog);
-
-// Rutas de Aseguradoras (ARS) y DGII
-router.post('/insurance/verify', integracionesController.verifyInsuranceCoverage);
-router.post('/dgii/verify-rnc', integracionesController.verifyDgiiRnc);
-
-// Rutas de Webhooks
-router.get('/webhooks', integracionesController.getWebhooks);
-router.post('/webhooks', integracionesController.createWebhook);
-router.post('/webhooks/:webhookId/trigger', integracionesController.triggerWebhook);
-
-// Rutas de IA Mapeador de Esquemas
-router.post('/ai/map-schema', integracionesController.mapSchemaWithAI);
+router.get('/api-keys', authMiddleware, ctrl.getApiKeys);
+router.post('/api-keys', authMiddleware, ctrl.createApiKey);
+router.delete('/api-keys/:id', authMiddleware, ctrl.revokeApiKey);
 
 module.exports = router;

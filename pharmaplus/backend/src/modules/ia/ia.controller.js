@@ -3,8 +3,12 @@ const { getDb } = require('../../db/database');
 
 function getGroqClient() {
   const apiKey = process.env.GROQ_API_KEY;
-  if (apiKey && apiKey !== 'your_groq_api_key_here') {
-    return new Groq({ apiKey });
+  if (apiKey && apiKey !== 'your_groq_api_key_here' && apiKey.trim().length > 10) {
+    try {
+      return new Groq({ apiKey });
+    } catch (e) {
+      return null;
+    }
   }
   return null;
 }
@@ -258,6 +262,137 @@ function cleanTechnicalText(text) {
   return cleaned.trim();
 }
 
+// ─── LOCAL INTENT PARSER & RESPONSE ENGINE ─────────────────────────────────
+function parseLocalIntent(text) {
+  if (!text) return null;
+  const lower = text.toLowerCase();
+
+  // Add Product Intent
+  if (/añadir|anadir|crear|agregar|nuevo producto|insertar/i.test(lower) && /producto|medicamento|jarabe|pastilla|crema|articulo/i.test(lower)) {
+    let name = text.replace(/.*?(añadir|anadir|crear|agregar|insertar)\s+(un\s+)?(nuevo\s+)?(producto|medicamento)?\s*(llamado|nombre)?/i, '').trim();
+    name = name.split(/a\s+\d+|con\s+costo|precio|stock|costo/i)[0].trim() || 'Nuevo Producto';
+
+    const priceMatch = text.match(/(?:precio|venta|a)\s*(?:de\s*)?(?:rd\$|\$)?\s*(\d+(?:\.\d+)?)/i) || text.match(/(\d+(?:\.\d+)?)\s*(?:pesos|rd\$|\$)/i);
+    const costMatch = text.match(/(?:costo|coste)\s*(?:de\s*)?(?:rd\$|\$)?\s*(\d+(?:\.\d+)?)/i);
+    const stockMatch = text.match(/(?:stock|cantidad|unidades)\s*(?:de\s*)?(\d+)/i);
+
+    const sale_price = priceMatch ? parseFloat(priceMatch[1]) : 100;
+    const cost_price = costMatch ? parseFloat(costMatch[1]) : sale_price * 0.7;
+    const stock = stockMatch ? parseInt(stockMatch[1], 10) : 20;
+
+    return {
+      name: 'add_product',
+      args: { name, sale_price, cost_price, stock }
+    };
+  }
+
+  // Update Product Intent
+  if (/editar|modificar|actualizar|cambiar/i.test(lower) && /producto|stock|precio/i.test(lower)) {
+    const stockMatch = text.match(/(?:stock|cantidad)\s*(?:a|de)?\s*(\d+)/i);
+    const priceMatch = text.match(/(?:precio|venta)\s*(?:a|de)?\s*(\d+(?:\.\d+)?)/i);
+    let identifier = text.split(/stock|precio|costo|a\s+\d+/i)[0].replace(/.*?(editar|modificar|actualizar|cambiar)\s*(el\s+producto|producto)?/i, '').trim();
+
+    return {
+      name: 'update_product',
+      args: {
+        product_identifier: identifier || '1',
+        stock: stockMatch ? parseInt(stockMatch[1], 10) : undefined,
+        sale_price: priceMatch ? parseFloat(priceMatch[1]) : undefined
+      }
+    };
+  }
+
+  // Delete Product Intent
+  if (/eliminar|borrar|desactivar|quitar/i.test(lower) && /producto|medicamento/i.test(lower)) {
+    const identifier = text.replace(/.*?(eliminar|borrar|desactivar|quitar)\s*(el\s+producto|producto)?/i, '').trim();
+    return {
+      name: 'delete_product',
+      args: { product_identifier: identifier }
+    };
+  }
+
+  // Add Client Intent
+  if (/añadir|anadir|crear|agregar|nuevo cliente/i.test(lower) && /cliente|persona/i.test(lower)) {
+    let name = text.replace(/.*?(añadir|anadir|crear|agregar)\s*(un\s+)?(nuevo\s+)?cliente\s*(llamado|nombre)?/i, '').trim();
+    name = name.split(/con\s+cédula|cedula|teléfono|telefono|email/i)[0].trim() || 'Nuevo Cliente';
+    const phoneMatch = text.match(/(?:teléfono|telefono|tel)\s*(\d[\d\s-]{7,})/i);
+    const cedulaMatch = text.match(/(?:cédula|cedula|rnc)\s*(\d[\d\s-]{8,})/i);
+
+    return {
+      name: 'add_client',
+      args: {
+        name,
+        phone: phoneMatch ? phoneMatch[1].trim() : null,
+        cedula: cedulaMatch ? cedulaMatch[1].trim() : null
+      }
+    };
+  }
+
+  // Delete Client Intent
+  if (/eliminar|borrar|desactivar|quitar/i.test(lower) && /cliente/i.test(lower)) {
+    const identifier = text.replace(/.*?(eliminar|borrar|desactivar|quitar)\s*(el\s+cliente|cliente)?/i, '').trim();
+    return {
+      name: 'delete_client',
+      args: { client_identifier: identifier }
+    };
+  }
+
+  return null;
+}
+
+function generateLocalResponse(message, contextStr, db) {
+  const lower = message.toLowerCase();
+
+  // Search product directly in DB if query looks like a specific search
+  const cleanMsg = message.trim();
+  if (cleanMsg.length > 2 && !['hola', 'buenas', 'ayuda', 'saludos'].includes(lower)) {
+    const matchedProducts = db.prepare(`
+      SELECT name, code, stock, min_stock, sale_price 
+      FROM products 
+      WHERE is_active = 1 AND (name LIKE ? OR code LIKE ?)
+      LIMIT 10
+    `).all(`%${cleanMsg}%`, `%${cleanMsg}%`);
+
+    if (matchedProducts.length > 0) {
+      const list = matchedProducts.map(p => 
+        `• **${p.name}** (Código: \`${p.code}\`)\n  - Stock disponible: **${p.stock} unidades** (Mínimo: ${p.min_stock})\n  - Precio de Venta: **RD$ ${p.sale_price.toFixed(2)}**`
+      ).join('\n\n');
+      return `Encontré los siguientes productos coincidentes en el inventario:\n\n${list}`;
+    }
+  }
+
+  // Stock / Inventario queries
+  if (lower.includes('stock') || lower.includes('inventario') || lower.includes('agotado') || lower.includes('bajo')) {
+    const lowStockProds = db.prepare(`SELECT name, code, stock, min_stock, sale_price FROM products WHERE stock <= min_stock AND is_active = 1 ORDER BY stock ASC`).all();
+    if (lowStockProds.length === 0) {
+      return `✅ **Estado del Inventario**: Todo el catálogo de productos se encuentra en niveles óptimos de stock (ningún producto con alerta de mínimo).`;
+    }
+    const list = lowStockProds.map(p => `• **${p.name}** (\`${p.code}\`): **${p.stock} unid.** (Mín: ${p.min_stock}) | RD$ ${p.sale_price.toFixed(2)}`).join('\n');
+    return `⚠️ **Productos con Stock Bajo o Agotado (${lowStockProds.length})**:\n\n${list}\n\n¿Deseas realizar un ajuste de inventario o emitir una orden de compra?`;
+  }
+
+  // Sales queries
+  if (lower.includes('venta') || lower.includes('vendio') || lower.includes('ingreso') || lower.includes('hoy')) {
+    const todaySales = db.prepare(`SELECT COALESCE(SUM(total), 0) as total, COUNT(*) as count FROM sales WHERE DATE(created_at) = DATE('now') AND status = 'completada'`).get();
+    return `📊 **Resumen de Ventas de Hoy**:\n- Total Facturado: **RD$ ${todaySales.total.toFixed(2)}**\n- Transacciones Completadas: **${todaySales.count}**\n\n¿Necesitas consultar un reporte más detallado?`;
+  }
+
+  // Client queries
+  if (lower.includes('cliente') || lower.includes('directorio')) {
+    const clients = db.prepare(`SELECT name, cedula, phone FROM clients WHERE is_active = 1 ORDER BY id DESC LIMIT 5`).all();
+    const list = clients.map(c => `• **${c.name}** | Cédula: ${c.cedula || 'N/A'} | Tel: ${c.phone || 'N/A'}`).join('\n');
+    return `👥 **Directorio Reciente de Clientes**:\n\n${list}`;
+  }
+
+  // Greeting or general query
+  if (lower.includes('hola') || lower.includes('buenas') || lower.includes('ayuda') || lower.includes('saludo')) {
+    return `¡Hola! Soy el **Asistente IA de PharmaPlus**. 🏥\n\nPuedes pedirme consultas en tiempo real sobre el inventario, registrar o modificar productos y clientes, o ver el resumen de ventas de hoy.\n\n${contextStr}`;
+  }
+
+  // Default fallback response
+  return `¡Entendido! Aquí tienes el resumen factual de la base de datos en tiempo real:\n\n${contextStr}\n\nPuedes pedirme buscar productos específicos, consultar ventas, o registrar nuevos productos y clientes.`;
+}
+
 // ─── CONVERSATIONS API ───────────────────────────────────────────────────────
 async function getConversations(req, res) {
   const db = getDb();
@@ -348,14 +483,6 @@ async function chat(req, res) {
   const { conversation_id, message } = req.body;
   if (!message) return res.status(400).json({ success: false, message: 'El mensaje es requerido' });
 
-  const groq = getGroqClient();
-  if (!groq) {
-    return res.status(500).json({ 
-      success: false, 
-      message: 'La API Key de Groq no está configurada correctamente en .env' 
-    });
-  }
-
   const db = getDb();
   let convId = conversation_id;
 
@@ -365,11 +492,50 @@ async function chat(req, res) {
     convId = result.lastInsertRowid;
   }
 
-  try {
-    // Save user message to DB
-    db.prepare(`INSERT INTO ai_messages (conversation_id, role, content) VALUES (?, 'user', ?)`).run(convId, message);
-    db.prepare(`UPDATE ai_conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(convId);
+  // Save user message to DB
+  db.prepare(`INSERT INTO ai_messages (conversation_id, role, content) VALUES (?, 'user', ?)`).run(convId, message);
+  db.prepare(`UPDATE ai_conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = ?`).run(convId);
 
+  const groq = getGroqClient();
+
+  // IF GROQ API KEY IS NOT SET OR PLACEHOLDER -> USE LOCAL SQLITE ASSISTANT
+  if (!groq) {
+    let aiContent = '';
+    let toolResultsSummary = [];
+    const isModification = isDbModificationIntent(message);
+
+    if (isModification) {
+      const parsedTool = parseLocalIntent(message);
+      if (parsedTool) {
+        const result = executeTool(db, parsedTool.name, parsedTool.args, req.user.id);
+        toolResultsSummary.push({ tool: parsedTool.name, result });
+        aiContent = result.message || 'Acción procesada en la base de datos.';
+      }
+    }
+
+    if (!aiContent) {
+      const contextStr = getPharmacyContext(db);
+      aiContent = generateLocalResponse(message, contextStr, db);
+    }
+
+    aiContent += `\n\n💡 *Nota: Asistente operando con el motor SQL local de PharmaPlus. Si deseas activar la IA de Groq (Llama 3.3 70B en la nube), ingresa tu GROQ_API_KEY en el archivo .env del backend.*`;
+
+    // Save assistant message to DB
+    const result = db.prepare(`INSERT INTO ai_messages (conversation_id, role, content) VALUES (?, 'assistant', ?)`).run(convId, aiContent);
+    const savedMessage = db.prepare(`SELECT * FROM ai_messages WHERE id = ?`).get(result.lastInsertRowid);
+
+    return res.json({ 
+      success: true, 
+      data: {
+        conversation_id: convId,
+        message: savedMessage,
+        executed_actions: toolResultsSummary
+      } 
+    });
+  }
+
+  // IF GROQ API KEY IS PRESENT -> RUN GROQ LLM WITH FALLBACK SAFETY
+  try {
     const contextStr = getPharmacyContext(db);
     const systemPrompt = `
 Eres "Asistente IA Pharma", la Inteligencia Artificial oficial de PharmaPlus.
@@ -407,7 +573,7 @@ ${contextStr}
           model: 'llama-3.3-70b-versatile',
           tools: TOOLS,
           tool_choice: 'auto',
-          temperature: 0.1, // LOW TEMPERATURE FOR HIGHEST PRECISION
+          temperature: 0.1,
           max_tokens: 1024,
         });
 
@@ -445,7 +611,7 @@ ${contextStr}
           const secondCompletion = await groq.chat.completions.create({
             messages: messagesToSend,
             model: 'llama-3.3-70b-versatile',
-            temperature: 0.1, // LOW TEMPERATURE FOR HIGHEST PRECISION
+            temperature: 0.1,
             max_tokens: 1024,
           });
 
@@ -459,24 +625,22 @@ ${contextStr}
         const fallbackCompletion = await groq.chat.completions.create({
           messages: messagesToSend,
           model: 'llama-3.3-70b-versatile',
-          temperature: 0.1, // LOW TEMPERATURE FOR HIGHEST PRECISION
+          temperature: 0.1,
           max_tokens: 1024,
         });
         aiContent = fallbackCompletion.choices[0]?.message?.content || 'Entendido. ¿Deseas realizar alguna otra consulta?';
       }
     } else {
-      // Standard chat completion with temperature 0.1 for high factual precision
       const chatCompletion = await groq.chat.completions.create({
         messages: messagesToSend,
         model: 'llama-3.3-70b-versatile',
-        temperature: 0.1, // LOW TEMPERATURE FOR HIGHEST PRECISION
+        temperature: 0.1,
         max_tokens: 1024,
       });
 
       aiContent = chatCompletion.choices[0]?.message?.content || '¡Hola! ¿En qué puedo ayudarte hoy?';
     }
 
-    // Clean any accidental SQL or technical traces from output
     aiContent = cleanTechnicalText(aiContent);
 
     // Save assistant message to DB
@@ -493,24 +657,39 @@ ${contextStr}
     });
 
   } catch (error) {
-    console.error('Groq AI Main Error:', error);
-    try {
-      const contextStr = getPharmacyContext(db);
-      const fallbackText = `¡Hola! Aquí tienes los datos en tiempo real de **PharmaPlus**:\n\n${contextStr}\n\n¿En qué puedo ayudarte?`;
-      
-      db.prepare(`INSERT INTO ai_messages (conversation_id, role, content) VALUES (?, 'assistant', ?)`).run(convId, fallbackText);
-      const savedMsg = db.prepare(`SELECT * FROM ai_messages WHERE id = (SELECT max(id) FROM ai_messages)`).get();
+    console.error('Groq AI Call Error (Falling back to local SQL assistant):', error.message);
 
-      return res.json({
-        success: true,
-        data: {
-          conversation_id: convId,
-          message: savedMsg
-        }
-      });
-    } catch (dbErr) {
-      return res.status(500).json({ success: false, message: 'Error procesando respuesta.' });
+    let aiContent = '';
+    let toolResultsSummary = [];
+    const isModification = isDbModificationIntent(message);
+
+    if (isModification) {
+      const parsedTool = parseLocalIntent(message);
+      if (parsedTool) {
+        const result = executeTool(db, parsedTool.name, parsedTool.args, req.user.id);
+        toolResultsSummary.push({ tool: parsedTool.name, result });
+        aiContent = result.message || 'Acción procesada en la base de datos.';
+      }
     }
+
+    if (!aiContent) {
+      const contextStr = getPharmacyContext(db);
+      aiContent = generateLocalResponse(message, contextStr, db);
+    }
+
+    aiContent += `\n\n💡 *Nota: Se utilizó el motor SQL local debido a una desconexión o clave inválida de Groq AI (${error.message}).*`;
+
+    db.prepare(`INSERT INTO ai_messages (conversation_id, role, content) VALUES (?, 'assistant', ?)`).run(convId, aiContent);
+    const savedMsg = db.prepare(`SELECT * FROM ai_messages WHERE id = (SELECT max(id) FROM ai_messages)`).get();
+
+    return res.json({
+      success: true,
+      data: {
+        conversation_id: convId,
+        message: savedMsg,
+        executed_actions: toolResultsSummary
+      }
+    });
   }
 }
 
