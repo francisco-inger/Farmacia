@@ -1296,34 +1296,31 @@ const Configuracion = () => {
         </div>
       )}
 
-      {/* ─── UNIFIED HEADER CARD WITH MODULE IMAGE ────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <img 
-            src="/modules/dashboard.png" 
-            alt="Configuración" 
-            className="w-14 h-14 rounded-2xl object-cover border border-emerald-100 shadow-sm shrink-0"
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Configuración del Sistema</h1>
-              <span className="bg-emerald-50 text-[#16a085] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                14 Secciones
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 font-medium">Personaliza datos de la empresa, impuestos, facturación, dispositivos y seguridad</p>
+      {/* ─── SLEEK GREEN HEADER BANNER ────────────────────────────────────────── */}
+      <div className="bg-[#16a085] rounded-2xl p-4 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-4 overflow-hidden relative">
+        <div className="flex items-center gap-3 z-10">
+          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Configuración General del Sistema</h2>
+        </div>
+        
+        <div className="flex items-center gap-3 shrink-0 z-10">
+          <button
+            onClick={handleSaveSettings}
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-[#16a085] hover:bg-slate-50 disabled:opacity-50 font-bold text-xs transition-all shadow-md active:scale-95 shrink-0"
+          >
+            {saving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
+            <span>Guardar cambios</span>
+          </button>
+
+          <div className="shrink-0 h-14 overflow-hidden rounded-xl border border-white/30 shadow-sm">
+            <img 
+              src="/modules/dashboard.png" 
+              alt="Configuración" 
+              className="h-full w-44 object-cover rounded-xl"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
           </div>
         </div>
-
-        <button
-          onClick={handleSaveSettings}
-          disabled={saving}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#16a085] hover:bg-[#12876f] disabled:opacity-50 text-white font-semibold text-xs transition-all shadow-md active:scale-95 shrink-0"
-        >
-          {saving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
-          <span>Guardar cambios</span>
-        </button>
       </div>
 
       {/* ─── MAIN CONTENT LAYOUT (2 COLUMNS: NAV SIDEBAR + FORM WORKSPACE) ─── */}

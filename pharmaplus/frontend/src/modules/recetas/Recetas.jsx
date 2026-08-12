@@ -388,45 +388,43 @@ const Recetas = () => {
         </div>
       )}
 
-      {/* ─── UNIFIED HEADER CARD WITH MODULE IMAGE ────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+      {/* ─── SLEEK GREEN HEADER BANNER ────────────────────────────────────────── */}
+      <div className="bg-[#16a085] rounded-2xl p-4 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-4 overflow-hidden relative">
+        <div className="flex items-center gap-3 z-10">
+          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Validación y Despacho de Recetas Médicas</h2>
+        </div>
+        
+        <div className="shrink-0 h-14 overflow-hidden rounded-xl border border-white/30 shadow-sm z-10">
           <img 
             src="/modules/recetas.png" 
             alt="Recetas" 
-            className="w-14 h-14 rounded-2xl object-cover border border-emerald-100 shadow-sm shrink-0"
+            className="h-full w-48 md:w-60 object-cover rounded-xl"
             onError={(e) => { e.target.style.display = 'none'; }}
           />
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Recetas Médicas</h1>
-              <span className="bg-emerald-50 text-[#16a085] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                Dispensación Assistida
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 font-medium">Consulta, registra y dispensa prescripciones médicas y recetas RX</p>
-          </div>
+        </div>
+      </div>
+
+      {/* ─── ACTIONS BAR ────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full">
+        {/* Search Input */}
+        <div className="relative flex-1 sm:w-80 min-w-[240px]">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <input
+            type="text"
+            placeholder="Buscar por paciente, receta, médico o código..."
+            className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all shadow-sm"
+            value={searchTerm}
+            onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+          />
+          <ScanLine 
+            onClick={() => setIsScanModalOpen(true)}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 cursor-pointer transition-colors" 
+            size={18} 
+            title="Escanear receta médica" 
+          />
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Search Input */}
-          <div className="relative flex-1 sm:w-80 min-w-[240px]">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input
-              type="text"
-              placeholder="Buscar por paciente, receta, médico o código..."
-              className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all shadow-sm"
-              value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-            />
-            <ScanLine 
-              onClick={() => setIsScanModalOpen(true)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 cursor-pointer transition-colors" 
-              size={18} 
-              title="Escanear receta médica" 
-            />
-          </div>
-
+        <div className="flex items-center gap-2">
           {/* Scan Recipe Button */}
           <button
             onClick={() => setIsScanModalOpen(true)}

@@ -261,29 +261,36 @@ const Usuarios = () => {
         </div>
       )}
 
-      {/* Top Header Section */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-[#2c3e50] tracking-tight">Usuarios y Roles</h1>
-          <p className="text-xs font-medium text-slate-500 mt-0.5">Gestiona los usuarios del sistema y sus permisos</p>
+      {/* Sleek Green Header Banner */}
+      <div className="bg-[#16a085] rounded-2xl p-4 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-4 overflow-hidden relative">
+        <div className="flex items-center gap-3 z-10">
+          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Gestión de Usuarios y Roles</h2>
         </div>
-
-        {/* Action Buttons Top Right */}
-        <div className="flex items-center gap-3">
+        
+        <div className="flex items-center gap-3 shrink-0 z-10">
           <button 
             onClick={() => setActiveTab('roles')} 
-            className="flex items-center gap-2 bg-white text-[#2c3e50] hover:bg-slate-50 border border-slate-200/90 px-4 py-2.5 rounded-xl font-semibold text-xs shadow-sm hover:shadow transition"
+            className="flex items-center gap-2 bg-white text-[#2c3e50] hover:bg-slate-50 border border-slate-200/90 px-3.5 py-2 rounded-xl font-semibold text-xs shadow-sm hover:shadow transition"
           >
             <Shield size={16} className="text-[#16a085]" />
             <span>Roles</span>
           </button>
           <button 
             onClick={handleOpenNewUser} 
-            className="flex items-center gap-2 bg-[#16a085] hover:bg-[#12876f] text-white px-4 py-2.5 rounded-xl font-semibold text-xs shadow-md shadow-teal-200 transition"
+            className="flex items-center gap-2 bg-[#12876f] hover:bg-[#0e6b58] text-white px-3.5 py-2 rounded-xl font-semibold text-xs shadow-md transition"
           >
             <Plus size={16} />
             <span>Nuevo usuario</span>
           </button>
+
+          <div className="shrink-0 h-14 overflow-hidden rounded-xl border border-white/30 shadow-sm">
+            <img 
+              src="/modules/clientes.png" 
+              alt="Usuarios" 
+              className="h-full w-44 object-cover rounded-xl"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
+          </div>
         </div>
       </div>
 

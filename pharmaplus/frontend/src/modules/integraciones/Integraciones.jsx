@@ -173,34 +173,19 @@ const Integraciones = () => {
         </div>
       )}
 
-      {/* ─── UNIFIED HEADER CARD WITH MODULE IMAGE ────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+      {/* ─── SLEEK GREEN HEADER BANNER ────────────────────────────────────────── */}
+      <div className="bg-[#16a085] rounded-2xl p-4 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-4 overflow-hidden relative">
+        <div className="flex items-center gap-3 z-10">
+          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Integraciones Externas & Servicios Cloud</h2>
+        </div>
+        
+        <div className="shrink-0 h-14 overflow-hidden rounded-xl border border-white/30 shadow-sm z-10">
           <img 
             src="/modules/reportes.png" 
             alt="Integraciones" 
-            className="w-14 h-14 rounded-2xl object-cover border border-emerald-100 shadow-sm shrink-0"
+            className="h-full w-48 md:w-60 object-cover rounded-xl"
             onError={(e) => { e.target.style.display = 'none'; }}
           />
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Integraciones Externas & Cloud</h1>
-              <span className="bg-emerald-50 text-[#16a085] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                7 Conectores Activos
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 font-medium">Plataforma API Gateway con aseguradoras (ARS), distribuidores, facturación DGII y Webhooks</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 shrink-0">
-          <button 
-            onClick={fetchData} 
-            className="flex items-center gap-2 bg-[#16a085] hover:bg-[#12876f] text-white px-4 py-2 rounded-xl text-xs font-bold shadow transition"
-          >
-            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
-            <span>Actualizar Estados</span>
-          </button>
         </div>
       </div>
 

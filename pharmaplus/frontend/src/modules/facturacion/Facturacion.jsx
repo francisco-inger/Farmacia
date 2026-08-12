@@ -372,73 +372,67 @@ const Facturacion = () => {
         </div>
       )}
 
-      {/* ─── UNIFIED HEADER CARD WITH MODULE IMAGE ────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+      {/* ─── SLEEK GREEN HEADER BANNER ────────────────────────────────────────── */}
+      <div className="bg-[#16a085] rounded-2xl p-4 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-4 overflow-hidden relative">
+        <div className="flex items-center gap-3 z-10">
+          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Facturación & Comprobantes Fiscales NCF</h2>
+        </div>
+        
+        <div className="shrink-0 h-14 overflow-hidden rounded-xl border border-white/30 shadow-sm z-10">
           <img 
             src="/modules/pos.png" 
             alt="Facturación" 
-            className="w-14 h-14 rounded-2xl object-cover border border-emerald-100 shadow-sm shrink-0"
+            className="h-full w-48 md:w-60 object-cover rounded-xl"
             onError={(e) => { e.target.style.display = 'none'; }}
           />
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Facturación & NCF</h1>
-              <span className="bg-emerald-50 text-[#16a085] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                Comprobantes DGII
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 font-medium">Generación de facturas fiscales, comprobantes de crédito fiscal, consumidor final e ITBIS</p>
-          </div>
         </div>
+      </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Live Search Input with Scanner Icon */}
-          <div className="relative flex-1 sm:w-96 min-w-[280px]">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-            <input
-              type="text"
-              placeholder="Buscar producto por nombre, código o escanear código de barras..."
-              className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all shadow-sm"
-              value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setShowSearchDropdown(true); }}
-              onFocus={() => setShowSearchDropdown(true)}
-            />
-            <ScanLine 
-              onClick={() => setIsProductPickerOpen(true)}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 cursor-pointer transition-colors" 
-              size={18} 
-              title="Escanear código de barras" 
-            />
+      {/* ─── ACTIONS BAR ────────────────────────────────────────── */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 w-full">
+        {/* Live Search Input with Scanner Icon */}
+        <div className="relative flex-1 sm:w-96 min-w-[280px]">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <input
+            type="text"
+            placeholder="Buscar producto por nombre, código o escanear código de barras..."
+            className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all shadow-sm"
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setShowSearchDropdown(true); }}
+            onFocus={() => setShowSearchDropdown(true)}
+          />
+          <ScanLine 
+            onClick={() => setIsProductPickerOpen(true)}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 cursor-pointer transition-colors" 
+            size={18} 
+            title="Escanear producto" 
+          />
 
-            {/* Live Search Dropdown Results */}
-            {showSearchDropdown && searchResults.length > 0 && (
-              <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-30 overflow-hidden animate-fade-in divide-y divide-slate-100">
-                {searchResults.map(p => (
-                  <div
+          {/* Search Results Dropdown */}
+          {showSearchDropdown && searchQuery.trim().length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-slate-200 z-50 max-h-60 overflow-y-auto divide-y divide-slate-100">
+              {filteredProducts.length === 0 ? (
+                <div className="p-3 text-xs text-slate-400 text-center">No se encontraron productos</div>
+              ) : (
+                filteredProducts.map(p => (
+                  <div 
                     key={p.id}
-                    onClick={() => addProductToCart(p)}
+                    onClick={() => handleAddCartItem(p)}
                     className="p-3 hover:bg-emerald-50/60 cursor-pointer flex items-center justify-between transition-colors"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
-                        {p.image_url ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover rounded-lg" /> : <Package size={16} className="text-slate-400" />}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-slate-800 text-xs">{p.name}</p>
-                        <p className="text-[11px] font-mono text-slate-400">{p.barcode || p.code || '7500000000000'}</p>
-                      </div>
+                    <div>
+                      <h4 className="font-bold text-slate-800 text-xs">{p.name}</h4>
+                      <p className="text-[10px] text-slate-400">Código: {p.code} | Stock: {p.stock}</p>
                     </div>
-                    <div className="text-right">
-                      <span className="font-bold text-slate-900 text-xs">RD$ {(p.sale_price || 0).toFixed(2)}</span>
-                      <span className="block text-[10px] text-emerald-600 font-medium">Stock: {p.stock}</span>
-                    </div>
+                    <span className="font-bold text-emerald-600 text-xs">RD$ {p.sale_price.toFixed(2)}</span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                ))
+              )}
+            </div>
+          )}
+        </div>
 
+        <div className="flex items-center gap-2">
           {/* Barcode Scan Button */}
           <button
             onClick={() => setIsProductPickerOpen(true)}

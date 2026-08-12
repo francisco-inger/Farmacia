@@ -150,25 +150,19 @@ const POS = () => {
       
       {/* Left Area: Products Search */}
       <div className="flex-1 flex flex-col gap-4 bg-surface rounded-lg shadow-sm border border-border overflow-hidden p-4">
-        <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
-          <div className="flex items-center gap-3">
+        <div className="bg-[#16a085] rounded-xl p-3.5 text-white shadow-sm flex items-center justify-between overflow-hidden relative">
+          <div className="flex items-center gap-3 z-10">
+            <h2 className="text-lg font-black text-white tracking-tight">Punto de Venta (POS)</h2>
+          </div>
+          
+          <div className="shrink-0 h-10 overflow-hidden rounded-lg border border-white/30 shadow-xs z-10">
             <img 
               src="/modules/pos.png" 
               alt="POS" 
-              className="w-10 h-10 rounded-xl object-cover border border-emerald-100 shadow-2xs shrink-0"
+              className="h-full w-36 object-cover rounded-lg"
               onError={(e) => { e.target.style.display = 'none'; }}
             />
-            <div>
-              <h2 className="font-bold text-main text-sm flex items-center gap-2">
-                Punto de Venta (POS)
-              </h2>
-              <p className="text-[11px] text-muted font-medium">Facturación rápida y cobro asistido</p>
-            </div>
           </div>
-
-          <span className="bg-emerald-50 text-[#16a085] text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-200 shrink-0">
-            🟢 Caja Abierta
-          </span>
         </div>
         
         <div className="relative">

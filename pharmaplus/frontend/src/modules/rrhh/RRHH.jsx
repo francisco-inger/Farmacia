@@ -561,24 +561,19 @@ const RRHH = () => {
         </div>
       )}
 
-      {/* ─── UNIFIED HEADER CARD WITH MODULE IMAGE ────────────────────────────────────────── */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
+      {/* ─── SLEEK GREEN HEADER BANNER ────────────────────────────────────────── */}
+      <div className="bg-[#16a085] rounded-2xl p-4 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-4 overflow-hidden relative">
+        <div className="flex items-center gap-3 z-10">
+          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Gestión de Recursos Humanos (RR. HH.)</h2>
+        </div>
+        
+        <div className="shrink-0 h-14 overflow-hidden rounded-xl border border-white/30 shadow-sm z-10">
           <img 
             src="/modules/clientes.png" 
             alt="RRHH" 
-            className="w-14 h-14 rounded-2xl object-cover border border-emerald-100 shadow-sm shrink-0"
+            className="h-full w-48 md:w-60 object-cover rounded-xl"
             onError={(e) => { e.target.style.display = 'none'; }}
           />
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Recursos Humanos (RR. HH.)</h1>
-              <span className="bg-emerald-50 text-[#16a085] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                Gestión de Personal
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 font-medium">Gestión de empleados, control de asistencia, turnos de trabajo, nómina y vacaciones</p>
-          </div>
         </div>
       </div>
 

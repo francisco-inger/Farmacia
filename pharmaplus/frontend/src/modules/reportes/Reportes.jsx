@@ -138,61 +138,54 @@ const Reportes = () => {
         </div>
       )}
 
-      {/* Header Card with Module Image Badge */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <img 
-            src="/modules/reportes.png" 
-            alt="Reportes" 
-            className="w-14 h-14 rounded-2xl object-cover border border-emerald-100 shadow-sm shrink-0"
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Reportes e Informes</h1>
-              <span className="bg-emerald-50 text-[#16a085] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
-                Análisis Financiero
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 font-medium">Análisis de ventas, márgenes de ganancia, valoración de stock y arqueos de caja</p>
-          </div>
+      {/* Sleek Green Header Banner */}
+      <div className="bg-[#16a085] rounded-2xl p-4 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-4 overflow-hidden relative">
+        <div className="flex items-center gap-3 z-10">
+          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Reportes e Informes Financieros</h2>
         </div>
 
         {/* Filter Controls & Export Button */}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 z-10">
           <select
             value={period}
             onChange={(e) => setPeriod(e.target.value)}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-[#16a085]"
+            className="px-3 py-2 bg-white/20 text-white font-bold border border-white/30 rounded-xl text-xs focus:outline-none"
           >
-            <option value="daily">Vista: Diaria</option>
-            <option value="monthly">Vista: Mensual</option>
-            <option value="yearly">Vista: Anual</option>
+            <option value="daily" className="text-slate-800">Vista: Diaria</option>
+            <option value="monthly" className="text-slate-800">Vista: Mensual</option>
+            <option value="yearly" className="text-slate-800">Vista: Anual</option>
           </select>
 
           <input
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none"
-            placeholder="Desde"
+            className="px-3 py-2 bg-white/20 text-white font-medium border border-white/30 rounded-xl text-xs focus:outline-none"
           />
 
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none"
-            placeholder="Hasta"
+            className="px-3 py-2 bg-white/20 text-white font-medium border border-white/30 rounded-xl text-xs focus:outline-none"
           />
 
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-2 bg-[#16a085] hover:bg-[#12876f] text-white px-4 py-2 rounded-xl text-xs font-bold shadow transition"
+            className="flex items-center gap-2 bg-white text-[#16a085] hover:bg-slate-50 px-4 py-2 rounded-xl text-xs font-bold shadow transition"
           >
             <Download size={15} />
             <span>Exportar CSV</span>
           </button>
+        </div>
+        
+        <div className="shrink-0 h-14 overflow-hidden rounded-xl border border-white/30 shadow-sm z-10">
+          <img 
+            src="/modules/reportes.png" 
+            alt="Reportes" 
+            className="h-full w-44 object-cover rounded-xl"
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
         </div>
       </div>
 
