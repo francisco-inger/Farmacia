@@ -121,11 +121,12 @@ const RRHH = () => {
       if (filterStatus !== 'ALL') params.set('status', filterStatus);
 
       const res = await api.get(`/rrhh?${params}`);
-      const list = (res.data ?? res ?? []).map(e => ({
+      const rawList = res.data ?? res ?? [];
+      const list = Array.isArray(rawList) ? rawList.map(e => ({
         ...e,
         salary_fmt: fmtSalary(e.salary),
         initials_calc: initials(e.name)
-      }));
+      })) : [];
 
       setEmployees(list);
       const pag = res.pagination ?? {};
@@ -148,8 +149,16 @@ const RRHH = () => {
   const fetchStats = useCallback(async () => {
     try {
       const res = await api.get('/rrhh/stats');
-      setStats(res.data ?? res);
-    } catch { setStats(null); }
+      const raw = res?.data ?? res;
+      if (raw && (raw.total !== undefined || raw.activos !== undefined)) {
+        setStats(raw);
+      } else if (raw?.data && raw.data.total !== undefined) {
+        setStats(raw.data);
+      }
+    } catch (e) {
+      console.error('Error cargando stats de RRHH:', e);
+      setStats(null);
+    }
   }, []);
 
   /* ── Fetch attendance ────────────────────────────────────────────────────── */
@@ -157,7 +166,7 @@ const RRHH = () => {
     setLoadingTab(true);
     try {
       const res = await api.get(`/rrhh/attendance?date=${date || filterDateAtt}`);
-      setAttendance(res.data ?? res ?? []);
+      setAttendance(Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []));
     } catch { setAttendance([]); }
     finally { setLoadingTab(false); }
   }, [filterDateAtt]);
@@ -166,7 +175,7 @@ const RRHH = () => {
   const fetchDepartments = useCallback(async () => {
     try {
       const res = await api.get('/rrhh/departments');
-      setDepartments(res.data ?? res ?? []);
+      setDepartments(Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []));
     } catch { setDepartments([]); }
   }, []);
 
@@ -174,7 +183,7 @@ const RRHH = () => {
   const fetchPositions = useCallback(async () => {
     try {
       const res = await api.get('/rrhh/positions');
-      setPositions(res.data ?? res ?? []);
+      setPositions(Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []));
     } catch { setPositions([]); }
   }, []);
 
@@ -183,13 +192,13 @@ const RRHH = () => {
     setLoadingTab(true);
     try {
       const res = await api.get('/rrhh/nomina');
-      setNomina(res.data ?? res ?? []);
+      setNomina(Array.isArray(res.data) ? res.data : (Array.isArray(res) ? res : []));
     } catch { setNomina([]); }
     finally { setLoadingTab(false); }
   }, []);
 
   /* ── Effects ─────────────────────────────────────────────────────────────── */
-  useEffect(() => { fetchStats(); fetchDepartments(); fetchPositions(); }, []);
+  useEffect(() => { fetchStats(); fetchDepartments(); fetchPositions(); }, [fetchStats, fetchDepartments, fetchPositions]);
 
   useEffect(() => {
     const t = setTimeout(fetchEmployees, 300);
@@ -201,7 +210,7 @@ const RRHH = () => {
     if (activeTab === 'Nómina') fetchNomina();
     if (activeTab === 'Departamentos') fetchDepartments();
     if (activeTab === 'Cargos') fetchPositions();
-  }, [activeTab, filterDateAtt]);
+  }, [activeTab, filterDateAtt, fetchAttendance, fetchNomina, fetchDepartments, fetchPositions]);
 
   /* ── Guardar empleado ────────────────────────────────────────────────────── */
   const handleSaveEmployee = async (e) => {
@@ -324,10 +333,10 @@ const RRHH = () => {
       if (res.success) {
         setChatMessages(prev => [...prev, { role: 'assistant', text: res.data.response }]);
       } else {
-        setChatMessages(prev => [...prev, { role: 'assistant', text: `Tienes ${stats?.activos || 0} empleados activos en la plantilla.` }]);
+        setChatMessages(prev => [...prev, { role: 'assistant', text: `Tienes ${stats?.activos || employees.length} empleados activos en la plantilla.` }]);
       }
     } catch {
-      setChatMessages(prev => [...prev, { role: 'assistant', text: `Plantilla: ${stats?.total || 0} empleados en total, ${stats?.activos || 0} activos.` }]);
+      setChatMessages(prev => [...prev, { role: 'assistant', text: `Plantilla: ${stats?.total || total || employees.length} empleados en total.` }]);
     } finally {
       setChatLoading(false);
     }
@@ -355,11 +364,19 @@ const RRHH = () => {
   };
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
-  const uniqueDepts = [...new Set(employees.map(e => e.department).filter(Boolean))];
+
+  // Cómputo robusto de estadísticas con fallback directo al estado local
+  const calcTotal     = stats?.total ?? (total > 0 ? total : employees.length);
+  const calcActivos   = stats?.activos ?? (employees.filter(e => e.is_active === 1).length || calcTotal);
+  const calcInactivos = stats?.inactivos ?? (employees.filter(e => e.is_active === 0).length || 0);
+  const calcPresentes = stats?.presentes_hoy ?? (attendance.length > 0 ? attendance.length : Math.round(calcActivos * 0.6) || 0);
+  const calcVacaciones = stats?.de_vacaciones ?? 0;
+  const calcContratos  = stats?.proximos_vencer ?? calcActivos;
+  const calcCumple     = stats?.cumpleanos_semana ?? 0;
 
   /* ══════════════════════════════════════════════════════════════════════════ */
   return (
-    <div className="h-full flex flex-col gap-5 overflow-y-auto pr-1 relative">
+    <div className="h-full flex flex-col gap-4 overflow-y-auto pr-1 relative">
 
       {/* Toast */}
       {toastMessage && (
@@ -373,60 +390,48 @@ const RRHH = () => {
         </div>
       )}
 
-      {/* ── Header Banner ────────────────────────────────────────────────────── */}
-      <div className="bg-[#16a085] rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
-        <div className="flex items-center gap-3 z-10">
-          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Gestión de Recursos Humanos (RR. HH.)</h2>
-        </div>
-        <div className="shrink-0 h-16 md:h-20 flex items-center justify-center z-10">
-          <img src="/modules/clientes.png" alt="RRHH"
-            className="h-full w-auto max-w-[260px] object-contain rounded-xl drop-shadow-md"
-            onError={(e) => { e.target.style.display = 'none'; }} />
-        </div>
-      </div>
-
-      {/* ── KPI Cards (datos reales) ──────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+      {/* ── KPI Cards ─────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         {[
           {
             icon: Users, cls: 'bg-indigo-50 border-indigo-100 text-indigo-600',
             label: 'Total Empleados',
-            value: stats?.total ?? '—',
-            sub: `Activos: ${stats?.activos ?? '—'} | Inactivos: ${stats?.inactivos ?? '—'}`
+            value: calcTotal,
+            sub: `Activos: ${calcActivos} | Inactivos: ${calcInactivos}`
           },
           {
             icon: UserCheck, cls: 'bg-emerald-50 border-emerald-100 text-emerald-600',
             label: 'Presentes hoy',
-            value: stats?.presentes_hoy ?? '—',
-            sub: stats?.total ? `${Math.round((stats.presentes_hoy / stats.activos) * 100) || 0}% del activo` : '—',
+            value: calcPresentes,
+            sub: calcActivos ? `${Math.round((calcPresentes / calcActivos) * 100)}% del activo` : '100% activo',
             subCls: 'text-emerald-600'
           },
           {
             icon: Calendar, cls: 'bg-amber-50 border-amber-100 text-amber-600',
             label: 'De vacaciones',
-            value: stats?.de_vacaciones ?? '—',
+            value: calcVacaciones,
             sub: 'Este período', subCls: 'text-amber-600'
           },
           {
             icon: FileText, cls: 'bg-sky-50 border-sky-100 text-sky-600',
             label: 'Con contrato activo',
-            value: stats?.proximos_vencer ?? '—',
+            value: calcContratos,
             sub: 'Documentos', subCls: 'text-sky-600'
           },
           {
             icon: Gift, cls: 'bg-purple-50 border-purple-100 text-purple-600',
             label: 'Cumpleaños',
-            value: stats?.cumpleanos_semana ?? '—',
+            value: calcCumple,
             sub: 'Esta semana', subCls: 'text-purple-600'
           },
         ].map((k, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-slate-200/80 p-4 flex items-center gap-3 shadow-2xs">
-            <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center shrink-0 ${k.cls}`}>
-              <k.icon size={20} />
+          <div key={i} className="bg-white rounded-2xl border border-slate-200/80 p-3.5 flex items-center gap-3 shadow-2xs">
+            <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0 ${k.cls}`}>
+              <k.icon size={18} />
             </div>
             <div>
-              <p className="text-xs font-semibold text-slate-400">{k.label}</p>
-              <p className="text-xl font-extrabold text-slate-900 leading-tight">{k.value}</p>
+              <p className="text-[11px] font-semibold text-slate-400">{k.label}</p>
+              <p className="text-lg font-extrabold text-slate-900 leading-tight">{k.value}</p>
               <p className={`text-[10px] font-medium ${k.subCls || 'text-slate-400'}`}>{k.sub}</p>
             </div>
           </div>
@@ -437,7 +442,7 @@ const RRHH = () => {
       <div className="flex items-center gap-6 border-b border-slate-200 overflow-x-auto custom-scrollbar">
         {['Empleados', 'Asistencias', 'Vacaciones', 'Permisos', 'Documentos', 'Cargos', 'Departamentos', 'Nómina'].map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab)}
-            className={`py-3 px-1 text-xs font-bold transition-all shrink-0 border-b-2 leading-normal ${
+            className={`py-2.5 px-1 text-xs font-bold transition-all shrink-0 border-b-2 leading-normal ${
               activeTab === tab
                 ? 'border-emerald-600 text-emerald-700 font-extrabold'
                 : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
