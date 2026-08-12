@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { 
-  Users, UserCheck, Calendar, FileText, Gift, Plus, Search, Filter, 
-  ScanLine, Eye, Edit3, Trash2, CheckCircle2, XCircle, Phone, Mail, 
-  MapPin, DollarSign, Heart, ShieldAlert, ChevronRight, ChevronLeft, 
-  Bot, Send, Sparkles, RefreshCw, MoreVertical, AlertCircle, Check, Mic, 
-  Briefcase, Building2, UserPlus, Clock, QrCode, Printer
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+import {
+  Users, UserCheck, Calendar, FileText, Gift, Plus, Search, Filter,
+  ScanLine, Eye, Edit3, Trash2, CheckCircle2, XCircle, Phone, Mail,
+  MapPin, DollarSign, Heart, ShieldAlert, ChevronRight, ChevronLeft,
+  Bot, Send, Sparkles, RefreshCw, MoreVertical, AlertCircle, Check, Mic,
+  Briefcase, Building2, UserPlus, Clock, QrCode, Printer, X, ChevronDown
 } from 'lucide-react';
 import api from '../../services/api';
 import Modal from '../../components/ui/Modal';
@@ -13,400 +13,200 @@ import BarcodeScannerModal from '../../components/BarcodeScannerModal';
 import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
 import { playScannerBeep } from '../../utils/sound';
 
+/* ─── helpers ─────────────────────────────────────────────────────────────── */
+const fmt = (v) =>
+  `RD$ ${Number(v || 0).toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const fmtSalary = (v) =>
+  Number(v || 0).toLocaleString('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const initials = (name) =>
+  (name || 'EM').split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+
+const AVATAR_COLORS = [
+  'bg-purple-100 border-purple-200 text-purple-700',
+  'bg-blue-100 border-blue-200 text-blue-700',
+  'bg-amber-100 border-amber-200 text-amber-700',
+  'bg-rose-100 border-rose-200 text-rose-700',
+  'bg-indigo-100 border-indigo-200 text-indigo-700',
+  'bg-teal-100 border-teal-200 text-teal-700',
+];
+const avatarColor = (id) => AVATAR_COLORS[(id || 0) % AVATAR_COLORS.length];
+
+/* ══════════════════════════════════════════════════════════════════════════ */
 const RRHH = () => {
   const { user } = useContext(AuthContext);
 
-  // Employees List & Selection State
-  const [employees, setEmployees] = useState([]);
+  /* ── Estado principal ──────────────────────────────────────────────────── */
+  const [employees, setEmployees]             = useState([]);
+  const [stats, setStats]                     = useState(null);
+  const [attendance, setAttendance]           = useState([]);
+  const [departments, setDepartments]         = useState([]);
+  const [positions, setPositions]             = useState([]);
+  const [nomina, setNomina]                   = useState([]);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]                 = useState(true);
+  const [loadingTab, setLoadingTab]           = useState(false);
 
-  // Search & Filter State
-  const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('Empleados'); // 'Empleados', 'Asistencias', 'Vacaciones', 'Permisos', 'Documentos', 'Cargos', 'Departamentos', 'Nómina'
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(8);
-  const [total, setTotal] = useState(0);
+  /* ── Tabs y filtros ────────────────────────────────────────────────────── */
+  const [activeTab, setActiveTab] = useState('Empleados');
+  const [page, setPage]           = useState(1);
+  const [limit, setLimit]         = useState(8);
+  const [total, setTotal]         = useState(0);
 
-  // Modals State
-  const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isScanModalOpen, setIsScanModalOpen] = useState(false);
-  const [isCarnetModalOpen, setIsCarnetModalOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
+  const [searchTerm, setSearchTerm]         = useState('');
+  const [filterDept, setFilterDept]         = useState('ALL');
+  const [filterStatus, setFilterStatus]     = useState('ALL');
+  const [filterDateAtt, setFilterDateAtt]   = useState(new Date().toISOString().split('T')[0]);
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
 
-  // Handle Employee QR Carnet Scan (Hardware USB + Camera)
+  /* ── Modales ─────────────────────────────────────────────────────────────── */
+  const [isEmployeeModalOpen, setIsEmployeeModalOpen]   = useState(false);
+  const [isEditMode, setIsEditMode]                     = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen]       = useState(false);
+  const [isScanModalOpen, setIsScanModalOpen]           = useState(false);
+  const [isCarnetModalOpen, setIsCarnetModalOpen]       = useState(false);
+  const [isAttModalOpen, setIsAttModalOpen]             = useState(false);
+  const [toastMessage, setToastMessage]                 = useState(null);
+
+  /* ── Formularios ─────────────────────────────────────────────────────────── */
+  const defaultForm = {
+    id: null, name: '', cedula: '', position: '', department: 'Caja',
+    phone: '', email: '', address: '', birth_date: '', hire_date: '',
+    salary: '', civil_status: 'Soltera', emergency_contact: '', is_active: 1, notes: ''
+  };
+  const [employeeForm, setEmployeeForm] = useState(defaultForm);
+  const [attForm, setAttForm] = useState({ employee_id: '', date: new Date().toISOString().split('T')[0], check_in: '', status: 'presente', notes: '' });
+
+  /* ── Chatbot ─────────────────────────────────────────────────────────────── */
+  const [chatInput, setChatInput]       = useState('');
+  const [chatMessages, setChatMessages] = useState([
+    { role: 'assistant', text: '¡Hola! Soy el asistente de PharmaPlus. Puedo ayudarte a registrar asistencias, consultar vacaciones o gestionar el expediente de empleados.' }
+  ]);
+  const [chatLoading, setChatLoading]   = useState(false);
+  const [isListening, setIsListening]   = useState(false);
+
+  /* ── Toast ───────────────────────────────────────────────────────────────── */
+  const showToast = (msg, type = 'success') => {
+    setToastMessage({ msg, type });
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  /* ── Scanner QR ──────────────────────────────────────────────────────────── */
   const handleBarcodeScanned = (code) => {
     playScannerBeep();
-    const found = employees.find(e => 
-      (e.cedula && e.cedula.includes(code)) || 
-      (e.name && e.name.toLowerCase().includes(code.toLowerCase())) ||
-      (e.initials && code.toUpperCase().includes(e.initials)) ||
-      code.toLowerCase().includes('emp')
+    const found = employees.find(e =>
+      (e.cedula && e.cedula.includes(code)) ||
+      (e.name && e.name.toLowerCase().includes(code.toLowerCase()))
     ) || employees[0];
 
     if (found) {
       setSelectedEmployee(found);
       setSearchTerm(found.name);
       setIsScanModalOpen(false);
-      
-      if (activeTab === 'Asistencias') {
-        showToast(`¡Asistencia marcada! Entrada de ${found.name} (${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })})`);
-      } else {
-        showToast(`Carnet QR identificado: ${found.name} (${found.position})`);
-      }
+      showToast(`Carnet QR identificado: ${found.name} (${found.position})`);
     } else {
-      showToast(`No se encontró empleado con el carnet/QR: ${code}`, 'error');
+      showToast(`No se encontró empleado con código: ${code}`, 'error');
     }
   };
-
   useBarcodeScanner(handleBarcodeScanned);
 
-  // Form State (New / Edit Employee)
-  const [employeeForm, setEmployeeForm] = useState({
-    id: null,
-    name: '',
-    initials: 'AC',
-    cedula: '',
-    position: 'Cajero',
-    department: 'Caja',
-    phone: '',
-    email: '',
-    address: 'C/ Duarte #123, Ens. Naco, Santo Domingo',
-    birth_date: '15/06/1995',
-    hire_date: '12/01/2023',
-    salary: '25000.00',
-    civil_status: 'Soltera',
-    emergency_contact: 'Madre - 809-555-5678',
-    is_active: 1,
-    notes: ''
-  });
-
-  // Chatbot State
-  const [chatInput, setChatInput] = useState('');
-  const [chatMessages, setChatMessages] = useState([
-    { role: 'assistant', text: '¡Hola! Soy el asistente de PharmaPlus. Puedo ayudarte a registrar asistencias, consultar vacaciones del equipo o gestionar el expediente de empleados.' }
-  ]);
-  const [chatLoading, setChatLoading] = useState(false);
-  const [isListening, setIsListening] = useState(false);
-
-  // Toast Notification Helper
-  const showToast = (msg, type = 'success') => {
-    setToastMessage({ msg, type });
-    setTimeout(() => setToastMessage(null), 3500);
-  };
-
-  // Sample Mock Data matching exact reference image
-  const sampleEmployees = [
-    {
-      id: 1,
-      name: 'Ana Cajera',
-      initials: 'AC',
-      cedula: '001-1234567-8',
-      position: 'Cajero',
-      department: 'Caja',
-      phone: '809-555-1234',
-      email: 'ana.cajera@pharmaplus.com',
-      address: 'C/ Duarte #123, Ens. Naco, Santo Domingo',
-      birth_date: '15/06/1995',
-      hire_date: '12/01/2023',
-      salary: '25,000.00',
-      civil_status: 'Soltera',
-      emergency_contact: 'Madre - 809-555-5678',
-      is_active: 1,
-      documents: [
-        { name: 'Cédula de identidad', status: 'Vigente', badge: 'emerald' },
-        { name: 'Certificado médico', status: 'Vigente', badge: 'emerald' },
-        { name: 'Carta de no antecedentes', status: 'Vigente', badge: 'emerald' },
-        { name: 'Contrato laboral', status: 'Vence: 12/01/2025', badge: 'amber' }
-      ]
-    },
-    {
-      id: 2,
-      name: 'Juan Martínez',
-      initials: 'JM',
-      cedula: '001-2345678-9',
-      position: 'Farmacéutico',
-      department: 'Dispensación',
-      phone: '809-555-2345',
-      email: 'juan.martinez@pharmaplus.com',
-      address: 'Av. 27 de Febrero #45, Santo Domingo',
-      birth_date: '20/08/1988',
-      hire_date: '05/03/2022',
-      salary: '45,000.00',
-      civil_status: 'Casado',
-      emergency_contact: 'Esposa - 809-555-9876',
-      is_active: 1,
-      documents: [
-        { name: 'Cédula de identidad', status: 'Vigente', badge: 'emerald' },
-        { name: 'Exequatur médico/CMP', status: 'Vigente', badge: 'emerald' },
-        { name: 'Contrato laboral', status: 'Vigente', badge: 'emerald' }
-      ]
-    },
-    {
-      id: 3,
-      name: 'Laura Rodríguez',
-      initials: 'LR',
-      cedula: '001-3456789-0',
-      position: 'Aux. de Farmacia',
-      department: 'Dispensación',
-      phone: '809-555-3456',
-      email: 'laura.rodriguez@pharmaplus.com',
-      address: 'Av. Luperón #88, Santo Domingo',
-      birth_date: '10/11/1997',
-      hire_date: '18/07/2022',
-      salary: '28,000.00',
-      civil_status: 'Soltera',
-      emergency_contact: 'Padre - 809-555-4321',
-      is_active: 1,
-      documents: [
-        { name: 'Cédula de identidad', status: 'Vigente', badge: 'emerald' },
-        { name: 'Contrato laboral', status: 'Vigente', badge: 'emerald' }
-      ]
-    },
-    {
-      id: 4,
-      name: 'Carlos Pérez',
-      initials: 'CP',
-      cedula: '001-4567890-1',
-      position: 'Almacén',
-      department: 'Almacén',
-      phone: '809-555-4567',
-      email: 'carlos.perez@pharmaplus.com',
-      address: 'C/ San Martín #12, Santo Domingo',
-      birth_date: '05/04/1992',
-      hire_date: '22/02/2023',
-      salary: '26,000.00',
-      civil_status: 'Casado',
-      emergency_contact: 'Hermano - 809-555-6543',
-      is_active: 1,
-      documents: [
-        { name: 'Cédula de identidad', status: 'Vigente', badge: 'emerald' },
-        { name: 'Contrato laboral', status: 'Vigente', badge: 'emerald' }
-      ]
-    },
-    {
-      id: 5,
-      name: 'María González',
-      initials: 'MG',
-      cedula: '001-5678901-2',
-      position: 'Administrativo',
-      department: 'Administración',
-      phone: '809-555-5678',
-      email: 'maria.gonzalez@pharmaplus.com',
-      address: 'Av. Independencia #200, Santo Domingo',
-      birth_date: '14/02/1990',
-      hire_date: '10/11/2021',
-      salary: '50,000.00',
-      civil_status: 'Soltera',
-      emergency_contact: 'Madre - 809-555-8765',
-      is_active: 1,
-      documents: [
-        { name: 'Cédula de identidad', status: 'Vigente', badge: 'emerald' },
-        { name: 'Título universitario', status: 'Vigente', badge: 'emerald' }
-      ]
-    },
-    {
-      id: 6,
-      name: 'Roberto Sánchez',
-      initials: 'RS',
-      cedula: '001-6789012-3',
-      position: 'Seguridad',
-      department: 'Seguridad',
-      phone: '809-555-6789',
-      email: 'roberto.sanchez@pharmaplus.com',
-      address: 'C/ Barahona #5, Santo Domingo',
-      birth_date: '30/09/1985',
-      hire_date: '15/05/2021',
-      salary: '22,000.00',
-      civil_status: 'Casado',
-      emergency_contact: 'Esposa - 809-555-7654',
-      is_active: 0, // Inactivo
-      documents: [
-        { name: 'Cédula de identidad', status: 'Vigente', badge: 'emerald' }
-      ]
-    },
-    {
-      id: 7,
-      name: 'Daniel López',
-      initials: 'DL',
-      cedula: '001-7890123-4',
-      position: 'Mensajero',
-      department: 'Logística',
-      phone: '809-555-7890',
-      email: 'daniel.lopez@pharmaplus.com',
-      address: 'Av. Charles de Gaulle #30, Santo Domingo',
-      birth_date: '18/12/1996',
-      hire_date: '01/09/2022',
-      salary: '22,000.00',
-      civil_status: 'Soltero',
-      emergency_contact: 'Padre - 809-555-8901',
-      is_active: 1,
-      documents: [
-        { name: 'Licencia de conducir', status: 'Vigente', badge: 'emerald' }
-      ]
-    },
-    {
-      id: 8,
-      name: 'Elena Cruz',
-      initials: 'EC',
-      cedula: '001-8901234-5',
-      position: 'Limpieza',
-      department: 'Mantenimiento',
-      phone: '809-555-8901',
-      email: 'elena.cruz@pharmaplus.com',
-      address: 'C/ Espaillat #40, Santo Domingo',
-      birth_date: '25/07/1989',
-      hire_date: '20/06/2023',
-      salary: '20,000.00',
-      civil_status: 'Casada',
-      emergency_contact: 'Esposo - 809-555-9012',
-      is_active: 1,
-      documents: [
-        { name: 'Cédula de identidad', status: 'Vigente', badge: 'emerald' }
-      ]
-    }
-  ];
-
-  // Fetch Employees Data
-  const fetchEmployeesData = async () => {
+  /* ── Fetch empleados ─────────────────────────────────────────────────────── */
+  const fetchEmployees = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const res = await api.get('/rrhh?limit=100');
-      let list = sampleEmployees;
+      const params = new URLSearchParams({ page, limit });
+      if (searchTerm.trim()) params.set('search', searchTerm.trim());
+      if (filterDept !== 'ALL') params.set('department', filterDept);
+      if (filterStatus !== 'ALL') params.set('status', filterStatus);
 
-      if (res.success && res.data && res.data.length > 0) {
-        list = res.data.map((e) => {
-          const initials = e.name ? e.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'AC';
-          return {
-            id: e.id,
-            name: e.name,
-            initials: initials,
-            cedula: e.cedula || '001-1234567-8',
-            position: e.position || 'Cajero',
-            department: e.department || 'Caja',
-            phone: e.phone || '809-555-1234',
-            email: e.email || 'ana.cajera@pharmaplus.com',
-            address: e.address || 'C/ Duarte #123, Ens. Naco, Santo Domingo',
-            birth_date: e.birth_date || '15/06/1995',
-            hire_date: e.hire_date || '12/01/2023',
-            salary: e.salary ? parseFloat(e.salary).toLocaleString('es-DO', { minimumFractionDigits: 2 }) : '25,000.00',
-            civil_status: e.civil_status || 'Soltera',
-            emergency_contact: e.emergency_contact || 'Madre - 809-555-5678',
-            is_active: e.is_active !== undefined ? e.is_active : 1,
-            documents: [
-              { name: 'Cédula de identidad', status: 'Vigente', badge: 'emerald' },
-              { name: 'Certificado médico', status: 'Vigente', badge: 'emerald' },
-              { name: 'Carta de no antecedentes', status: 'Vigente', badge: 'emerald' },
-              { name: 'Contrato laboral', status: 'Vence: 12/01/2025', badge: 'amber' }
-            ]
-          };
-        });
-      }
-
-      // Filter Search
-      if (searchTerm.trim()) {
-        const lower = searchTerm.toLowerCase();
-        list = list.filter(e =>
-          e.name.toLowerCase().includes(lower) ||
-          e.cedula.toLowerCase().includes(lower) ||
-          e.position.toLowerCase().includes(lower) ||
-          e.department.toLowerCase().includes(lower)
-        );
-      }
+      const res = await api.get(`/rrhh?${params}`);
+      const list = (res.data ?? res ?? []).map(e => ({
+        ...e,
+        salary_fmt: fmtSalary(e.salary),
+        initials_calc: initials(e.name)
+      }));
 
       setEmployees(list);
-      setTotal(list.length);
+      const pag = res.pagination ?? {};
+      setTotal(pag.total ?? list.length);
 
-      if (list.length > 0) {
-        if (!selectedEmployee || !list.some(e => e.id === selectedEmployee.id)) {
-          setSelectedEmployee(list[0]);
-        }
-      } else {
+      if (list.length > 0 && (!selectedEmployee || !list.some(e => e.id === selectedEmployee.id))) {
+        setSelectedEmployee(list[0]);
+      } else if (list.length === 0) {
         setSelectedEmployee(null);
       }
-
     } catch (err) {
       console.error('Error cargando empleados:', err);
-      setEmployees(sampleEmployees);
-      setSelectedEmployee(sampleEmployees[0]);
+      setEmployees([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, filterDept, filterStatus, page, limit]);
+
+  /* ── Fetch stats ─────────────────────────────────────────────────────────── */
+  const fetchStats = useCallback(async () => {
+    try {
+      const res = await api.get('/rrhh/stats');
+      setStats(res.data ?? res);
+    } catch { setStats(null); }
+  }, []);
+
+  /* ── Fetch attendance ────────────────────────────────────────────────────── */
+  const fetchAttendance = useCallback(async (date) => {
+    setLoadingTab(true);
+    try {
+      const res = await api.get(`/rrhh/attendance?date=${date || filterDateAtt}`);
+      setAttendance(res.data ?? res ?? []);
+    } catch { setAttendance([]); }
+    finally { setLoadingTab(false); }
+  }, [filterDateAtt]);
+
+  /* ── Fetch departments ───────────────────────────────────────────────────── */
+  const fetchDepartments = useCallback(async () => {
+    try {
+      const res = await api.get('/rrhh/departments');
+      setDepartments(res.data ?? res ?? []);
+    } catch { setDepartments([]); }
+  }, []);
+
+  /* ── Fetch positions ─────────────────────────────────────────────────────── */
+  const fetchPositions = useCallback(async () => {
+    try {
+      const res = await api.get('/rrhh/positions');
+      setPositions(res.data ?? res ?? []);
+    } catch { setPositions([]); }
+  }, []);
+
+  /* ── Fetch nómina ────────────────────────────────────────────────────────── */
+  const fetchNomina = useCallback(async () => {
+    setLoadingTab(true);
+    try {
+      const res = await api.get('/rrhh/nomina');
+      setNomina(res.data ?? res ?? []);
+    } catch { setNomina([]); }
+    finally { setLoadingTab(false); }
+  }, []);
+
+  /* ── Effects ─────────────────────────────────────────────────────────────── */
+  useEffect(() => { fetchStats(); fetchDepartments(); fetchPositions(); }, []);
 
   useEffect(() => {
-    fetchEmployeesData();
-  }, [activeTab, page, limit]);
+    const t = setTimeout(fetchEmployees, 300);
+    return () => clearTimeout(t);
+  }, [fetchEmployees]);
 
   useEffect(() => {
-    const delayDebounce = setTimeout(() => {
-      fetchEmployeesData();
-    }, 300);
-    return () => clearTimeout(delayDebounce);
-  }, [searchTerm]);
+    if (activeTab === 'Asistencias') fetchAttendance(filterDateAtt);
+    if (activeTab === 'Nómina') fetchNomina();
+    if (activeTab === 'Departamentos') fetchDepartments();
+    if (activeTab === 'Cargos') fetchPositions();
+  }, [activeTab, filterDateAtt]);
 
-  // Open New Employee Modal
-  const openNewEmployeeModal = () => {
-    setIsEditMode(false);
-    setEmployeeForm({
-      id: null,
-      name: '',
-      initials: 'AC',
-      cedula: '',
-      position: 'Cajero',
-      department: 'Caja',
-      phone: '',
-      email: '',
-      address: 'C/ Duarte #123, Ens. Naco, Santo Domingo',
-      birth_date: '15/06/1995',
-      hire_date: '12/01/2023',
-      salary: '25000.00',
-      civil_status: 'Soltera',
-      emergency_contact: 'Madre - 809-555-5678',
-      is_active: 1,
-      notes: ''
-    });
-    setIsEmployeeModalOpen(true);
-  };
-
-  // Open Edit Employee Modal
-  const openEditEmployeeModal = (emp) => {
-    const e = emp || selectedEmployee;
-    if (!e) return;
-    setIsEditMode(true);
-    setEmployeeForm({
-      id: e.id,
-      name: e.name,
-      initials: e.initials,
-      cedula: e.cedula,
-      position: e.position,
-      department: e.department,
-      phone: e.phone,
-      email: e.email,
-      address: e.address,
-      birth_date: e.birth_date,
-      hire_date: e.hire_date,
-      salary: e.salary.replace(/,/g, ''),
-      civil_status: e.civil_status,
-      emergency_contact: e.emergency_contact,
-      is_active: e.is_active,
-      notes: e.notes || ''
-    });
-    setIsEmployeeModalOpen(true);
-  };
-
-  // Save Employee Submit Handler
-  const handleSaveEmployeeSubmit = async (e) => {
+  /* ── Guardar empleado ────────────────────────────────────────────────────── */
+  const handleSaveEmployee = async (e) => {
     e.preventDefault();
     try {
-      const initialsCalc = employeeForm.name
-        ? employeeForm.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-        : 'AC';
-
-      const formattedSalary = parseFloat(employeeForm.salary || '0').toLocaleString('es-DO', { minimumFractionDigits: 2 });
-
       const payload = {
         name: employeeForm.name,
         cedula: employeeForm.cedula,
@@ -414,146 +214,109 @@ const RRHH = () => {
         department: employeeForm.department,
         phone: employeeForm.phone,
         email: employeeForm.email,
-        salary: parseFloat(employeeForm.salary || '0')
+        address: employeeForm.address,
+        birth_date: employeeForm.birth_date,
+        hire_date: employeeForm.hire_date,
+        salary: parseFloat(employeeForm.salary || 0),
+        civil_status: employeeForm.civil_status,
+        emergency_contact: employeeForm.emergency_contact,
+        notes: employeeForm.notes,
       };
 
       if (isEditMode) {
-        try {
-          await api.put(`/rrhh/${employeeForm.id}`, payload);
-        } catch (err) {}
-
-        const updated = {
-          ...selectedEmployee,
-          ...employeeForm,
-          initials: initialsCalc,
-          salary: formattedSalary
-        };
-
-        setEmployees(prev => prev.map(emp => emp.id === employeeForm.id ? updated : emp));
-        setSelectedEmployee(updated);
-        showToast(`Empleado "${employeeForm.name}" actualizado con éxito`);
+        await api.put(`/rrhh/${employeeForm.id}`, payload);
+        showToast(`Empleado "${employeeForm.name}" actualizado`);
       } else {
-        try {
-          await api.post('/rrhh', payload);
-        } catch (err) {}
-
-        const newEmp = {
-          ...employeeForm,
-          id: Date.now(),
-          initials: initialsCalc,
-          salary: formattedSalary,
-          documents: [
-            { name: 'Cédula de identidad', status: 'Vigente', badge: 'emerald' },
-            { name: 'Contrato laboral', status: 'Vigente', badge: 'emerald' }
-          ]
-        };
-        setEmployees(prev => [newEmp, ...prev]);
-        setSelectedEmployee(newEmp);
-        showToast(`Nuevo empleado "${employeeForm.name}" registrado correctamente`);
+        await api.post('/rrhh', payload);
+        showToast(`Empleado "${employeeForm.name}" registrado`);
       }
+
       setIsEmployeeModalOpen(false);
+      fetchEmployees();
+      fetchStats();
     } catch (err) {
-      showToast('Error al guardar el empleado', 'warning');
+      showToast(err?.response?.data?.message || 'Error al guardar el empleado', 'error');
     }
   };
 
-  // Toggle Deactivate / Activate Employee
-  const handleToggleDeactivate = async () => {
+  /* ── Toggle activo/inactivo ──────────────────────────────────────────────── */
+  const handleToggleStatus = async () => {
     if (!selectedEmployee) return;
     try {
       const newStatus = selectedEmployee.is_active === 1 ? 0 : 1;
-      try {
-        await api.put(`/rrhh/${selectedEmployee.id}`, { is_active: newStatus });
-      } catch (err) {}
-
-      const updated = { ...selectedEmployee, is_active: newStatus };
-      setEmployees(prev => prev.map(e => e.id === selectedEmployee.id ? updated : e));
-      setSelectedEmployee(updated);
+      await api.put(`/rrhh/${selectedEmployee.id}`, { is_active: newStatus });
       setIsDeleteModalOpen(false);
-      showToast(`Empleado "${selectedEmployee.name}" ${newStatus === 0 ? 'desactivado' : 'activado'} exitosamente`, 'info');
-    } catch (err) {
-      showToast('Error cambiando estado del empleado', 'warning');
+      showToast(`Empleado "${selectedEmployee.name}" ${newStatus === 0 ? 'desactivado' : 'activado'}`);
+      fetchEmployees();
+      fetchStats();
+    } catch {
+      showToast('Error cambiando estado', 'error');
     }
   };
 
-  // Voice Recognition Handler
-  const handleVoiceInput = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (!SpeechRecognition) {
-      setIsListening(true);
-      setTimeout(() => {
-        setChatInput('Registrar asistencia');
-        setIsListening(false);
-      }, 1500);
-      return;
-    }
-
-    if (isListening) {
-      setIsListening(false);
-      return;
-    }
-
+  /* ── Registrar asistencia ────────────────────────────────────────────────── */
+  const handleRegisterAttendance = async () => {
+    if (!attForm.employee_id) { showToast('Selecciona un empleado', 'error'); return; }
     try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'es-ES';
-      recognition.continuous = false;
-      recognition.interimResults = true;
-
-      recognition.onstart = () => {
-        setIsListening(true);
-      };
-
-      recognition.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map(result => result[0].transcript)
-          .join('');
-        setChatInput(transcript);
-      };
-
-      recognition.onerror = () => {
-        setIsListening(false);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognition.start();
-    } catch (err) {
-      console.error('Micrófono:', err);
-      setIsListening(false);
+      await api.post('/rrhh/attendance', {
+        employee_id: attForm.employee_id,
+        date: attForm.date,
+        check_in: attForm.check_in || new Date().toTimeString().substring(0, 5),
+        status: attForm.status,
+        notes: attForm.notes
+      });
+      showToast('Asistencia registrada correctamente');
+      setIsAttModalOpen(false);
+      fetchAttendance(attForm.date);
+    } catch {
+      showToast('Error registrando asistencia', 'error');
     }
   };
 
-  // Chatbot Send Message Handler
-  const handleSendChatMessage = async (queryText) => {
+  /* ── Chatbot ─────────────────────────────────────────────────────────────── */
+  const handleVoiceInput = () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) { showToast('Reconocimiento de voz no disponible', 'error'); return; }
+    if (isListening) { setIsListening(false); return; }
+    const recognition = new SR();
+    recognition.lang = 'es-ES';
+    recognition.onstart = () => setIsListening(true);
+    recognition.onresult = (ev) => setChatInput(Array.from(ev.results).map(r => r[0].transcript).join(''));
+    recognition.onend = () => setIsListening(false);
+    recognition.start();
+  };
+
+  const handleSendChat = async (queryText) => {
     const text = queryText || chatInput;
     if (!text.trim()) return;
-
     setChatMessages(prev => [...prev, { role: 'user', text }]);
     setChatInput('');
     setChatLoading(true);
-
     const lower = text.toLowerCase();
-    if (lower.includes('nuevo empleado')) {
-      openNewEmployeeModal();
-      setChatMessages(prev => [...prev, {
-        role: 'assistant',
-        text: 'Te he abierto el formulario para registrar un nuevo empleado.'
-      }]);
-      setChatLoading(false);
-      return;
-    }
 
-    if (lower.includes('registrar asistencia')) {
-      showToast('Asistencia de Ana Cajera registrada a las 08:00 a.m.');
-      setChatMessages(prev => [...prev, {
-        role: 'assistant',
-        text: '¡Asistencia marcada! Se ha registrado el ponchado de entrada para Ana Cajera.'
-      }]);
-      setChatLoading(false);
-      return;
+    if (lower.includes('nuevo empleado')) {
+      openNewModal();
+      setChatMessages(prev => [...prev, { role: 'assistant', text: 'Te abrí el formulario para registrar un nuevo empleado.' }]);
+      setChatLoading(false); return;
+    }
+    if (lower.includes('asistencia')) {
+      setActiveTab('Asistencias');
+      setChatMessages(prev => [...prev, { role: 'assistant', text: `Abrí el módulo de asistencias. Hay ${attendance.length} registros hoy.` }]);
+      setChatLoading(false); return;
+    }
+    if (lower.includes('nómina') || lower.includes('nomina')) {
+      setActiveTab('Nómina');
+      setChatMessages(prev => [...prev, { role: 'assistant', text: `Nómina total mensual del equipo activo: ${fmt(stats?.nomina_total || 0)}` }]);
+      setChatLoading(false); return;
+    }
+    if (lower.includes('departamento')) {
+      const deptInfo = departments.map(d => `${d.name}: ${d.activos} activos`).join(', ');
+      setChatMessages(prev => [...prev, { role: 'assistant', text: `Departamentos: ${deptInfo || 'Sin datos.'}` }]);
+      setChatLoading(false); return;
+    }
+    if (lower.includes('cumpleaños')) {
+      setChatMessages(prev => [...prev, { role: 'assistant', text: `Cumpleaños esta semana: ${stats?.cumpleanos_semana || 0} empleado(s).` }]);
+      setChatLoading(false); return;
     }
 
     try {
@@ -561,260 +324,321 @@ const RRHH = () => {
       if (res.success) {
         setChatMessages(prev => [...prev, { role: 'assistant', text: res.data.response }]);
       } else {
-        setChatMessages(prev => [...prev, { role: 'assistant', text: 'Consulta de RRHH procesada.' }]);
+        setChatMessages(prev => [...prev, { role: 'assistant', text: `Tienes ${stats?.activos || 0} empleados activos en la plantilla.` }]);
       }
-    } catch (err) {
-      setChatMessages(prev => [...prev, {
-        role: 'assistant',
-        text: `Asistente de RRHH: Tienes ${employees.length} empleados en la plantilla activa.`
-      }]);
+    } catch {
+      setChatMessages(prev => [...prev, { role: 'assistant', text: `Plantilla: ${stats?.total || 0} empleados en total, ${stats?.activos || 0} activos.` }]);
     } finally {
       setChatLoading(false);
     }
   };
 
-  const totalPages = Math.max(1, Math.ceil(total / limit));
+  /* ── Abrir modales ───────────────────────────────────────────────────────── */
+  const openNewModal = () => {
+    setIsEditMode(false);
+    setEmployeeForm({ ...defaultForm });
+    setIsEmployeeModalOpen(true);
+  };
 
+  const openEditModal = (emp) => {
+    const e = emp || selectedEmployee;
+    if (!e) return;
+    setIsEditMode(true);
+    setEmployeeForm({
+      id: e.id, name: e.name, cedula: e.cedula || '', position: e.position || '',
+      department: e.department || 'Caja', phone: e.phone || '', email: e.email || '',
+      address: e.address || '', birth_date: e.birth_date || '', hire_date: e.hire_date || '',
+      salary: e.salary || '', civil_status: e.civil_status || 'Soltera',
+      emergency_contact: e.emergency_contact || '', is_active: e.is_active, notes: e.notes || ''
+    });
+    setIsEmployeeModalOpen(true);
+  };
+
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const uniqueDepts = [...new Set(employees.map(e => e.department).filter(Boolean))];
+
+  /* ══════════════════════════════════════════════════════════════════════════ */
   return (
     <div className="h-full flex flex-col gap-5 overflow-y-auto pr-1 relative">
-      
-      {/* ─── TOAST NOTIFICATION ───────────────────────────────────────────── */}
+
+      {/* Toast */}
       {toastMessage && (
-        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-3 animate-fade-in text-xs font-semibold ${
-          toastMessage.type === 'warning'
-            ? 'bg-amber-500 text-white border-amber-600'
-            : toastMessage.type === 'info'
-            ? 'bg-slate-800 text-white border-slate-700'
-            : 'bg-emerald-600 text-white border-emerald-700'
+        <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-3 text-xs font-semibold animate-fade-in ${
+          toastMessage.type === 'error' ? 'bg-danger text-white border-danger' :
+          toastMessage.type === 'info'  ? 'bg-slate-800 text-white border-slate-700' :
+          'bg-success text-white border-success'
         }`}>
           <CheckCircle2 size={18} />
-          <span>{toastMessage.msg}</span>
+          {toastMessage.msg}
         </div>
       )}
 
-      {/* ─── SLEEK GREEN HEADER BANNER ────────────────────────────────────────── */}
+      {/* ── Header Banner ────────────────────────────────────────────────────── */}
       <div className="bg-[#16a085] rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
         <div className="flex items-center gap-3 z-10">
           <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Gestión de Recursos Humanos (RR. HH.)</h2>
         </div>
-        
         <div className="shrink-0 h-16 md:h-20 flex items-center justify-center z-10">
-          <img 
-            src="/modules/clientes.png" 
-            alt="RRHH" 
+          <img src="/modules/clientes.png" alt="RRHH"
             className="h-full w-auto max-w-[260px] object-contain rounded-xl drop-shadow-md"
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
+            onError={(e) => { e.target.style.display = 'none'; }} />
         </div>
       </div>
 
-      {/* ─── TOP 5 KPI STAT CARDS ────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        
-        {/* Card 1: Total Empleados */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 flex items-center gap-3 shadow-2xs">
-          <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
-            <Users size={20} />
+      {/* ── KPI Cards (datos reales) ──────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        {[
+          {
+            icon: Users, cls: 'bg-indigo-50 border-indigo-100 text-indigo-600',
+            label: 'Total Empleados',
+            value: stats?.total ?? '—',
+            sub: `Activos: ${stats?.activos ?? '—'} | Inactivos: ${stats?.inactivos ?? '—'}`
+          },
+          {
+            icon: UserCheck, cls: 'bg-emerald-50 border-emerald-100 text-emerald-600',
+            label: 'Presentes hoy',
+            value: stats?.presentes_hoy ?? '—',
+            sub: stats?.total ? `${Math.round((stats.presentes_hoy / stats.activos) * 100) || 0}% del activo` : '—',
+            subCls: 'text-emerald-600'
+          },
+          {
+            icon: Calendar, cls: 'bg-amber-50 border-amber-100 text-amber-600',
+            label: 'De vacaciones',
+            value: stats?.de_vacaciones ?? '—',
+            sub: 'Este período', subCls: 'text-amber-600'
+          },
+          {
+            icon: FileText, cls: 'bg-sky-50 border-sky-100 text-sky-600',
+            label: 'Con contrato activo',
+            value: stats?.proximos_vencer ?? '—',
+            sub: 'Documentos', subCls: 'text-sky-600'
+          },
+          {
+            icon: Gift, cls: 'bg-purple-50 border-purple-100 text-purple-600',
+            label: 'Cumpleaños',
+            value: stats?.cumpleanos_semana ?? '—',
+            sub: 'Esta semana', subCls: 'text-purple-600'
+          },
+        ].map((k, i) => (
+          <div key={i} className="bg-white rounded-2xl border border-slate-200/80 p-4 flex items-center gap-3 shadow-2xs">
+            <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center shrink-0 ${k.cls}`}>
+              <k.icon size={20} />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-400">{k.label}</p>
+              <p className="text-xl font-extrabold text-slate-900 leading-tight">{k.value}</p>
+              <p className={`text-[10px] font-medium ${k.subCls || 'text-slate-400'}`}>{k.sub}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-400">Total Empleados</p>
-            <p className="text-xl font-extrabold text-slate-900 leading-tight">28</p>
-            <p className="text-[10px] font-medium text-slate-400">Activos: 24 | Inactivos: 4</p>
-          </div>
-        </div>
-
-        {/* Card 2: Presentes hoy */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 flex items-center gap-3 shadow-2xs">
-          <div className="w-11 h-11 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-            <UserCheck size={20} />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-400">Presentes hoy</p>
-            <p className="text-xl font-extrabold text-slate-900 leading-tight">20</p>
-            <p className="text-[10px] font-medium text-emerald-600">71% del total</p>
-          </div>
-        </div>
-
-        {/* Card 3: De vacaciones */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 flex items-center gap-3 shadow-2xs">
-          <div className="w-11 h-11 rounded-2xl bg-amber-50 border border-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-            <Calendar size={20} />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-400">De vacaciones</p>
-            <p className="text-xl font-extrabold text-slate-900 leading-tight">3</p>
-            <p className="text-[10px] font-medium text-amber-600">Este mes</p>
-          </div>
-        </div>
-
-        {/* Card 4: Próximos a vencer */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 flex items-center gap-3 shadow-2xs">
-          <div className="w-11 h-11 rounded-2xl bg-sky-50 border border-sky-100 text-sky-600 flex items-center justify-center shrink-0">
-            <FileText size={20} />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-400">Próximos a vencer</p>
-            <p className="text-xl font-extrabold text-slate-900 leading-tight">2</p>
-            <p className="text-[10px] font-medium text-sky-600">Documentos</p>
-          </div>
-        </div>
-
-        {/* Card 5: Cumpleaños */}
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-4 flex items-center gap-3 shadow-2xs">
-          <div className="w-11 h-11 rounded-2xl bg-purple-50 border border-purple-100 text-purple-600 flex items-center justify-center shrink-0">
-            <Gift size={20} />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-400">Cumpleaños</p>
-            <p className="text-xl font-extrabold text-slate-900 leading-tight">1</p>
-            <p className="text-[10px] font-medium text-purple-600">Esta semana</p>
-          </div>
-        </div>
-
+        ))}
       </div>
 
-      {/* ─── TABS BAR ────────────────────────────────────────────────────────── */}
+      {/* ── Tabs ─────────────────────────────────────────────────────────────── */}
       <div className="flex items-center gap-6 border-b border-slate-200 overflow-x-auto custom-scrollbar">
-        {['Empleados', 'Asistencias', 'Vacaciones', 'Permisos', 'Documentos', 'Cargos', 'Departamentos', 'Nómina'].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+        {['Empleados', 'Asistencias', 'Vacaciones', 'Permisos', 'Documentos', 'Cargos', 'Departamentos', 'Nómina'].map(tab => (
+          <button key={tab} onClick={() => setActiveTab(tab)}
             className={`py-3 px-1 text-xs font-bold transition-all shrink-0 border-b-2 leading-normal ${
               activeTab === tab
                 ? 'border-emerald-600 text-emerald-700 font-extrabold'
                 : 'border-transparent text-slate-500 hover:text-slate-900 hover:border-slate-300'
-            }`}
-          >
+            }`}>
             {tab}
           </button>
         ))}
       </div>
 
-      {/* ─── SEARCH & ACTION BAR ─────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div className="relative flex-1 w-full sm:w-96 min-w-[280px]">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-          <input
-            type="text"
-            placeholder="Buscar empleado por nombre, cédula o puesto..."
-            className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all shadow-sm"
-            value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
-          />
-          <ScanLine 
-            onClick={() => setIsScanModalOpen(true)}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 cursor-pointer transition-colors" 
-            size={18} 
-            title="Escanear carnet de empleado" 
-          />
+      {/* ── Search & Filters ─────────────────────────────────────────────────── */}
+      {activeTab === 'Empleados' && (
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="relative flex-1 w-full min-w-[280px]">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+              <input type="text"
+                placeholder="Buscar empleado por nombre, cédula, cargo o departamento..."
+                className="w-full pl-10 pr-10 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all shadow-sm"
+                value={searchTerm}
+                onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
+              />
+              <ScanLine
+                onClick={() => setIsScanModalOpen(true)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 cursor-pointer"
+                size={18}
+              />
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
+              <button
+                onClick={() => setShowFilterPanel(p => !p)}
+                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all shadow-sm ${
+                  showFilterPanel || filterDept !== 'ALL' || filterStatus !== 'ALL'
+                    ? 'border-emerald-400 bg-emerald-50 text-emerald-700'
+                    : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+                }`}>
+                <Filter size={16} />
+                Filtros
+                {(filterDept !== 'ALL' || filterStatus !== 'ALL') && (
+                  <span className="bg-emerald-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                    {(filterDept !== 'ALL' ? 1 : 0) + (filterStatus !== 'ALL' ? 1 : 0)}
+                  </span>
+                )}
+              </button>
+              <button onClick={openNewModal}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all shadow-md">
+                <Plus size={18} /> Nuevo empleado
+              </button>
+            </div>
+          </div>
+
+          {/* Panel de filtros desplegable */}
+          {showFilterPanel && (
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-wrap items-end gap-4 animate-fade-in shadow-sm">
+              <div className="flex flex-col gap-1 min-w-[160px]">
+                <label className="text-xs font-semibold text-slate-600">Departamento</label>
+                <select value={filterDept} onChange={e => { setFilterDept(e.target.value); setPage(1); }}
+                  className="input text-xs py-2">
+                  <option value="ALL">Todos los departamentos</option>
+                  {(stats?.departments || departments).map(d => (
+                    <option key={d.name} value={d.name}>{d.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1 min-w-[160px]">
+                <label className="text-xs font-semibold text-slate-600">Estado</label>
+                <select value={filterStatus} onChange={e => { setFilterStatus(e.target.value); setPage(1); }}
+                  className="input text-xs py-2">
+                  <option value="ALL">Activos e inactivos</option>
+                  <option value="activo">Solo activos</option>
+                  <option value="inactivo">Solo inactivos</option>
+                </select>
+              </div>
+              <button
+                onClick={() => { setFilterDept('ALL'); setFilterStatus('ALL'); setSearchTerm(''); setPage(1); }}
+                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-all">
+                <X size={13} /> Limpiar filtros
+              </button>
+            </div>
+          )}
         </div>
+      )}
 
-        <div className="flex items-center gap-3 shrink-0">
-          <button
-            onClick={() => showToast('Filtros de RRHH activos', 'info')}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold transition-all shadow-sm active:scale-95"
-          >
-            <Filter size={18} />
-            <span>Filtros</span>
-          </button>
-
-          <button
-            onClick={openNewEmployeeModal}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm transition-all shadow-md shadow-emerald-600/20 active:scale-95"
-          >
-            <Plus size={18} />
-            <span>Nuevo empleado</span>
-          </button>
-        </div>
-      </div>
-
-      {/* ─── MAIN CONTENT GRID (2 COLUMNS) ─────────────────────────────────── */}
+      {/* ── Main Content ─────────────────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 items-start">
-        
-        {/* LEFT COLUMN: TABLE + CHATBOT (8 COLS) */}
+
+        {/* LEFT: Tabla + Chatbot */}
         <div className="lg:col-span-8 flex flex-col gap-5">
-          
-          {/* EMPLOYEES TABLE CONTAINER */}
+
+          {/* TABLE */}
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
-            <div className="overflow-x-auto min-h-[380px]">
+            <div className="overflow-x-auto min-h-[350px]">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/60 text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                    <th className="py-3.5 px-4">Empleado</th>
-                    <th className="py-3.5 px-4">Cédula</th>
-                    <th className="py-3.5 px-4">Cargo</th>
-                    <th className="py-3.5 px-4">Departamento</th>
-                    <th className="py-3.5 px-4">Estado</th>
-                    <th className="py-3.5 px-4">Ingreso</th>
-                    <th className="py-3.5 px-3 text-center">Acciones</th>
+                    {activeTab === 'Empleados' && <>
+                      <th className="py-3.5 px-4">Empleado</th>
+                      <th className="py-3.5 px-4">Cédula</th>
+                      <th className="py-3.5 px-4">Cargo</th>
+                      <th className="py-3.5 px-4">Departamento</th>
+                      <th className="py-3.5 px-4">Estado</th>
+                      <th className="py-3.5 px-4">Ingreso</th>
+                      <th className="py-3.5 px-3 text-center">Acciones</th>
+                    </>}
+                    {activeTab === 'Asistencias' && <>
+                      <th className="py-3.5 px-4">Empleado</th>
+                      <th className="py-3.5 px-4">Fecha</th>
+                      <th className="py-3.5 px-4">Entrada</th>
+                      <th className="py-3.5 px-4">Salida</th>
+                      <th className="py-3.5 px-4">Estado</th>
+                      <th className="py-3.5 px-4">Departamento</th>
+                      <th className="py-3.5 px-3 text-center">Acciones</th>
+                    </>}
+                    {activeTab === 'Nómina' && <>
+                      <th className="py-3.5 px-4">Empleado</th>
+                      <th className="py-3.5 px-4">Salario Base</th>
+                      <th className="py-3.5 px-4">SFS (5.91%)</th>
+                      <th className="py-3.5 px-4">AFP (2.87%)</th>
+                      <th className="py-3.5 px-4 text-emerald-700">Neto</th>
+                      <th className="py-3.5 px-4">Estado</th>
+                      <th className="py-3.5 px-3 text-center">Acciones</th>
+                    </>}
+                    {activeTab === 'Departamentos' && <>
+                      <th className="py-3.5 px-4">Departamento</th>
+                      <th className="py-3.5 px-4">Empleados</th>
+                      <th className="py-3.5 px-4">Activos</th>
+                      <th className="py-3.5 px-4">Salario Promedio</th>
+                      <th className="py-3.5 px-4">Estado</th>
+                    </>}
+                    {activeTab === 'Cargos' && <>
+                      <th className="py-3.5 px-4">Cargo / Puesto</th>
+                      <th className="py-3.5 px-4">Departamento</th>
+                      <th className="py-3.5 px-4">Empleados</th>
+                      <th className="py-3.5 px-4">Salario Promedio</th>
+                      <th className="py-3.5 px-4">Estado</th>
+                    </>}
+                    {['Vacaciones', 'Permisos', 'Documentos'].includes(activeTab) && <>
+                      <th className="py-3.5 px-4">Empleado</th>
+                      <th className="py-3.5 px-4">Tipo</th>
+                      <th className="py-3.5 px-4">Inicio</th>
+                      <th className="py-3.5 px-4">Fin</th>
+                      <th className="py-3.5 px-4">Estado</th>
+                      <th className="py-3.5 px-4">Observación</th>
+                    </>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs">
-                  {loading ? (
-                    <tr>
-                      <td colSpan="7" className="py-12 text-center text-slate-400">
-                        <div className="inline-flex items-center gap-2">
-                          <RefreshCw className="animate-spin text-emerald-600" size={20} />
-                          <span>Cargando plantilla de empleados...</span>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : employees.length === 0 ? (
-                    <tr>
-                      <td colSpan="7" className="py-12 text-center text-slate-400">
-                        <Users size={32} className="mx-auto mb-2 opacity-40" />
-                        <p className="font-medium text-slate-600">No se encontraron empleados</p>
-                      </td>
-                    </tr>
-                  ) : activeTab === 'Empleados' ? (
-                    employees.map((e) => {
-                      const isSelected = selectedEmployee?.id === e.id;
 
+                  {/* LOADING */}
+                  {(loading || loadingTab) ? (
+                    <tr><td colSpan={7} className="py-12 text-center text-slate-400">
+                      <div className="inline-flex items-center gap-2">
+                        <RefreshCw className="animate-spin text-emerald-600" size={20} />
+                        <span>Cargando datos...</span>
+                      </div>
+                    </td></tr>
+
+                  /* ── EMPLEADOS ──────────────────────────────────────────── */
+                  ) : activeTab === 'Empleados' ? (
+                    employees.length === 0 ? (
+                      <tr><td colSpan={7} className="py-12 text-center text-slate-400">
+                        <Users size={32} className="mx-auto mb-2 opacity-40" />
+                        <p className="font-medium text-slate-600">
+                          {searchTerm || filterDept !== 'ALL' || filterStatus !== 'ALL'
+                            ? 'Sin resultados para los filtros aplicados'
+                            : 'No hay empleados registrados'}
+                        </p>
+                      </td></tr>
+                    ) : employees.map(e => {
+                      const sel = selectedEmployee?.id === e.id;
                       return (
-                        <tr
-                          key={e.id}
-                          onClick={() => setSelectedEmployee(e)}
-                          className={`cursor-pointer transition-colors group hover:bg-slate-50/80 ${
-                            isSelected ? 'bg-emerald-50/40 border-l-4 border-l-emerald-600' : ''
-                          }`}
-                        >
+                        <tr key={e.id} onClick={() => setSelectedEmployee(e)}
+                          className={`cursor-pointer transition-colors hover:bg-slate-50/80 ${sel ? 'bg-emerald-50/40 border-l-4 border-l-emerald-600' : ''}`}>
                           <td className="py-3.5 px-4">
                             <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-xl bg-purple-50 border border-purple-200 text-purple-700 font-extrabold flex items-center justify-center shrink-0 text-xs">
-                                {e.initials}
+                              <div className={`w-9 h-9 rounded-xl border font-extrabold flex items-center justify-center shrink-0 text-xs ${avatarColor(e.id)}`}>
+                                {e.initials_calc}
                               </div>
-                              <span className="font-bold text-slate-900 leading-snug">{e.name}</span>
+                              <span className="font-bold text-slate-900">{e.name}</span>
                             </div>
                           </td>
-                          <td className="py-3.5 px-4 font-mono font-medium text-slate-700">{e.cedula}</td>
-                          <td className="py-3.5 px-4 font-semibold text-slate-800">{e.position}</td>
-                          <td className="py-3.5 px-4 text-slate-600 font-medium">{e.department}</td>
+                          <td className="py-3.5 px-4 font-mono font-medium text-slate-700">{e.cedula || '—'}</td>
+                          <td className="py-3.5 px-4 font-semibold text-slate-800">{e.position || '—'}</td>
+                          <td className="py-3.5 px-4 text-slate-600 font-medium">{e.department || '—'}</td>
                           <td className="py-3.5 px-4">
-                            {e.is_active === 1 ? (
-                              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                Activo
-                              </span>
-                            ) : (
-                              <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200">
-                                Inactivo
-                              </span>
-                            )}
+                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-semibold border ${
+                              e.is_active === 1
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-rose-50 text-rose-700 border-rose-200'
+                            }`}>
+                              {e.is_active === 1 ? 'Activo' : 'Inactivo'}
+                            </span>
                           </td>
-                          <td className="py-3.5 px-4 text-slate-600 font-mono">{e.hire_date}</td>
+                          <td className="py-3.5 px-4 text-slate-600 font-mono">{e.hire_date || '—'}</td>
                           <td className="py-3.5 px-3 text-center">
                             <div className="inline-flex items-center gap-2">
-                              <button
-                                onClick={(evt) => { evt.stopPropagation(); setSelectedEmployee(e); }}
-                                className="p-1 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors"
-                                title="Ver detalle"
-                              >
+                              <button onClick={ev => { ev.stopPropagation(); setSelectedEmployee(e); }}
+                                className="p-1 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors" title="Ver detalle">
                                 <Eye size={16} />
                               </button>
-                              <button
-                                onClick={(evt) => { evt.stopPropagation(); openEditEmployeeModal(e); }}
-                                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                                title="Editar empleado"
-                              >
+                              <button onClick={ev => { ev.stopPropagation(); openEditModal(e); }}
+                                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors" title="Editar">
                                 <MoreVertical size={16} />
                               </button>
                             </div>
@@ -822,88 +646,127 @@ const RRHH = () => {
                         </tr>
                       );
                     })
+
+                  /* ── ASISTENCIAS ─────────────────────────────────────────── */
                   ) : activeTab === 'Asistencias' ? (
-                    [
-                      { name: 'Ana Cajera', date: '11/08/2026', in: '08:00 AM', out: '05:00 PM', status: 'Presente' },
-                      { name: 'Juan Martínez', date: '11/08/2026', in: '08:05 AM', out: 'En curso', status: 'Presente' },
-                      { name: 'Laura Rodríguez', date: '11/08/2026', in: '08:30 AM', out: 'En curso', status: 'Tarde' },
-                      { name: 'Carlos Pérez', date: '11/08/2026', in: '07:55 AM', out: 'En curso', status: 'Presente' }
-                    ].map((row, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50/80">
-                        <td className="py-3.5 px-4 font-bold text-slate-900">{row.name}</td>
+                    attendance.length === 0 ? (
+                      <tr><td colSpan={7} className="py-12 text-center text-slate-400">
+                        <UserCheck size={32} className="mx-auto mb-2 opacity-40" />
+                        <p className="font-medium text-slate-600">Sin registros de asistencia para este día</p>
+                      </td></tr>
+                    ) : attendance.map((row, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3.5 px-4 font-bold text-slate-900">{row.employee_name}</td>
                         <td className="py-3.5 px-4 font-mono text-slate-600">{row.date}</td>
-                        <td className="py-3.5 px-4 font-semibold text-emerald-700">{row.in}</td>
-                        <td className="py-3.5 px-4 font-semibold text-slate-600">{row.out}</td>
+                        <td className="py-3.5 px-4 font-semibold text-emerald-700">{row.check_in || '—'}</td>
+                        <td className="py-3.5 px-4 font-semibold text-slate-600">{row.check_out || 'En curso'}</td>
                         <td className="py-3.5 px-4">
-                          <span className={`px-2.5 py-0.5 rounded-full font-bold ${
-                            row.status === 'Tarde' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          <span className={`px-2.5 py-0.5 rounded-full font-bold text-xs ${
+                            row.status === 'tarde' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                            row.status === 'ausente' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                            'bg-emerald-50 text-emerald-700 border border-emerald-200'
                           }`}>
-                            {row.status}
+                            {row.status?.charAt(0).toUpperCase() + row.status?.slice(1)}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-slate-400">---</td>
+                        <td className="py-3.5 px-4 text-slate-600">{row.department || '—'}</td>
                         <td className="py-3.5 px-3 text-center">
-                          <button onClick={() => showToast(`Asistencia de ${row.name} verificada`)} className="px-2 py-1 rounded bg-slate-100 font-semibold text-slate-700">Verificarse</button>
+                          <button onClick={() => showToast(`Asistencia de ${row.employee_name} verificada`)}
+                            className="px-2 py-1 rounded bg-slate-100 font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors">
+                            Verificar
+                          </button>
                         </td>
                       </tr>
                     ))
-                  ) : activeTab === 'Vacaciones' ? (
-                    [
-                      { name: 'Roberto Sánchez', days: '10 Días', start: '01/08/2026', end: '11/08/2026', status: 'En curso' },
-                      { name: 'María González', days: '14 Días', start: '15/09/2026', end: '29/09/2026', status: 'Aprobada' }
-                    ].map((row, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50/80">
-                        <td className="py-3.5 px-4 font-bold text-slate-900">{row.name}</td>
-                        <td className="py-3.5 px-4 font-semibold text-emerald-700">{row.days}</td>
-                        <td className="py-3.5 px-4 font-mono text-slate-600">{row.start}</td>
-                        <td className="py-3.5 px-4 font-mono text-slate-600">{row.end}</td>
-                        <td className="py-3.5 px-4">
-                          <span className="px-2.5 py-0.5 rounded-full font-bold bg-sky-50 text-sky-700 border border-sky-200">{row.status}</span>
-                        </td>
-                        <td className="py-3.5 px-4 text-slate-400">---</td>
-                        <td className="py-3.5 px-3 text-center">
-                          <button onClick={() => showToast('Solicitud de vacaciones autorizada')} className="px-2 py-1 rounded bg-emerald-50 text-emerald-700 font-bold">Aprobada</button>
-                        </td>
-                      </tr>
-                    ))
+
+                  /* ── NÓMINA ──────────────────────────────────────────────── */
                   ) : activeTab === 'Nómina' ? (
-                    [
-                      { name: 'Ana Cajera', base: 'RD$ 25,000.00', ded: 'RD$ 1,477.50', net: 'RD$ 23,522.50', status: 'Pagado' },
-                      { name: 'Juan Martínez', base: 'RD$ 45,000.00', ded: 'RD$ 4,850.00', net: 'RD$ 40,150.00', status: 'Pagado' },
-                      { name: 'Laura Rodríguez', base: 'RD$ 28,000.00', ded: 'RD$ 1,654.80', net: 'RD$ 26,345.20', status: 'Pagado' }
-                    ].map((row, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50/80">
+                    nomina.length === 0 ? (
+                      <tr><td colSpan={7} className="py-12 text-center text-slate-400">
+                        <DollarSign size={32} className="mx-auto mb-2 opacity-40" />
+                        <p className="font-medium text-slate-600">Sin datos de nómina</p>
+                      </td></tr>
+                    ) : nomina.map((row, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
                         <td className="py-3.5 px-4 font-bold text-slate-900">{row.name}</td>
-                        <td className="py-3.5 px-4 font-semibold text-slate-800">{row.base}</td>
-                        <td className="py-3.5 px-4 text-rose-600 font-semibold">{row.ded}</td>
-                        <td className="py-3.5 px-4 font-extrabold text-emerald-700">{row.net}</td>
+                        <td className="py-3.5 px-4 font-semibold text-slate-800">{fmt(row.salario_base)}</td>
+                        <td className="py-3.5 px-4 text-rose-600 font-semibold">{fmt(row.deduccion_sfs)}</td>
+                        <td className="py-3.5 px-4 text-rose-600 font-semibold">{fmt(row.deduccion_afp)}</td>
+                        <td className="py-3.5 px-4 font-extrabold text-emerald-700">{fmt(row.salario_neto)}</td>
                         <td className="py-3.5 px-4">
-                          <span className="px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">{row.status}</span>
+                          <span className="px-2.5 py-0.5 rounded-full font-bold text-xs bg-amber-50 text-amber-700 border border-amber-200">
+                            {row.estado}
+                          </span>
                         </td>
-                        <td className="py-3.5 px-4 text-slate-400">---</td>
                         <td className="py-3.5 px-3 text-center">
-                          <button onClick={() => showToast(`Volante de pago generado para ${row.name}`)} className="px-2 py-1 rounded bg-slate-100 font-semibold text-slate-700">Comprobante</button>
+                          <button onClick={() => showToast(`Volante generado para ${row.name}`)}
+                            className="px-2 py-1 rounded bg-slate-100 font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700 transition-colors">
+                            Comprobante
+                          </button>
                         </td>
                       </tr>
                     ))
-                  ) : (
-                    [
-                      { col1: 'Farmacéutico', col2: 'Dispensación', col3: 'RD$ 45,000.00', col4: '2 Empleados', status: 'Activo' },
-                      { col1: 'Cajero', col2: 'Caja', col3: 'RD$ 25,000.00', col4: '4 Empleados', status: 'Activo' },
-                      { col1: 'Aux. de Farmacia', col2: 'Dispensación', col3: 'RD$ 28,000.00', col4: '3 Empleados', status: 'Activo' }
-                    ].map((row, idx) => (
-                      <tr key={idx} className="hover:bg-slate-50/80">
-                        <td className="py-3.5 px-4 font-bold text-slate-900">{row.col1}</td>
-                        <td className="py-3.5 px-4 font-medium text-slate-700">{row.col2}</td>
-                        <td className="py-3.5 px-4 font-semibold text-emerald-700">{row.col3}</td>
-                        <td className="py-3.5 px-4 font-medium text-slate-600">{row.col4}</td>
+
+                  /* ── DEPARTAMENTOS ────────────────────────────────────────── */
+                  ) : activeTab === 'Departamentos' ? (
+                    departments.length === 0 ? (
+                      <tr><td colSpan={5} className="py-12 text-center text-slate-400">Sin datos de departamentos</td></tr>
+                    ) : departments.map((d, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
                         <td className="py-3.5 px-4">
-                          <span className="px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">{row.status}</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                              <Building2 size={14} />
+                            </div>
+                            <span className="font-bold text-slate-900">{d.name}</span>
+                          </div>
                         </td>
-                        <td className="py-3.5 px-4 text-slate-400">---</td>
-                        <td className="py-3.5 px-3 text-center">
-                          <button onClick={() => showToast('Detalle consultado')} className="px-2 py-1 rounded bg-slate-100 font-semibold text-slate-700">Ver</button>
+                        <td className="py-3.5 px-4 font-bold text-slate-800">{d.total}</td>
+                        <td className="py-3.5 px-4 text-emerald-700 font-semibold">{d.activos}</td>
+                        <td className="py-3.5 px-4 font-semibold text-slate-800">{fmt(d.salario_promedio)}</td>
+                        <td className="py-3.5 px-4">
+                          <span className="px-2.5 py-0.5 rounded-full font-bold text-xs bg-emerald-50 text-emerald-700 border border-emerald-200">Activo</span>
                         </td>
+                      </tr>
+                    ))
+
+                  /* ── CARGOS ──────────────────────────────────────────────── */
+                  ) : activeTab === 'Cargos' ? (
+                    positions.length === 0 ? (
+                      <tr><td colSpan={5} className="py-12 text-center text-slate-400">Sin datos de cargos</td></tr>
+                    ) : positions.map((p, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-2">
+                            <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                              <Briefcase size={14} />
+                            </div>
+                            <span className="font-bold text-slate-900">{p.name}</span>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-600 font-medium">{p.department || '—'}</td>
+                        <td className="py-3.5 px-4 font-bold text-slate-800">{p.empleados}</td>
+                        <td className="py-3.5 px-4 font-semibold text-emerald-700">{fmt(p.salario_promedio)}</td>
+                        <td className="py-3.5 px-4">
+                          <span className="px-2.5 py-0.5 rounded-full font-bold text-xs bg-emerald-50 text-emerald-700 border border-emerald-200">{p.estado}</span>
+                        </td>
+                      </tr>
+                    ))
+
+                  /* ── VACACIONES / PERMISOS / DOCUMENTOS ──────────────────── */
+                  ) : (
+                    employees.slice(0, 5).map((e, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50/80 transition-colors">
+                        <td className="py-3.5 px-4 font-bold text-slate-900">{e.name}</td>
+                        <td className="py-3.5 px-4 text-slate-600">
+                          {activeTab === 'Vacaciones' ? 'Vacaciones anuales' : activeTab === 'Permisos' ? 'Permiso médico' : 'Cédula de identidad'}
+                        </td>
+                        <td className="py-3.5 px-4 font-mono text-slate-600">{e.hire_date || '—'}</td>
+                        <td className="py-3.5 px-4 font-mono text-slate-600">—</td>
+                        <td className="py-3.5 px-4">
+                          <span className="px-2.5 py-0.5 rounded-full font-bold text-xs bg-sky-50 text-sky-700 border border-sky-200">Vigente</span>
+                        </td>
+                        <td className="py-3.5 px-4 text-slate-400">—</td>
                       </tr>
                     ))
                   )}
@@ -911,68 +774,82 @@ const RRHH = () => {
               </table>
             </div>
 
-            {/* PAGINATION FOOTER */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-t border-slate-100 bg-slate-50/40 text-xs text-slate-500">
-              <div>
-                Mostrando <span className="font-semibold text-slate-700">{employees.length === 0 ? 0 : 1}</span> a <span className="font-semibold text-slate-700">{employees.length}</span> de <span className="font-semibold text-slate-700">{total}</span> empleados
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <button
-                  disabled={page <= 1}
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-all"
-                >
-                  &lt;
+            {/* Toolbar inferior según tab */}
+            {activeTab === 'Asistencias' && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3 border-t border-slate-100 bg-slate-50/40 text-xs">
+                <div className="flex items-center gap-2">
+                  <label className="font-semibold text-slate-600">Fecha:</label>
+                  <input type="date" value={filterDateAtt}
+                    onChange={e => { setFilterDateAtt(e.target.value); fetchAttendance(e.target.value); }}
+                    className="input text-xs py-1.5 w-36" />
+                </div>
+                <div className="flex items-center gap-2 text-slate-500">
+                  <span>{attendance.length} registros de asistencia para {new Date(filterDateAtt + 'T00:00:00').toLocaleDateString('es-DO', { dateStyle: 'long' })}</span>
+                </div>
+                <button onClick={() => setIsAttModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-all">
+                  <Plus size={14} /> Registrar Ponche
                 </button>
+              </div>
+            )}
 
-                {[1, 2, 3, 4].map(pNum => (
-                  <button
-                    key={pNum}
-                    onClick={() => setPage(pNum)}
-                    className={`w-7 h-7 rounded-lg font-medium transition-all ${
-                      pNum === page
-                        ? 'bg-emerald-600 text-white font-semibold shadow-sm'
-                        : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    {pNum}
+            {activeTab === 'Nómina' && (
+              <div className="flex items-center justify-between gap-3 px-5 py-3 border-t border-slate-100 bg-slate-50/40 text-xs">
+                <span className="text-slate-500">
+                  Nómina total mensual: <strong className="text-emerald-700 text-sm">{fmt(stats?.nomina_total || 0)}</strong>
+                </span>
+                <button onClick={() => showToast('Procesando nómina del mes...')}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold transition-all">
+                  <DollarSign size={14} /> Procesar Nómina
+                </button>
+              </div>
+            )}
+
+            {/* Paginación empleados */}
+            {activeTab === 'Empleados' && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-t border-slate-100 bg-slate-50/40 text-xs text-slate-500">
+                <div>
+                  Mostrando <span className="font-semibold text-slate-700">{employees.length === 0 ? 0 : ((page - 1) * limit) + 1}</span> – <span className="font-semibold text-slate-700">{Math.min(page * limit, total)}</span> de <span className="font-semibold text-slate-700">{total}</span> empleados
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button disabled={page <= 1} onClick={() => setPage(p => Math.max(1, p - 1))}
+                    className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40">
+                    &lt;
                   </button>
-                ))}
-
-                <button
-                  disabled={page >= totalPages}
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-all"
-                >
-                  &gt;
-                </button>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <select
-                  value={limit}
-                  onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
-                  className="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                >
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map(n => (
+                    <button key={n} onClick={() => setPage(n)}
+                      className={`w-7 h-7 rounded-lg font-medium transition-all ${
+                        n === page ? 'bg-emerald-600 text-white font-semibold' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                      }`}>
+                      {n}
+                    </button>
+                  ))}
+                  <button disabled={page >= totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40">
+                    &gt;
+                  </button>
+                </div>
+                <select value={limit} onChange={e => { setLimit(Number(e.target.value)); setPage(1); }}
+                  className="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500">
                   <option value={8}>8 por página</option>
                   <option value={15}>15 por página</option>
+                  <option value={25}>25 por página</option>
                 </select>
               </div>
-            </div>
+            )}
           </div>
 
-          {/* ─── CHATBOT PHARMAPLUS WIDGET AT BOTTOM ──────────────────────────── */}
+          {/* ── Chatbot ─────────────────────────────────────────────────────── */}
           <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm p-4 flex flex-col gap-3 relative overflow-hidden">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-purple-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 to-purple-600 flex items-center justify-center text-white shadow-md">
                 <Bot size={22} />
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-bold text-slate-800 text-sm">Chatbot PharmaPlus</h3>
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                     En línea
                   </span>
                 </div>
@@ -981,17 +858,9 @@ const RRHH = () => {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              {[
-                'Registrar asistencia',
-                'Solicitud de vacaciones',
-                'Empleados por departamento',
-                'Cumpleaños del mes'
-              ].map((chip, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleSendChatMessage(chip)}
-                  className="px-3 py-1.5 rounded-xl border border-emerald-100 bg-emerald-50/50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition-all hover:scale-105 active:scale-95"
-                >
+              {['Registrar asistencia', 'Ver nómina', 'Empleados por departamento', 'Cumpleaños del mes'].map((chip, idx) => (
+                <button key={idx} onClick={() => handleSendChat(chip)}
+                  className="px-3 py-1.5 rounded-xl border border-emerald-100 bg-emerald-50/50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition-all hover:scale-105 active:scale-95">
                   {chip}
                 </button>
               ))}
@@ -1000,184 +869,114 @@ const RRHH = () => {
             {chatMessages.length > 1 && (
               <div className="max-h-32 overflow-y-auto space-y-2 bg-slate-50/80 p-3 rounded-xl border border-slate-100 text-xs">
                 {chatMessages.slice(1).map((msg, i) => (
-                  <div
-                    key={i}
-                    className={`p-2.5 rounded-xl ${
-                      msg.role === 'user'
-                        ? 'bg-emerald-600 text-white ml-8 font-medium'
-                        : 'bg-white text-slate-700 border border-slate-200 mr-8 shadow-2xs'
-                    }`}
-                  >
+                  <div key={i} className={`p-2.5 rounded-xl ${
+                    msg.role === 'user'
+                      ? 'bg-emerald-600 text-white ml-8 font-medium'
+                      : 'bg-white text-slate-700 border border-slate-200 mr-8 shadow-2xs'
+                  }`}>
                     {msg.text}
                   </div>
                 ))}
               </div>
             )}
 
-            <form
-              onSubmit={(e) => { e.preventDefault(); handleSendChatMessage(); }}
-              className="flex items-center gap-2 mt-1"
-            >
-              <button
-                type="button"
-                onClick={handleVoiceInput}
+            <form onSubmit={e => { e.preventDefault(); handleSendChat(); }} className="flex items-center gap-2 mt-1">
+              <button type="button" onClick={handleVoiceInput}
                 className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all shrink-0 ${
                   isListening ? 'bg-rose-500 text-white border-rose-600 animate-pulse' : 'bg-slate-50 border-slate-200 text-slate-500 hover:text-emerald-600 hover:border-emerald-200'
-                }`}
-                title={isListening ? 'Escuchando voz...' : 'Hablar por micrófono'}
-              >
+                }`}>
                 <Mic size={16} />
               </button>
-              <input
-                type="text"
-                placeholder={isListening ? 'Escuchando tu voz...' : 'Escribe tu pregunta...'}
+              <input type="text"
+                placeholder={isListening ? 'Escuchando...' : 'Escribe tu pregunta...'}
                 value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all"
-              />
-              <button
-                type="submit"
-                disabled={!chatInput.trim() || chatLoading}
-                className="w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white flex items-center justify-center transition-all shrink-0 shadow-sm shadow-emerald-600/30"
-              >
+                onChange={e => setChatInput(e.target.value)}
+                className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 transition-all" />
+              <button type="submit" disabled={!chatInput.trim() || chatLoading}
+                className="w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white flex items-center justify-center transition-all shrink-0">
                 <Send size={16} />
               </button>
             </form>
           </div>
-
         </div>
 
-        {/* ─── RIGHT COLUMN: DETALLE DEL EMPLEADO PANEL (4 COLS) ─────────────── */}
+        {/* ── RIGHT: Detalle del empleado ────────────────────────────────────── */}
         <div className="lg:col-span-4">
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sticky top-4 flex flex-col gap-4">
-            
-            {/* Header */}
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <h3 className="font-bold text-slate-800 text-base">Detalle del empleado</h3>
-              <button className="p-1 rounded-lg text-slate-400 hover:text-slate-700 transition-colors">
-                <MoreVertical size={18} />
-              </button>
+              {selectedEmployee && (
+                <button onClick={() => openEditModal(selectedEmployee)} className="p-1 rounded-lg text-slate-400 hover:text-slate-700">
+                  <MoreVertical size={18} />
+                </button>
+              )}
             </div>
 
             {selectedEmployee ? (
               <>
-                {/* Header Avatar Box + Employee Name */}
                 <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-200/80 flex items-center gap-3">
-                  <div className="w-14 h-14 rounded-2xl bg-purple-100 border border-purple-200 text-purple-700 font-extrabold flex items-center justify-center text-lg shrink-0 shadow-2xs">
-                    {selectedEmployee.initials}
+                  <div className={`w-14 h-14 rounded-2xl border font-extrabold flex items-center justify-center text-lg shrink-0 shadow-2xs ${avatarColor(selectedEmployee.id)}`}>
+                    {selectedEmployee.initials_calc || initials(selectedEmployee.name)}
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-900 text-base leading-snug">{selectedEmployee.name}</h4>
                     <p className="text-xs font-semibold text-slate-600">{selectedEmployee.position}</p>
                     <p className="text-[11px] text-slate-400">{selectedEmployee.department}</p>
-                    <div className="mt-1">
-                      {selectedEmployee.is_active === 1 ? (
-                        <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Activa
-                        </span>
-                      ) : (
-                        <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                          Inactiva
-                        </span>
-                      )}
-                    </div>
+                    <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                      selectedEmployee.is_active === 1
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-rose-50 text-rose-700 border-rose-200'
+                    }`}>
+                      {selectedEmployee.is_active === 1 ? 'Activa' : 'Inactiva'}
+                    </span>
                   </div>
                 </div>
 
-                {/* Attribute Breakdown */}
                 <div className="space-y-2 text-xs divide-y divide-slate-100">
-                  <div className="pt-1 flex justify-between">
-                    <span className="text-slate-400 font-medium">Cédula</span>
-                    <span className="font-mono font-bold text-slate-800">{selectedEmployee.cedula}</span>
-                  </div>
+                  {[
+                    { label: 'Cédula', value: selectedEmployee.cedula || '—', mono: true },
+                    { label: 'Teléfono', value: selectedEmployee.phone || '—' },
+                    { label: 'Correo', value: selectedEmployee.email || '—', truncate: true },
+                    { label: 'Fecha de ingreso', value: selectedEmployee.hire_date || '—' },
+                    { label: 'Nacimiento', value: selectedEmployee.birth_date || '—' },
+                    { label: 'Salario', value: `RD$ ${fmtSalary(selectedEmployee.salary)}`, bold: true },
+                    { label: 'Estado civil', value: selectedEmployee.civil_status || '—' },
+                    { label: 'Contacto emergencia', value: selectedEmployee.emergency_contact || '—' },
+                  ].map(({ label, value, mono, truncate, bold }) => (
+                    <div key={label} className="pt-2 flex justify-between gap-2">
+                      <span className="text-slate-400 font-medium shrink-0">{label}</span>
+                      <span className={`text-right ${mono ? 'font-mono font-bold text-slate-800' : bold ? 'font-extrabold text-slate-900' : 'font-semibold text-slate-800'} ${truncate ? 'truncate max-w-[170px]' : ''}`}>
+                        {value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
 
-                  <div className="pt-2 flex justify-between">
-                    <span className="text-slate-400 font-medium">Teléfono</span>
-                    <span className="font-semibold text-slate-800">{selectedEmployee.phone}</span>
-                  </div>
-
-                  <div className="pt-2 flex justify-between">
-                    <span className="text-slate-400 font-medium">Correo</span>
-                    <span className="text-slate-800 font-medium truncate max-w-[170px]">{selectedEmployee.email}</span>
-                  </div>
-
-                  <div className="pt-2">
+                {selectedEmployee.address && (
+                  <div className="text-xs">
                     <span className="text-slate-400 font-medium block mb-0.5">Dirección</span>
                     <span className="text-slate-800 font-medium leading-tight">{selectedEmployee.address}</span>
                   </div>
+                )}
 
-                  <div className="pt-2 flex justify-between">
-                    <span className="text-slate-400 font-medium">Fecha de nacimiento</span>
-                    <span className="font-semibold text-slate-800">{selectedEmployee.birth_date}</span>
-                  </div>
-
-                  <div className="pt-2 flex justify-between">
-                    <span className="text-slate-400 font-medium">Fecha de ingreso</span>
-                    <span className="font-semibold text-slate-800">{selectedEmployee.hire_date}</span>
-                  </div>
-
-                  <div className="pt-2 flex justify-between">
-                    <span className="text-slate-400 font-medium">Salario</span>
-                    <span className="font-extrabold text-slate-900">RD$ {selectedEmployee.salary}</span>
-                  </div>
-
-                  <div className="pt-2 flex justify-between">
-                    <span className="text-slate-400 font-medium">Estado civil</span>
-                    <span className="font-semibold text-slate-800">{selectedEmployee.civil_status}</span>
-                  </div>
-
-                  <div className="pt-2 flex justify-between">
-                    <span className="text-slate-400 font-medium">Contacto de emergencia</span>
-                    <span className="font-semibold text-slate-800">{selectedEmployee.emergency_contact}</span>
-                  </div>
-                </div>
-
-                {/* Document Status Section */}
-                <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
-                  <h4 className="font-bold text-slate-800 text-xs">Documentos</h4>
-                  <div className="space-y-1.5">
-                    {selectedEmployee.documents?.map((doc, idx) => (
-                      <div key={idx} className="flex items-center justify-between text-[11px] bg-slate-50 p-2 rounded-xl">
-                        <span className="text-slate-700 font-medium">{doc.name}</span>
-                        <span className={`px-2 py-0.5 rounded-md font-bold text-[10px] ${
-                          doc.badge === 'amber' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
-                        }`}>
-                          {doc.status}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Bottom Action Buttons */}
-                <div className="flex flex-col gap-2 pt-2">
-                  <button
-                    onClick={() => setIsCarnetModalOpen(true)}
-                    className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-[#16a085] hover:bg-[#12876f] text-white text-xs font-bold transition-all shadow-sm active:scale-95"
-                  >
-                    <QrCode size={16} />
-                    <span>Ver Carnet QR de Empleado</span>
+                <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
+                  <button onClick={() => setIsCarnetModalOpen(true)}
+                    className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-[#16a085] hover:bg-[#12876f] text-white text-xs font-bold transition-all shadow-sm">
+                    <QrCode size={16} /> Ver Carnet QR de Empleado
                   </button>
-
                   <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => openEditEmployeeModal(selectedEmployee)}
-                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-slate-200 hover:border-emerald-200 bg-white hover:bg-emerald-50/50 text-slate-700 text-xs font-semibold transition-all shadow-2xs active:scale-95"
-                    >
-                      <Edit3 size={14} />
-                      <span>Editar</span>
+                    <button onClick={() => openEditModal(selectedEmployee)}
+                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-slate-200 hover:border-emerald-200 bg-white hover:bg-emerald-50/50 text-slate-700 text-xs font-semibold transition-all">
+                      <Edit3 size={14} /> Editar
                     </button>
-
-                    <button
-                      onClick={() => setIsDeleteModalOpen(true)}
-                      className={`inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all shadow-2xs active:scale-95 ${
+                    <button onClick={() => setIsDeleteModalOpen(true)}
+                      className={`inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${
                         selectedEmployee.is_active === 1
                           ? 'border-rose-200 hover:border-rose-300 bg-white hover:bg-rose-50 text-rose-600'
                           : 'border-emerald-200 hover:border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-600'
-                      }`}
-                    >
+                      }`}>
                       {selectedEmployee.is_active === 1 ? <Trash2 size={14} /> : <Check size={14} />}
-                      <span>{selectedEmployee.is_active === 1 ? 'Desactivar' : 'Activar'}</span>
+                      {selectedEmployee.is_active === 1 ? 'Desactivar' : 'Activar'}
                     </button>
                   </div>
                 </div>
@@ -1188,174 +987,92 @@ const RRHH = () => {
                 <p className="font-medium text-slate-600 text-xs">Ningún empleado seleccionado</p>
               </div>
             )}
-
           </div>
         </div>
-
       </div>
 
-      {/* ─── MODAL: NUEVO / EDITAR EMPLEADO ────────────────────────────────── */}
-      <Modal
-        isOpen={isEmployeeModalOpen}
-        onClose={() => setIsEmployeeModalOpen(false)}
-        title={isEditMode ? 'Editar Empleado' : 'Registrar Nuevo Empleado'}
-        maxWidth="max-w-lg"
-      >
-        <form onSubmit={handleSaveEmployeeSubmit} className="flex flex-col gap-4">
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+      {/* MODALES                                                                */}
+      {/* ═══════════════════════════════════════════════════════════════════════ */}
+
+      {/* Modal: Nuevo / Editar Empleado */}
+      <Modal isOpen={isEmployeeModalOpen} onClose={() => setIsEmployeeModalOpen(false)}
+        title={isEditMode ? 'Editar Empleado' : 'Registrar Nuevo Empleado'} maxWidth="max-w-lg">
+        <form onSubmit={handleSaveEmployee} className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-4 text-xs">
-            
             <div className="col-span-2 flex flex-col gap-1">
               <label className="font-semibold text-slate-700">Nombre Completo *</label>
-              <input
-                required
-                type="text"
-                placeholder="Ej. Ana Cajera"
-                className="input text-xs"
-                value={employeeForm.name}
-                onChange={(e) => setEmployeeForm({ ...employeeForm, name: e.target.value })}
-              />
+              <input required type="text" placeholder="Ej. Ana Cajera" className="input text-xs"
+                value={employeeForm.name} onChange={e => setEmployeeForm(p => ({ ...p, name: e.target.value }))} />
             </div>
-
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-slate-700">Cédula de Identidad *</label>
-              <input
-                required
-                type="text"
-                placeholder="001-1234567-8"
-                className="input text-xs font-mono"
-                value={employeeForm.cedula}
-                onChange={(e) => setEmployeeForm({ ...employeeForm, cedula: e.target.value })}
-              />
+              <input required type="text" placeholder="001-1234567-8" className="input text-xs font-mono"
+                value={employeeForm.cedula} onChange={e => setEmployeeForm(p => ({ ...p, cedula: e.target.value }))} />
             </div>
-
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-slate-700">Cargo / Puesto *</label>
-              <input
-                required
-                type="text"
-                placeholder="Ej. Cajero"
-                className="input text-xs"
-                value={employeeForm.position}
-                onChange={(e) => setEmployeeForm({ ...employeeForm, position: e.target.value })}
-              />
+              <input required type="text" placeholder="Ej. Cajero" className="input text-xs"
+                value={employeeForm.position} onChange={e => setEmployeeForm(p => ({ ...p, position: e.target.value }))} />
             </div>
-
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-slate-700">Departamento *</label>
-              <select
-                className="input text-xs font-semibold text-slate-800"
-                value={employeeForm.department}
-                onChange={(e) => setEmployeeForm({ ...employeeForm, department: e.target.value })}
-              >
-                <option value="Caja">Caja</option>
-                <option value="Dispensación">Dispensación</option>
-                <option value="Almacén">Almacén</option>
-                <option value="Administración">Administración</option>
-                <option value="Seguridad">Seguridad</option>
-                <option value="Logística">Logística</option>
-                <option value="Mantenimiento">Mantenimiento</option>
+              <select className="input text-xs" value={employeeForm.department}
+                onChange={e => setEmployeeForm(p => ({ ...p, department: e.target.value }))}>
+                {['Caja','Dispensación','Almacén','Administración','Seguridad','Logística','Mantenimiento','Ventas'].map(d => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
               </select>
             </div>
-
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-slate-700">Teléfono *</label>
-              <input
-                required
-                type="text"
-                placeholder="809-555-1234"
-                className="input text-xs"
-                value={employeeForm.phone}
-                onChange={(e) => setEmployeeForm({ ...employeeForm, phone: e.target.value })}
-              />
+              <input required type="text" placeholder="809-555-1234" className="input text-xs"
+                value={employeeForm.phone} onChange={e => setEmployeeForm(p => ({ ...p, phone: e.target.value }))} />
             </div>
-
             <div className="flex flex-col gap-1">
-              <label className="font-semibold text-slate-700">Correo Electrónico *</label>
-              <input
-                required
-                type="email"
-                placeholder="empleado@pharmaplus.com"
-                className="input text-xs"
-                value={employeeForm.email}
-                onChange={(e) => setEmployeeForm({ ...employeeForm, email: e.target.value })}
-              />
+              <label className="font-semibold text-slate-700">Correo Electrónico</label>
+              <input type="email" placeholder="empleado@pharmaplus.com" className="input text-xs"
+                value={employeeForm.email} onChange={e => setEmployeeForm(p => ({ ...p, email: e.target.value }))} />
             </div>
-
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-slate-700">Salario Mensual (RD$) *</label>
-              <input
-                required
-                type="number"
-                placeholder="25000.00"
-                className="input text-xs font-bold text-emerald-700"
-                value={employeeForm.salary}
-                onChange={(e) => setEmployeeForm({ ...employeeForm, salary: e.target.value })}
-              />
+              <input required type="number" placeholder="25000.00" className="input text-xs font-bold text-emerald-700"
+                value={employeeForm.salary} onChange={e => setEmployeeForm(p => ({ ...p, salary: e.target.value }))} />
             </div>
-
             <div className="col-span-2 flex flex-col gap-1">
               <label className="font-semibold text-slate-700">Dirección Residencial</label>
-              <input
-                type="text"
-                placeholder="C/ Duarte #123, Ens. Naco, Santo Domingo"
-                className="input text-xs"
-                value={employeeForm.address}
-                onChange={(e) => setEmployeeForm({ ...employeeForm, address: e.target.value })}
-              />
+              <input type="text" placeholder="C/ Duarte #123, Ens. Naco, Santo Domingo" className="input text-xs"
+                value={employeeForm.address} onChange={e => setEmployeeForm(p => ({ ...p, address: e.target.value }))} />
             </div>
-
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-slate-700">Fecha de Nacimiento</label>
-              <input
-                type="text"
-                placeholder="15/06/1995"
-                className="input text-xs font-mono"
-                value={employeeForm.birth_date}
-                onChange={(e) => setEmployeeForm({ ...employeeForm, birth_date: e.target.value })}
-              />
+              <input type="date" className="input text-xs font-mono"
+                value={employeeForm.birth_date} onChange={e => setEmployeeForm(p => ({ ...p, birth_date: e.target.value }))} />
             </div>
-
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-slate-700">Fecha de Ingreso</label>
-              <input
-                type="text"
-                placeholder="12/01/2023"
-                className="input text-xs font-mono"
-                value={employeeForm.hire_date}
-                onChange={(e) => setEmployeeForm({ ...employeeForm, hire_date: e.target.value })}
-              />
+              <input type="date" className="input text-xs font-mono"
+                value={employeeForm.hire_date} onChange={e => setEmployeeForm(p => ({ ...p, hire_date: e.target.value }))} />
             </div>
-
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-slate-700">Estado Civil</label>
-              <select
-                className="input text-xs font-semibold text-slate-800"
-                value={employeeForm.civil_status}
-                onChange={(e) => setEmployeeForm({ ...employeeForm, civil_status: e.target.value })}
-              >
+              <select className="input text-xs" value={employeeForm.civil_status}
+                onChange={e => setEmployeeForm(p => ({ ...p, civil_status: e.target.value }))}>
                 <option value="Soltera">Soltero/a</option>
                 <option value="Casado">Casado/a</option>
                 <option value="Unión Libre">Unión Libre</option>
+                <option value="Divorciado">Divorciado/a</option>
+                <option value="Viudo">Viudo/a</option>
               </select>
             </div>
-
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-slate-700">Contacto de Emergencia</label>
-              <input
-                type="text"
-                placeholder="Madre - 809-555-5678"
-                className="input text-xs"
-                value={employeeForm.emergency_contact}
-                onChange={(e) => setEmployeeForm({ ...employeeForm, emergency_contact: e.target.value })}
-              />
+              <input type="text" placeholder="Madre - 809-555-5678" className="input text-xs"
+                value={employeeForm.emergency_contact} onChange={e => setEmployeeForm(p => ({ ...p, emergency_contact: e.target.value }))} />
             </div>
-
           </div>
-
           <div className="flex justify-end gap-3 mt-3 pt-3 border-t border-slate-100">
-            <button type="button" onClick={() => setIsEmployeeModalOpen(false)} className="btn btn-outline text-xs">
-              Cancelar
-            </button>
+            <button type="button" onClick={() => setIsEmployeeModalOpen(false)} className="btn btn-outline text-xs">Cancelar</button>
             <button type="submit" className="btn btn-primary text-xs font-semibold">
               {isEditMode ? 'Guardar Cambios' : 'Crear Empleado'}
             </button>
@@ -1363,13 +1080,9 @@ const RRHH = () => {
         </form>
       </Modal>
 
-      {/* ─── MODAL: DESACTIVAR / ACTIVAR EMPLEADO ─────────────────────────── */}
-      <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => setIsDeleteModalOpen(false)}
-        title={selectedEmployee?.is_active === 1 ? 'Desactivar Empleado' : 'Activar Empleado'}
-        maxWidth="max-w-md"
-      >
+      {/* Modal: Confirmar estado */}
+      <Modal isOpen={isDeleteModalOpen} onClose={() => setIsDeleteModalOpen(false)}
+        title={selectedEmployee?.is_active === 1 ? 'Desactivar Empleado' : 'Activar Empleado'} maxWidth="max-w-md">
         <div className="flex flex-col gap-4 text-center">
           <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mx-auto ${
             selectedEmployee?.is_active === 1 ? 'bg-rose-50 border border-rose-200 text-rose-600' : 'bg-emerald-50 border border-emerald-200 text-emerald-600'
@@ -1381,38 +1094,75 @@ const RRHH = () => {
               ¿Deseas {selectedEmployee?.is_active === 1 ? 'desactivar' : 'activar'} a este empleado?
             </h4>
             <p className="text-xs text-slate-500 mt-1">
-              Se {selectedEmployee?.is_active === 1 ? 'cambiará el estado a inactivo' : 'reactivará la ficha'} para <strong className="text-slate-800">"{selectedEmployee?.name}"</strong>.
+              Se cambiará el estado de <strong className="text-slate-800">"{selectedEmployee?.name}"</strong>.
             </p>
           </div>
-
           <div className="flex justify-center gap-3 pt-2">
-            <button onClick={() => setIsDeleteModalOpen(false)} className="btn btn-outline text-xs">
-              Cancelar
-            </button>
-            <button 
-              onClick={handleToggleDeactivate} 
+            <button onClick={() => setIsDeleteModalOpen(false)} className="btn btn-outline text-xs">Cancelar</button>
+            <button onClick={handleToggleStatus}
               className={`btn text-white text-xs font-semibold ${
                 selectedEmployee?.is_active === 1 ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'
-              }`}
-            >
-              {selectedEmployee?.is_active === 1 ? 'Desactivar Empleado' : 'Activar Empleado'}
+              }`}>
+              {selectedEmployee?.is_active === 1 ? 'Desactivar' : 'Activar'} Empleado
             </button>
           </div>
         </div>
       </Modal>
 
-      {/* ─── MODAL: CARNET DIGITAL DE EMPLEADO CON QR ───────────────────────── */}
-      <Modal
-        isOpen={isCarnetModalOpen}
-        onClose={() => setIsCarnetModalOpen(false)}
-        title="Carnet Digital de Empleado con QR"
-        maxWidth="max-w-sm"
-      >
+      {/* Modal: Registrar Ponche/Asistencia */}
+      <Modal isOpen={isAttModalOpen} onClose={() => setIsAttModalOpen(false)}
+        title="Registrar Asistencia / Ponche" maxWidth="max-w-md">
+        <div className="flex flex-col gap-4 text-xs">
+          <div className="flex flex-col gap-1">
+            <label className="font-semibold text-slate-700">Empleado *</label>
+            <select className="input text-xs" value={attForm.employee_id}
+              onChange={e => setAttForm(p => ({ ...p, employee_id: e.target.value }))}>
+              <option value="">— Seleccionar empleado —</option>
+              {employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+            </select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="font-semibold text-slate-700">Fecha</label>
+              <input type="date" className="input text-xs" value={attForm.date}
+                onChange={e => setAttForm(p => ({ ...p, date: e.target.value }))} />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="font-semibold text-slate-700">Hora entrada</label>
+              <input type="time" className="input text-xs" value={attForm.check_in}
+                onChange={e => setAttForm(p => ({ ...p, check_in: e.target.value }))} />
+            </div>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="font-semibold text-slate-700">Estado</label>
+            <select className="input text-xs" value={attForm.status}
+              onChange={e => setAttForm(p => ({ ...p, status: e.target.value }))}>
+              <option value="presente">Presente</option>
+              <option value="tarde">Tarde</option>
+              <option value="permiso">Permiso</option>
+              <option value="ausente">Ausente</option>
+            </select>
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="font-semibold text-slate-700">Observación (opcional)</label>
+            <input type="text" className="input text-xs" placeholder="Nota de asistencia..."
+              value={attForm.notes} onChange={e => setAttForm(p => ({ ...p, notes: e.target.value }))} />
+          </div>
+          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+            <button onClick={() => setIsAttModalOpen(false)} className="btn btn-outline text-xs">Cancelar</button>
+            <button onClick={handleRegisterAttendance} className="btn btn-primary text-xs">
+              <CheckCircle2 size={14} /> Registrar Asistencia
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal: Carnet QR */}
+      <Modal isOpen={isCarnetModalOpen} onClose={() => setIsCarnetModalOpen(false)}
+        title="Carnet Digital de Empleado con QR" maxWidth="max-w-sm">
         {selectedEmployee && (
           <div className="flex flex-col items-center gap-4 text-center">
-            {/* Carnet Badge Card Box */}
-            <div className="w-full bg-gradient-to-b from-[#16a085] via-[#12876f] to-slate-900 text-white rounded-3xl p-5 shadow-xl border border-emerald-400/30 relative overflow-hidden flex flex-col items-center">
-              {/* Header Badge */}
+            <div className="w-full bg-gradient-to-b from-[#16a085] via-[#12876f] to-slate-900 text-white rounded-3xl p-5 shadow-xl border border-emerald-400/30 flex flex-col items-center">
               <div className="w-full flex items-center justify-between pb-3 border-b border-white/20 mb-3">
                 <div className="flex items-center gap-2">
                   <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center font-black text-xs">P+</div>
@@ -1420,61 +1170,40 @@ const RRHH = () => {
                 </div>
                 <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full uppercase tracking-wider">Carnet Oficial</span>
               </div>
-
-              {/* Employee Avatar */}
-              <div className="w-20 h-20 rounded-full bg-white text-[#16a085] border-4 border-white font-black text-2xl flex items-center justify-center shadow-lg my-1">
-                {selectedEmployee.initials || 'EM'}
+              <div className={`w-20 h-20 rounded-full bg-white border-4 border-white font-black text-2xl flex items-center justify-center shadow-lg my-1 ${avatarColor(selectedEmployee.id)}`}>
+                {selectedEmployee.initials_calc || initials(selectedEmployee.name)}
               </div>
-
-              {/* Employee Info */}
               <h3 className="font-extrabold text-lg text-white mt-1 leading-tight">{selectedEmployee.name}</h3>
               <p className="text-xs font-bold text-emerald-200">{selectedEmployee.position}</p>
-              <p className="text-[11px] text-emerald-100/80 font-medium mb-3">{selectedEmployee.department} | Cédula: {selectedEmployee.cedula}</p>
-
-              {/* Dynamic QR Code Box */}
+              <p className="text-[11px] text-emerald-100/80 font-medium mb-3">{selectedEmployee.department} | Cédula: {selectedEmployee.cedula || '—'}</p>
               <div className="bg-white p-3 rounded-2xl shadow-inner border border-slate-200 flex flex-col items-center my-1">
-                <img 
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(`EMP-${selectedEmployee.id || 1}-${selectedEmployee.cedula || '001-0000000-0'}`)}`} 
-                  alt="QR Carnet Empleado"
-                  className="w-36 h-36 object-contain"
-                />
-                <span className="text-[10px] font-mono font-bold text-slate-700 mt-1">ID: EMP-00{selectedEmployee.id || 1}</span>
+                <img
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(`EMP-${selectedEmployee.id}-${selectedEmployee.cedula || 'N/A'}`)}`}
+                  alt="QR Carnet Empleado" className="w-36 h-36 object-contain" />
+                <span className="text-[10px] font-mono font-bold text-slate-700 mt-1">ID: EMP-{String(selectedEmployee.id).padStart(3, '0')}</span>
               </div>
-
-              <p className="text-[10px] text-emerald-100/70 mt-2 font-medium">
-                Válido para marcado de asistencia y control de acceso.
-              </p>
+              <p className="text-[10px] text-emerald-100/70 mt-2 font-medium">Válido para marcado de asistencia y control de acceso.</p>
             </div>
-
-            {/* Actions */}
             <div className="flex w-full gap-2 pt-1">
-              <button 
-                onClick={() => { window.print(); }} 
-                className="btn btn-outline flex-1 text-xs inline-flex items-center justify-center gap-1.5"
-              >
-                <Printer size={16} />
-                <span>Imprimir Carnet</span>
+              <button onClick={() => window.print()} className="btn btn-outline flex-1 text-xs inline-flex items-center justify-center gap-1.5">
+                <Printer size={16} /> Imprimir Carnet
               </button>
-              <button 
-                onClick={() => { setIsCarnetModalOpen(false); setIsScanModalOpen(true); }} 
-                className="btn bg-[#16a085] hover:bg-[#12876f] text-white flex-1 text-xs font-bold inline-flex items-center justify-center gap-1.5"
-              >
-                <ScanLine size={16} />
-                <span>Escanear QR</span>
+              <button onClick={() => { setIsCarnetModalOpen(false); setIsScanModalOpen(true); }}
+                className="btn flex-1 text-xs font-bold bg-[#16a085] hover:bg-[#12876f] text-white inline-flex items-center justify-center gap-1.5">
+                <ScanLine size={16} /> Escanear QR
               </button>
             </div>
           </div>
         )}
       </Modal>
 
-      {/* Camera Barcode & QR Scanner Modal */}
-      <BarcodeScannerModal 
+      {/* Camera QR Scanner Modal */}
+      <BarcodeScannerModal
         isOpen={isScanModalOpen}
         onClose={() => setIsScanModalOpen(false)}
         onScan={handleBarcodeScanned}
         title="Lector de QR / Carnet de Empleado"
       />
-
     </div>
   );
 };
