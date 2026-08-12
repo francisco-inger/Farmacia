@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Filter, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, Filter, Edit, Trash2, ScanLine } from 'lucide-react';
 import api from '../../services/api';
 import Table from '../../components/ui/Table';
 import Modal from '../../components/ui/Modal';
+import BarcodeScannerModal from '../../components/BarcodeScannerModal';
+import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
+import { playScannerBeep } from '../../utils/sound';
 
 const Productos = () => {
   const [products, setProducts] = useState([]);
@@ -13,6 +16,20 @@ const Productos = () => {
   const [total, setTotal] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState(null);
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
+
+  const handleBarcodeScanned = (code) => {
+    playScannerBeep();
+    if (isModalOpen) {
+      // If modal is open (e.g. creating/editing product), set barcode field!
+      setFormData(prev => ({ ...prev, barcode: code, code: code }));
+    } else {
+      setSearchTerm(code);
+      setPage(1);
+    }
+  };
+
+  useBarcodeScanner(handleBarcodeScanned);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -152,14 +169,20 @@ const Productos = () => {
       {/* Actions Row */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 w-full">
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
+          <div className="relative flex-1 sm:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
             <input 
               type="text" 
-              placeholder="Buscar productos..." 
-              className="input pl-9"
+              placeholder="Buscar por código de barras o nombre..." 
+              className="input pl-9 pr-9"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <ScanLine 
+              onClick={() => setIsCameraScannerOpen(true)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 cursor-pointer transition-colors" 
+              size={16} 
+              title="Escanear código con la cámara" 
             />
           </div>
           <button className="btn btn-outline p-2.5"><Filter size={18} /></button>
@@ -234,6 +257,15 @@ const Productos = () => {
           </div>
         </form>
       </Modal>
+
+      {/* Camera Barcode Scanner Modal */}
+      <BarcodeScannerModal 
+        isOpen={isCameraScannerOpen}
+        onClose={() => setIsCameraScannerOpen(false)}
+        onScan={handleBarcodeScanned}
+        title="Lector de Código de Productos"
+      />
+
     </div>
   );
 };

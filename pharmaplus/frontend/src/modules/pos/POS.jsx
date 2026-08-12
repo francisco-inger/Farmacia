@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, Plus, Trash2, User, CreditCard, Banknote, ShoppingCart, CheckCircle, Printer } from 'lucide-react';
+import { Search, Plus, Trash2, User, CreditCard, Banknote, ShoppingCart, CheckCircle, Printer, ScanLine, Camera } from 'lucide-react';
 import api from '../../services/api';
 import Modal from '../../components/ui/Modal';
+import BarcodeScannerModal from '../../components/BarcodeScannerModal';
+import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
+import { playScannerBeep } from '../../utils/sound';
 
 const POS = () => {
   const [cart, setCart] = useState([]);
@@ -12,6 +15,7 @@ const POS = () => {
   const [cashStatus, setCashStatus] = useState(null); // Check if cash register is open
   
   const [loading, setLoading] = useState(false);
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
   const searchInputRef = useRef(null);
 
   // Payment State
@@ -19,6 +23,26 @@ const POS = () => {
   const [paymentMethod, setPaymentMethod] = useState('efectivo');
   const [amountPaid, setAmountPaid] = useState('');
   const [saleResult, setSaleResult] = useState(null);
+
+  // Handle Barcode Scan (both hardware USB scanner and Camera scanner)
+  const handleBarcodeScanned = async (code) => {
+    try {
+      const res = await api.get(`/products?search=${encodeURIComponent(code)}&limit=5`);
+      if (res.data && res.data.length > 0) {
+        // Exact barcode match or first match
+        const exactMatch = res.data.find(p => p.code === code) || res.data[0];
+        playScannerBeep();
+        addToCart(exactMatch);
+      } else {
+        alert(`No se encontró ningún producto con el código: ${code}`);
+      }
+    } catch (err) {
+      console.error('Error procesando escaneo de código:', err);
+    }
+  };
+
+  // Hardware USB/Bluetooth Scanner Listener
+  useBarcodeScanner(handleBarcodeScanned);
 
   useEffect(() => {
     // Check cash register status
@@ -50,6 +74,12 @@ const POS = () => {
       setProducts([]);
     }
   }, [searchTerm]);
+
+  const handleKeyDownSearch = (e) => {
+    if (e.key === 'Enter' && searchTerm.trim().length > 0) {
+      handleBarcodeScanned(searchTerm.trim());
+    }
+  };
 
   const addToCart = (product) => {
     if (product.stock <= 0) {
@@ -170,11 +200,19 @@ const POS = () => {
           <input 
             ref={searchInputRef}
             type="text" 
-            placeholder="Buscar por código de barras, nombre o componente..." 
-            className="w-full bg-background border border-border rounded-lg py-3 pl-10 pr-4 text-base focus:outline-none focus:border-primary transition-colors"
+            placeholder="Buscar o escanear código de barras (USB / Cámara)..." 
+            className="w-full bg-background border border-border rounded-lg py-3 pl-10 pr-12 text-base focus:outline-none focus:border-primary transition-colors"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onKeyDown={handleKeyDownSearch}
           />
+          <button
+            onClick={() => setIsCameraScannerOpen(true)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-2 text-muted hover:text-[#16a085] hover:bg-emerald-50 rounded-lg transition-colors"
+            title="Abrir Lector de Código por Cámara"
+          >
+            <ScanLine size={20} />
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 flex flex-col gap-2">
@@ -364,11 +402,18 @@ const POS = () => {
 
             <div className="flex w-full gap-3">
               <button onClick={() => setSaleResult(null)} className="btn btn-outline flex-1">Nueva Venta</button>
-              <button onClick={() => { window.print(); setSaleResult(null); }} className="btn btn-primary flex-1"><Printer size={18}/> Imprimir</button>
             </div>
           </div>
         )}
       </Modal>
+
+      {/* Camera Barcode Scanner Modal */}
+      <BarcodeScannerModal 
+        isOpen={isCameraScannerOpen}
+        onClose={() => setIsCameraScannerOpen(false)}
+        onScan={handleBarcodeScanned}
+        title="Lector de Código de Barras POS"
+      />
 
     </div>
   );

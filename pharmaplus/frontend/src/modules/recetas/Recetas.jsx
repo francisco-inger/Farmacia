@@ -7,9 +7,21 @@ import {
 import api from '../../services/api';
 import Modal from '../../components/ui/Modal';
 import { AuthContext } from '../../context/AuthContext';
+import BarcodeScannerModal from '../../components/BarcodeScannerModal';
+import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
+import { playScannerBeep } from '../../utils/sound';
 
 const Recetas = () => {
   const { user } = useContext(AuthContext);
+
+  const handleBarcodeScanned = (code) => {
+    playScannerBeep();
+    setSearchTerm(code);
+    setPage(1);
+    showToast(`Buscando código de receta: ${code}`, 'info');
+  };
+
+  useBarcodeScanner(handleBarcodeScanned);
 
   // Prescriptions List & Selection
   const [recipes, setRecipes] = useState([]);
@@ -1013,6 +1025,14 @@ const Recetas = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Camera Barcode Scanner Modal */}
+      <BarcodeScannerModal 
+        isOpen={isScanModalOpen}
+        onClose={() => setIsScanModalOpen(false)}
+        onScan={handleBarcodeScanned}
+        title="Lector de Código de Receta Médica"
+      />
 
     </div>
   );

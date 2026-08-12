@@ -8,10 +8,34 @@ import {
 import api from '../../services/api';
 import Modal from '../../components/ui/Modal';
 import { AuthContext } from '../../context/AuthContext';
+import BarcodeScannerModal from '../../components/BarcodeScannerModal';
+import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
+import { playScannerBeep } from '../../utils/sound';
 
 const Facturacion = () => {
   const { user } = useContext(AuthContext);
   const clientSelectRef = useRef(null);
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
+
+  // Handle Barcode Scanned
+  const handleBarcodeScanned = async (code) => {
+    try {
+      const res = await api.get(`/products?search=${encodeURIComponent(code)}&limit=5`);
+      const prods = res.data || [];
+      if (prods.length > 0) {
+        const p = prods.find(item => item.code === code) || prods[0];
+        playScannerBeep();
+        handleAddCartItem(p);
+        showToast(`Agregado: ${p.name}`);
+      } else {
+        showToast(`No se encontró producto con código: ${code}`, 'error');
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useBarcodeScanner(handleBarcodeScanned);
 
   // Products & Clients List
   const [productsList, setProductsList] = useState([]);
@@ -435,7 +459,7 @@ const Facturacion = () => {
         <div className="flex items-center gap-2">
           {/* Barcode Scan Button */}
           <button
-            onClick={() => setIsProductPickerOpen(true)}
+            onClick={() => setIsCameraScannerOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold transition-all shadow-sm active:scale-95"
           >
             <ScanLine size={18} className="text-emerald-600" />
@@ -1067,6 +1091,14 @@ const Facturacion = () => {
           </div>
         )}
       </Modal>
+
+      {/* Camera Barcode Scanner Modal */}
+      <BarcodeScannerModal 
+        isOpen={isCameraScannerOpen}
+        onClose={() => setIsCameraScannerOpen(false)}
+        onScan={handleBarcodeScanned}
+        title="Lector de Código de Facturación"
+      />
 
     </div>
   );

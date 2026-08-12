@@ -8,6 +8,9 @@ import {
 import api from '../../services/api';
 import Modal from '../../components/ui/Modal';
 import { AuthContext } from '../../context/AuthContext';
+import BarcodeScannerModal from '../../components/BarcodeScannerModal';
+import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
+import { playScannerBeep } from '../../utils/sound';
 
 const Inventario = () => {
   const { user } = useContext(AuthContext);
@@ -23,6 +26,15 @@ const Inventario = () => {
   const [total, setTotal] = useState(0);
   const [filterLowStock, setFilterLowStock] = useState(false);
   const [showFiltersModal, setShowFiltersModal] = useState(false);
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
+
+  const handleBarcodeScanned = (code) => {
+    playScannerBeep();
+    setSearchTerm(code);
+    setPage(1);
+  };
+
+  useBarcodeScanner(handleBarcodeScanned);
 
   // Check URL query parameters for filter=low_stock
   useEffect(() => {
@@ -340,7 +352,12 @@ const Inventario = () => {
             value={searchTerm}
             onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
           />
-          <ScanLine className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer hover:text-emerald-600 transition-colors" size={18} title="Escanear código de barras" />
+          <ScanLine 
+            onClick={() => setIsCameraScannerOpen(true)}
+            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 cursor-pointer hover:text-emerald-600 transition-colors" 
+            size={18} 
+            title="Escanear código de barras (Cámara / USB)" 
+          />
         </div>
 
         <div className="flex items-center gap-2">
@@ -1135,6 +1152,14 @@ const Inventario = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Camera Barcode Scanner Modal */}
+      <BarcodeScannerModal 
+        isOpen={isCameraScannerOpen}
+        onClose={() => setIsCameraScannerOpen(false)}
+        onScan={handleBarcodeScanned}
+        title="Lector de Código de Inventario"
+      />
 
     </div>
   );
