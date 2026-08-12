@@ -173,29 +173,32 @@ const Integraciones = () => {
         </div>
       )}
 
-      {/* Top Banner Header */}
-      <div className="bg-gradient-to-r from-[#1B3A4B] via-[#0E8F7E] to-[#14B8A6] text-white rounded-2xl p-6 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="bg-white/20 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full backdrop-blur-sm border border-white/20">
-              API Gateway & Webhooks
-            </span>
-            <span className="flex items-center gap-1 text-[11px] font-semibold text-teal-200">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              7 Conectores Activos
-            </span>
+      {/* ─── UNIFIED HEADER CARD WITH MODULE IMAGE ────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <img 
+            src="/modules/reportes.png" 
+            alt="Integraciones" 
+            className="w-14 h-14 rounded-2xl object-cover border border-emerald-100 shadow-sm shrink-0"
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Integraciones Externas & Cloud</h1>
+              <span className="bg-emerald-50 text-[#16a085] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
+                7 Conectores Activos
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium">Plataforma API Gateway con aseguradoras (ARS), distribuidores, facturación DGII y Webhooks</p>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight">Integraciones Externas & Servicios Cloud</h1>
-          <p className="text-sm text-teal-100/90 max-w-2xl">
-            Plataforma centralizada de conexión con aseguradoras (ARS), distribuidores de medicamentos, facturación electrónica DGII y Webhooks en tiempo real.
-          </p>
         </div>
+
         <div className="flex items-center gap-3 shrink-0">
           <button 
             onClick={fetchData} 
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-medium transition backdrop-blur-sm border border-white/20"
+            className="flex items-center gap-2 bg-[#16a085] hover:bg-[#12876f] text-white px-4 py-2 rounded-xl text-xs font-bold shadow transition"
           >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
             <span>Actualizar Estados</span>
           </button>
         </div>

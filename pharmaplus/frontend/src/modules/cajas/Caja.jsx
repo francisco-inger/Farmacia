@@ -404,10 +404,25 @@ const Caja = () => {
         </div>
       )}
 
-      {/* ─── HEADER ────────────────────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Caja</h1>
-        <p className="text-sm text-slate-500">Administra la apertura, operaciones y cierre de caja</p>
+      {/* ─── UNIFIED HEADER CARD WITH MODULE IMAGE ────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <img 
+            src="/modules/pos.png" 
+            alt="Caja" 
+            className="w-14 h-14 rounded-2xl object-cover border border-emerald-100 shadow-sm shrink-0"
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Gestión de Caja & Arqueos</h1>
+              <span className="bg-emerald-50 text-[#16a085] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
+                Turno en Vivo
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium">Apertura de turno, movimientos de ingreso/egreso, desglose de efectivo y cierre fiscal</p>
+          </div>
+        </div>
       </div>
 
       {/* ─── TOP 4 KPI STAT CARDS ────────────────────────────────────────────── */}

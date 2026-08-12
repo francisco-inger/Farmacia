@@ -228,11 +228,19 @@ const AsistenteIA = () => {
         {/* Chat Header */}
         <div className="p-4 border-b border-border flex items-center justify-between bg-surface">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-dark text-white flex items-center justify-center font-bold shadow-xs">
-              <BotMessageSquare size={22} />
-            </div>
+            <img 
+              src="/modules/reportes.png" 
+              alt="IA" 
+              className="w-12 h-12 rounded-xl object-cover border border-emerald-100 shadow-sm shrink-0"
+              onError={(e) => { e.target.style.display = 'none'; }}
+            />
             <div>
-              <h2 className="font-bold text-main text-base leading-tight">Asistente IA Pharma</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="font-bold text-main text-base leading-tight">Asistente IA Pharma</h2>
+                <span className="bg-emerald-50 text-[#16a085] text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
+                  Groq Llama 3.3
+                </span>
+              </div>
               <p className="text-xs text-success font-semibold flex items-center gap-1">
                 <Database size={12} /> Capacidad de Lectura, Creación, Edición y Eliminación en BD
               </p>

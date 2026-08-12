@@ -561,10 +561,25 @@ const RRHH = () => {
         </div>
       )}
 
-      {/* ─── HEADER & TOP ACTION BAR ────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">RR. HH.</h1>
-        <p className="text-sm text-slate-500">Gestiona la información de tu equipo y procesos de recursos humanos</p>
+      {/* ─── UNIFIED HEADER CARD WITH MODULE IMAGE ────────────────────────────────────────── */}
+      <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <img 
+            src="/modules/clientes.png" 
+            alt="RRHH" 
+            className="w-14 h-14 rounded-2xl object-cover border border-emerald-100 shadow-sm shrink-0"
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Recursos Humanos (RR. HH.)</h1>
+              <span className="bg-emerald-50 text-[#16a085] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
+                Gestión de Personal
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 font-medium">Gestión de empleados, control de asistencia, turnos de trabajo, nómina y vacaciones</p>
+          </div>
+        </div>
       </div>
 
       {/* ─── TOP 5 KPI STAT CARDS ────────────────────────────────────────────── */}
