@@ -1,9 +1,10 @@
 const express = require('express');
 const ctrl = require('./inventario.controller');
+const { requireRole } = require('../../middleware/roleMiddleware');
 const { authMiddleware } = require('../../middleware/authMiddleware');
 const router = express.Router();
-router.get('/', authMiddleware, ctrl.getInventory);
-router.get('/movements', authMiddleware, ctrl.getMovements);
-router.get('/expiring', authMiddleware, ctrl.getExpiring);
-router.post('/adjust', authMiddleware, ctrl.createAdjustment);
+router.get('/', authMiddleware, requireRole('admin','inventario'), ctrl.getInventory);
+router.get('/movements', authMiddleware, requireRole('admin','inventario'), ctrl.getMovements);
+router.get('/expiring', authMiddleware, requireRole('admin','inventario'), ctrl.getExpiring);
+router.post('/adjust', authMiddleware, requireRole('admin','inventario'), ctrl.createAdjustment);
 module.exports = router;

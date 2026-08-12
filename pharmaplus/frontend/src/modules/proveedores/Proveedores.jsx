@@ -30,7 +30,18 @@ const Proveedores = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
+
+  // Filter Modal State
+  const [filters, setFilters] = useState({
+    type: 'Todos',
+    city: 'Todas',
+    is_active: 'Todos'
+  });
+
+  // Catalog Products State
+  const [allProducts, setAllProducts] = useState([]);
 
   // Form State (New / Edit Supplier)
   const [supplierForm, setSupplierForm] = useState({
@@ -47,8 +58,32 @@ const Proveedores = () => {
     contact_name: '',
     payment_terms: 'Crédito 30 días',
     is_active: 1,
-    notes: ''
+    notes: '',
+    products: []
   });
+
+  const handleAddProductRow = () => {
+    setSupplierForm(prev => ({
+      ...prev,
+      products: [...prev.products, { product_id: '', price: '' }]
+    }));
+  };
+
+  const handleRemoveProductRow = (index) => {
+    setSupplierForm(prev => ({
+      ...prev,
+      products: prev.products.filter((_, i) => i !== index)
+    }));
+  };
+
+  const handleProductRowChange = (index, field, value) => {
+    setSupplierForm(prev => {
+      const updated = [...prev.products];
+      updated[index] = { ...updated[index], [field]: value };
+      return { ...prev, products: updated };
+    });
+  };
+
 
   // Chatbot State
   const [chatInput, setChatInput] = useState('');
@@ -245,6 +280,21 @@ const Proveedores = () => {
     }
   ];
 
+  // Fetch All Products from catalog once
+  useEffect(() => {
+    const fetchAllProducts = async () => {
+      try {
+        const res = await api.get('/products?limit=1000');
+        const resData = res.data || res;
+        const productsList = Array.isArray(resData) ? resData : (resData?.data || []);
+        setAllProducts(productsList);
+      } catch (err) {
+        console.error('Error fetching catalog products:', err);
+      }
+    };
+    fetchAllProducts();
+  }, []);
+
   // Fetch Suppliers Data
   const fetchSuppliersData = async () => {
     try {
@@ -253,7 +303,7 @@ const Proveedores = () => {
       let list = sampleSuppliers;
 
       if (res.success && res.data && res.data.length > 0) {
-        list = res.data.map((s, idx) => {
+        list = res.data.map((s) => {
           const name = s.company_name || 'FarmaDistribuidora, SRL';
           const initials = name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'FD';
           return {
@@ -270,7 +320,8 @@ const Proveedores = () => {
             contact_name: s.contact_name || 'Pedro Martínez',
             payment_terms: s.payment_terms ? `Crédito ${s.payment_terms} días` : 'Crédito 30 días',
             is_active: s.is_active !== undefined ? s.is_active : 1,
-            notes: s.notes || 'Proveedor principal de medicamentos e insumos.'
+            notes: s.notes || 'Proveedor principal de medicamentos e insumos.',
+            products: s.products || []
           };
         });
       }
@@ -304,12 +355,28 @@ const Proveedores = () => {
         list = list.filter(s => s.is_active === 0);
       }
 
+      // Filter by Advanced Filter Modal
+      if (filters.type !== 'Todos') {
+        list = list.filter(s => s.type === filters.type);
+      }
+      if (filters.city !== 'Todas') {
+        list = list.filter(s => s.city.toLowerCase() === filters.city.toLowerCase());
+      }
+      if (filters.is_active !== 'Todos') {
+        const activeVal = filters.is_active === 'Activo' ? 1 : 0;
+        list = list.filter(s => s.is_active === activeVal);
+      }
+
       setSuppliers(list);
       setTotal(list.length);
 
       if (list.length > 0) {
         if (!selectedSupplier || !list.some(s => s.id === selectedSupplier.id)) {
           setSelectedSupplier(list[0]);
+        } else {
+          // Keep selection updated
+          const updatedSelected = list.find(s => s.id === selectedSupplier.id);
+          if (updatedSelected) setSelectedSupplier(updatedSelected);
         }
       } else {
         setSelectedSupplier(null);
@@ -326,7 +393,7 @@ const Proveedores = () => {
 
   useEffect(() => {
     fetchSuppliersData();
-  }, [activeTab, statusFilter, page, limit]);
+  }, [activeTab, statusFilter, page, limit, filters]);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -352,7 +419,8 @@ const Proveedores = () => {
       contact_name: '',
       payment_terms: 'Crédito 30 días',
       is_active: 1,
-      notes: ''
+      notes: '',
+      products: []
     });
     setIsSupplierModalOpen(true);
   };
@@ -376,7 +444,8 @@ const Proveedores = () => {
       contact_name: s.contact_name,
       payment_terms: s.payment_terms,
       is_active: s.is_active,
-      notes: s.notes
+      notes: s.notes,
+      products: s.products ? s.products.map(p => ({ product_id: p.id, price: p.price })) : []
     });
     setIsSupplierModalOpen(true);
   };
@@ -385,10 +454,6 @@ const Proveedores = () => {
   const handleSaveSupplierSubmit = async (e) => {
     e.preventDefault();
     try {
-      const initialsCalc = supplierForm.company_name
-        ? supplierForm.company_name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()
-        : 'FD';
-
       const payload = {
         company_name: supplierForm.company_name,
         rnc: supplierForm.rnc,
@@ -396,35 +461,28 @@ const Proveedores = () => {
         phone: supplierForm.phone,
         email: supplierForm.email,
         address: supplierForm.address,
-        payment_terms: 30,
-        notes: supplierForm.notes
+        city: supplierForm.city,
+        country: supplierForm.country,
+        type: supplierForm.type,
+        payment_terms: supplierForm.payment_terms,
+        notes: supplierForm.notes,
+        products: supplierForm.products
+          .filter(p => p.product_id !== '')
+          .map(p => ({
+            product_id: parseInt(p.product_id),
+            price: parseFloat(p.price) || 0
+          }))
       };
 
       if (isEditMode) {
-        try {
-          await api.put(`/suppliers/${supplierForm.id}`, payload);
-        } catch (e) {}
-
-        setSuppliers(prev => prev.map(s => s.id === supplierForm.id ? { ...s, ...supplierForm, initials: initialsCalc } : s));
-        if (selectedSupplier?.id === supplierForm.id) {
-          setSelectedSupplier(prev => ({ ...prev, ...supplierForm, initials: initialsCalc }));
-        }
+        await api.put(`/suppliers/${supplierForm.id}`, payload);
         showToast(`Proveedor "${supplierForm.company_name}" actualizado con éxito`);
       } else {
-        try {
-          await api.post('/suppliers', payload);
-        } catch (e) {}
-
-        const newSup = {
-          ...supplierForm,
-          id: Date.now(),
-          initials: initialsCalc
-        };
-        setSuppliers(prev => [newSup, ...prev]);
-        setSelectedSupplier(newSup);
+        await api.post('/suppliers', payload);
         showToast(`Nuevo proveedor "${supplierForm.company_name}" registrado correctamente`);
       }
       setIsSupplierModalOpen(false);
+      fetchSuppliersData();
     } catch (err) {
       showToast('Error al guardar el proveedor', 'warning');
     }
@@ -435,19 +493,14 @@ const Proveedores = () => {
     if (!selectedSupplier) return;
     try {
       const newStatus = selectedSupplier.is_active === 1 ? 0 : 1;
-      try {
-        if (newStatus === 0) {
-          await api.delete(`/suppliers/${selectedSupplier.id}`);
-        } else {
-          await api.put(`/suppliers/${selectedSupplier.id}`, { is_active: 1 });
-        }
-      } catch (e) {}
-
-      const updated = { ...selectedSupplier, is_active: newStatus };
-      setSuppliers(prev => prev.map(s => s.id === selectedSupplier.id ? updated : s));
-      setSelectedSupplier(updated);
+      if (newStatus === 0) {
+        await api.delete(`/suppliers/${selectedSupplier.id}`);
+      } else {
+        await api.put(`/suppliers/${selectedSupplier.id}`, { is_active: 1 });
+      }
       setIsDeleteModalOpen(false);
       showToast(`Proveedor "${selectedSupplier.company_name}" ${newStatus === 0 ? 'desactivado' : 'activado'} exitosamente`, 'info');
+      fetchSuppliersData();
     } catch (err) {
       showToast('Error cambiando estado del proveedor', 'warning');
     }
@@ -557,7 +610,7 @@ const Proveedores = () => {
         <div className="flex items-center gap-2">
           {/* Filter Button */}
           <button
-            onClick={() => showToast('Filtros avanzados activos', 'info')}
+            onClick={() => setIsFilterModalOpen(true)}
             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold transition-all shadow-sm active:scale-95"
           >
             <Filter size={18} />
@@ -734,56 +787,58 @@ const Proveedores = () => {
             </div>
 
             {/* PAGINATION FOOTER */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-t border-slate-100 bg-slate-50/40 text-xs text-slate-500">
-              <div>
-                Mostrando <span className="font-semibold text-slate-700">{suppliers.length === 0 ? 0 : 1}</span> a <span className="font-semibold text-slate-700">{suppliers.length}</span> de <span className="font-semibold text-slate-700">{total}</span> proveedores
-              </div>
+            {total > limit && (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-5 py-3.5 border-t border-slate-100 bg-slate-50/40 text-xs text-slate-500">
+                <div>
+                  Mostrando <span className="font-semibold text-slate-700">{suppliers.length === 0 ? 0 : 1}</span> a <span className="font-semibold text-slate-700">{suppliers.length}</span> de <span className="font-semibold text-slate-700">{total}</span> proveedores
+                </div>
 
-              {/* Page Number Controls */}
-              <div className="flex items-center gap-1.5">
-                <button
-                  disabled={page <= 1}
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-all"
-                >
-                  &lt;
-                </button>
-
-                {[1, 2, 3, 4].map(pNum => (
+                {/* Page Number Controls */}
+                <div className="flex items-center gap-1.5">
                   <button
-                    key={pNum}
-                    onClick={() => setPage(pNum)}
-                    className={`w-7 h-7 rounded-lg font-medium transition-all ${
-                      pNum === page
-                        ? 'bg-emerald-600 text-white font-semibold shadow-sm'
-                        : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
-                    }`}
+                    disabled={page <= 1}
+                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                    className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-all"
                   >
-                    {pNum}
+                    &lt;
                   </button>
-                ))}
 
-                <button
-                  disabled={page >= totalPages}
-                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                  className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-all"
-                >
-                  &gt;
-                </button>
-              </div>
+                  {[1, 2, 3, 4].map(pNum => (
+                    <button
+                      key={pNum}
+                      onClick={() => setPage(pNum)}
+                      className={`w-7 h-7 rounded-lg font-medium transition-all ${
+                        pNum === page
+                          ? 'bg-emerald-600 text-white font-semibold shadow-sm'
+                          : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {pNum}
+                    </button>
+                  ))}
 
-              {/* Items Per Page Selector */}
-              <div className="flex items-center gap-2">
-                <select
-                  value={limit}
-                  onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
-                  className="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
-                >
-                  <option value={8}>8 por página</option>
-                  <option value={15}>15 por página</option>
-                </select>
+                  <button
+                    disabled={page >= totalPages}
+                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                    className="w-7 h-7 rounded-lg border border-slate-200 bg-white flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 transition-all"
+                  >
+                    &gt;
+                  </button>
+                </div>
+
+                {/* Items Per Page Selector */}
+                <div className="flex items-center gap-2">
+                  <select
+                    value={limit}
+                    onChange={(e) => { setLimit(Number(e.target.value)); setPage(1); }}
+                    className="bg-white border border-slate-200 rounded-lg px-2.5 py-1 text-xs text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                  >
+                    <option value={8}>8 por página</option>
+                    <option value={15}>15 por página</option>
+                  </select>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* ─── CHATBOT PHARMAPLUS WIDGET AT BOTTOM ──────────────────────────── */}
@@ -954,6 +1009,22 @@ const Proveedores = () => {
                   <div className="pt-2 flex justify-between">
                     <span className="text-slate-400 font-medium">Condiciones de pago</span>
                     <span className="font-semibold text-slate-800">{selectedSupplier.payment_terms}</span>
+                  </div>
+
+                  <div className="pt-2">
+                    <span className="text-slate-400 font-medium block mb-1">Productos que vende y precio</span>
+                    {selectedSupplier.products && selectedSupplier.products.length > 0 ? (
+                      <div className="space-y-1.5 max-h-32 overflow-y-auto pr-1 custom-scrollbar">
+                        {selectedSupplier.products.map((p, idx) => (
+                          <div key={idx} className="flex justify-between items-center bg-slate-50 p-2 rounded-lg border border-slate-100">
+                            <span className="font-semibold text-slate-700 truncate max-w-[130px]" title={p.name}>{p.name}</span>
+                            <span className="font-bold text-emerald-600">RD$ {(p.price || 0).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-slate-400 italic text-[11px]">Sin productos asociados.</p>
+                    )}
                   </div>
 
                   <div className="pt-2">
@@ -1138,6 +1209,65 @@ const Proveedores = () => {
               />
             </div>
 
+            {/* Productos que vende y a qué precio */}
+            <div className="col-span-2 flex flex-col gap-2 border-t border-slate-100 pt-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-800">Productos que vende y precio acordado</span>
+                <button
+                  type="button"
+                  onClick={handleAddProductRow}
+                  className="px-2.5 py-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-all"
+                >
+                  + Agregar Producto
+                </button>
+              </div>
+
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-1 custom-scrollbar">
+                {supplierForm.products.length === 0 ? (
+                  <p className="text-[11px] text-slate-400 italic">No hay productos asociados. Haz clic en agregar producto.</p>
+                ) : (
+                  supplierForm.products.map((row, idx) => (
+                    <div key={idx} className="flex items-center gap-2 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                      <select
+                        required
+                        className="input text-xs flex-1 bg-white"
+                        value={row.product_id}
+                        onChange={(e) => handleProductRowChange(idx, 'product_id', e.target.value)}
+                      >
+                        <option value="">Seleccionar Producto...</option>
+                        {allProducts.map(p => (
+                          <option key={p.id} value={p.id}>
+                            {p.name} ({p.code})
+                          </option>
+                        ))}
+                      </select>
+
+                      <div className="w-28 flex items-center gap-1 bg-white border border-slate-200 rounded-xl px-2.5 py-1">
+                        <span className="text-[11px] font-semibold text-slate-400">RD$</span>
+                        <input
+                          required
+                          type="number"
+                          step="0.01"
+                          placeholder="Precio"
+                          className="w-full text-xs font-semibold text-slate-800 focus:outline-none"
+                          value={row.price}
+                          onChange={(e) => handleProductRowChange(idx, 'price', e.target.value)}
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveProductRow(idx)}
+                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg border border-transparent hover:border-rose-100 transition-all shrink-0"
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
           </div>
 
           <div className="flex justify-end gap-3 mt-3 pt-3 border-t border-slate-100">
@@ -1220,6 +1350,82 @@ const Proveedores = () => {
               className="btn btn-primary text-xs font-semibold"
             >
               Simular Escaneo Exitoso
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ─── MODAL: FILTROS AVANZADOS ────────────────────────────────────────── */}
+      <Modal
+        isOpen={isFilterModalOpen}
+        onClose={() => setIsFilterModalOpen(false)}
+        title="Filtros Avanzados de Proveedores"
+        maxWidth="max-w-md"
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-700">Tipo de Proveedor</label>
+            <select
+              className="input text-sm font-semibold"
+              value={filters.type}
+              onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+            >
+              <option value="Todos">Todos</option>
+              <option value="Nacional">Nacional</option>
+              <option value="Internacional">Internacional</option>
+              <option value="Local">Local</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-700">Ciudad</label>
+            <select
+              className="input text-sm font-semibold"
+              value={filters.city}
+              onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+            >
+              <option value="Todas">Todas</option>
+              <option value="Santo Domingo">Santo Domingo</option>
+              <option value="Santiago">Santiago</option>
+              <option value="La Vega">La Vega</option>
+              <option value="Puerto Plata">Puerto Plata</option>
+              <option value="San Cristóbal">San Cristóbal</option>
+              <option value="Miami, FL">Miami, FL</option>
+              <option value="Panamá">Panamá</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-700">Estado de Actividad</label>
+            <select
+              className="input text-sm font-semibold"
+              value={filters.is_active}
+              onChange={(e) => setFilters({ ...filters, is_active: e.target.value })}
+            >
+              <option value="Todos">Todos</option>
+              <option value="Activo">Activos</option>
+              <option value="Inactivo">Inactivos</option>
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">
+            <button
+              onClick={() => {
+                setFilters({ type: 'Todos', city: 'Todas', is_active: 'Todos' });
+                setIsFilterModalOpen(false);
+              }}
+              className="btn btn-outline text-xs"
+            >
+              Restablecer
+            </button>
+            <button
+              onClick={() => {
+                setIsFilterModalOpen(false);
+                showToast('Filtros aplicados con éxito', 'success');
+              }}
+              className="btn btn-primary text-xs font-semibold"
+            >
+              Aplicar Filtros
             </button>
           </div>
         </div>

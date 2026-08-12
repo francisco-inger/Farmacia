@@ -15,12 +15,26 @@ const Caja = () => {
   // Cash Session & Movements State
   const [movements, setMovements] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentRegister, setCurrentRegister] = useState(null);
+  const [kpis, setKpis] = useState({
+    ventas: 0,
+    ingresos: 0,
+    egresos: 0,
+    balance: 0,
+    count: 0
+  });
   const [activeTab, setActiveTab] = useState('Movimientos'); // 'Movimientos', 'Ventas', 'Ingresos', 'Egresos', 'Arqueos', 'Cierres de caja'
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(8);
   const [total, setTotal] = useState(24);
   const [selectedDate, setSelectedDate] = useState('15/08/2026');
+
+  // Sales History State
+  const [salesHistory, setSalesHistory] = useState([]);
+  const [expandedSaleId, setExpandedSaleId] = useState(null);
+  const [saleDetail, setSaleDetail] = useState(null);
+  const [loadingSaleDetail, setLoadingSaleDetail] = useState(false);
 
   // Modals State
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
@@ -168,28 +182,79 @@ const Caja = () => {
     try {
       setLoading(true);
       const res = await api.get('/cajas');
-      let list = sampleMovements;
+      let list = [];
 
       if (res.success && res.data && res.data.length > 0) {
-        const cashObj = res.data[0];
+        const cashObj = res.data.find(c => c.status === 'abierta') || res.data[0];
+        setCurrentRegister(cashObj);
+        
         try {
           const movRes = await api.get(`/cajas/${cashObj.id}/movements`);
-          if (movRes.success && movRes.data && movRes.data.length > 0) {
-            list = movRes.data.map(m => ({
+          if (movRes.success && movRes.data) {
+            const rawMovements = movRes.data;
+            
+            // Calculate KPIs
+            let ventasTotal = 0;
+            let ingresosTotal = 0;
+            let egresosTotal = 0;
+            
+            rawMovements.forEach(m => {
+              const amt = parseFloat(m.amount) || 0;
+              if (m.movement_type === 'venta') {
+                ventasTotal += amt;
+              } else if (m.movement_type === 'ingreso') {
+                ingresosTotal += amt;
+              } else if (['retiro', 'devolucion', 'gasto'].includes(m.movement_type)) {
+                egresosTotal += amt;
+              }
+            });
+
+            setKpis({
+              ventas: ventasTotal,
+              ingresos: ingresosTotal,
+              egresos: egresosTotal,
+              balance: cashObj.initial_amount + ventasTotal + ingresosTotal - egresosTotal,
+              count: rawMovements.filter(m => m.movement_type === 'venta').length
+            });
+
+            list = rawMovements.map(m => ({
               id: m.id,
               time: new Date(m.created_at || Date.now()).toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit' }),
-              type: m.movement_type === 'venta' ? 'Venta' : m.movement_type === 'ingreso' ? 'Ingreso' : 'Egreso',
-              typeBadge: m.movement_type === 'venta' ? 'emerald' : m.movement_type === 'ingreso' ? 'sky' : 'rose',
-              doc: m.movement_type === 'venta' ? `FAC-000${m.id}` : m.movement_type === 'ingreso' ? `ING-000${m.id}` : `EGR-000${m.id}`,
-              description: m.description || (m.movement_type === 'venta' ? 'Venta a consumidor final' : 'Movimiento de caja'),
+              type: m.movement_type === 'venta' ? 'Venta' : m.movement_type === 'ingreso' ? 'Ingreso' : m.movement_type === 'apertura' ? 'Apertura' : m.movement_type === 'cierre' ? 'Cierre' : 'Egreso',
+              typeBadge: m.movement_type === 'venta' ? 'emerald' : (m.movement_type === 'ingreso' || m.movement_type === 'apertura') ? 'sky' : 'rose',
+              doc: m.movement_type === 'venta' ? `FAC-${String(m.id).padStart(6, '0')}` : m.movement_type === 'ingreso' ? `ING-${String(m.id).padStart(6, '0')}` : m.movement_type === 'apertura' ? `APE-${String(m.id).padStart(6, '0')}` : m.movement_type === 'cierre' ? `CIE-${String(m.id).padStart(6, '0')}` : `EGR-${String(m.id).padStart(6, '0')}`,
+              description: m.description || (m.movement_type === 'venta' ? 'Venta a consumidor final' : m.movement_type === 'apertura' ? 'Apertura de turno' : m.movement_type === 'cierre' ? 'Cierre de turno' : 'Movimiento de caja'),
               method: m.payment_method || 'Efectivo',
               methodBadge: (m.payment_method || 'Efectivo') === 'Tarjeta' ? 'purple' : (m.payment_method || 'Efectivo') === 'Transferencia' ? 'amber' : 'emerald',
               amount: parseFloat(m.amount || 0).toLocaleString('es-DO', { minimumFractionDigits: 2 }),
-              isOutflow: m.movement_type === 'retiro' || m.movement_type === 'gasto' || m.movement_type === 'Egreso',
+              isOutflow: ['retiro', 'devolucion', 'gasto'].includes(m.movement_type),
               user: m.user_name || 'Ana Cajera'
             }));
           }
-        } catch (e) {}
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        list = sampleMovements;
+        setCurrentRegister(null);
+        setKpis({
+          ventas: 25450.00,
+          ingresos: 25850.00,
+          egresos: 400.00,
+          balance: 25450.00,
+          count: 24
+        });
+      }
+
+      // Filter by Tab
+      if (activeTab === 'Ventas') {
+        list = list.filter(m => m.type === 'Venta');
+      } else if (activeTab === 'Ingresos') {
+        list = list.filter(m => m.type === 'Ingreso' || m.type === 'Apertura');
+      } else if (activeTab === 'Egresos') {
+        list = list.filter(m => m.type === 'Egreso' || m.isOutflow);
+      } else if (activeTab === 'Cierres de caja' || activeTab === 'Arqueos') {
+        list = list.filter(m => m.type === 'Cierre');
       }
 
       // Filter Search
@@ -204,12 +269,43 @@ const Caja = () => {
       }
 
       setMovements(list);
-      setTotal(24);
+      setTotal(list.length);
+
+      // Also fetch sales history for the Ventas tab
+      try {
+        const salesRes = await api.get('/pos/sales?limit=50');
+        if (salesRes.success && salesRes.data) {
+          setSalesHistory(salesRes.data);
+        }
+      } catch (e) {
+        console.error('Error fetching sales history:', e);
+      }
     } catch (err) {
       console.error('Error cargando movimientos de caja:', err);
       setMovements(sampleMovements);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Fetch sale detail when expanding a row
+  const fetchSaleDetail = async (saleId) => {
+    if (expandedSaleId === saleId) {
+      setExpandedSaleId(null);
+      setSaleDetail(null);
+      return;
+    }
+    setExpandedSaleId(saleId);
+    setLoadingSaleDetail(true);
+    try {
+      const res = await api.get(`/pos/sales/${saleId}`);
+      if (res.success && res.data) {
+        setSaleDetail(res.data);
+      }
+    } catch (err) {
+      console.error('Error fetching sale detail:', err);
+    } finally {
+      setLoadingSaleDetail(false);
     }
   };
 
@@ -235,12 +331,16 @@ const Caja = () => {
     Number(auditCounts.coins || 0)
   );
 
-  const expectedCashBalance = 25450.00;
+  const expectedCashBalance = currentRegister ? kpis.balance : 25450.00;
   const auditDifference = calculatedAuditTotal - expectedCashBalance;
 
   // Handle Save New Cash Movement
   const handleSaveMovementSubmit = async (e) => {
     e.preventDefault();
+    if (!currentRegister) {
+      showToast('Debe haber una caja abierta para registrar movimientos', 'warning');
+      return;
+    }
     try {
       const amt = parseFloat(movementForm.amount || '0');
       const payload = {
@@ -249,28 +349,12 @@ const Caja = () => {
         description: movementForm.description || (movementForm.movement_type === 'ingreso' ? 'Ingreso manual de caja' : 'Retiro para gastos')
       };
 
-      try {
-        await api.post('/cajas/1/movements', payload);
-      } catch (err) {}
+      await api.post(`/cajas/${currentRegister.id}/movements`, payload);
 
-      const newMov = {
-        id: Date.now(),
-        time: new Date().toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit' }),
-        type: movementForm.movement_type === 'ingreso' ? 'Ingreso' : 'Egreso',
-        typeBadge: movementForm.movement_type === 'ingreso' ? 'sky' : 'rose',
-        doc: movementForm.movement_type === 'ingreso' ? `ING-000${Math.floor(Math.random() * 90 + 10)}` : `EGR-000${Math.floor(Math.random() * 90 + 10)}`,
-        description: movementForm.description || (movementForm.movement_type === 'ingreso' ? 'Ingreso de efectivo' : 'Retiro para gastos'),
-        method: movementForm.payment_method,
-        methodBadge: movementForm.payment_method === 'Tarjeta' ? 'purple' : movementForm.payment_method === 'Transferencia' ? 'amber' : 'emerald',
-        amount: amt.toLocaleString('es-DO', { minimumFractionDigits: 2 }),
-        isOutflow: movementForm.movement_type !== 'ingreso',
-        user: user?.name || 'Ana Cajera'
-      };
-
-      setMovements(prev => [newMov, ...prev]);
+      showToast(`Movimiento registrado correctamente`);
       setIsMovementModalOpen(false);
       setMovementForm({ movement_type: 'ingreso', amount: '', payment_method: 'Efectivo', description: '', reference: '' });
-      showToast(`Movimiento de ${newMov.type} (RD$ ${newMov.amount}) registrado correctamente`);
+      fetchCashData();
     } catch (err) {
       showToast('Error al registrar movimiento de caja', 'warning');
     }
@@ -430,8 +514,8 @@ const Caja = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-400">Ventas del día</p>
-            <p className="text-xl font-extrabold text-slate-900 leading-tight">RD$ 25,450.00</p>
-            <p className="text-[10px] font-medium text-slate-400">24 transacciones</p>
+            <p className="text-xl font-extrabold text-slate-900 leading-tight">RD$ {kpis.ventas.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</p>
+            <p className="text-[10px] font-medium text-slate-400">{kpis.count} transacciones</p>
           </div>
         </div>
 
@@ -442,7 +526,7 @@ const Caja = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-400">Ingresos</p>
-            <p className="text-xl font-extrabold text-slate-900 leading-tight">RD$ 25,850.00</p>
+            <p className="text-xl font-extrabold text-slate-900 leading-tight">RD$ {kpis.ingresos.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</p>
             <p className="text-[10px] font-medium text-emerald-600">Efectivo + Otros</p>
           </div>
         </div>
@@ -454,7 +538,7 @@ const Caja = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-400">Egresos</p>
-            <p className="text-xl font-extrabold text-slate-900 leading-tight">RD$ 400.00</p>
+            <p className="text-xl font-extrabold text-slate-900 leading-tight">RD$ {kpis.egresos.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</p>
             <p className="text-[10px] font-medium text-rose-600">Retiro / Gastos</p>
           </div>
         </div>
@@ -466,8 +550,8 @@ const Caja = () => {
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-400">Balance actual</p>
-            <p className="text-xl font-extrabold text-slate-900 leading-tight">RD$ 25,450.00</p>
-            <p className="text-[10px] font-medium text-emerald-600">Diferencia: RD$ 0.00</p>
+            <p className="text-xl font-extrabold text-slate-900 leading-tight">RD$ {kpis.balance.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</p>
+            <p className="text-[10px] font-medium text-emerald-600 font-bold uppercase tracking-wider">Estado: {currentRegister?.status === 'abierta' ? 'Abierta' : 'Cerrada'}</p>
           </div>
         </div>
 
@@ -541,7 +625,140 @@ const Caja = () => {
           {/* CASH MOVEMENTS TABLE CONTAINER */}
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
             <div className="overflow-x-auto min-h-[380px]">
-              <table className="w-full text-left border-collapse">
+
+              {/* === VENTAS TAB: Sales History Detail === */}
+              {activeTab === 'Ventas' ? (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-100 bg-slate-50/60 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                      <th className="py-3.5 px-4">Nro. Venta</th>
+                      <th className="py-3.5 px-4">Fecha</th>
+                      <th className="py-3.5 px-4">Cliente</th>
+                      <th className="py-3.5 px-3">Cajero</th>
+                      <th className="py-3.5 px-4">Subtotal</th>
+                      <th className="py-3.5 px-3">Descuento</th>
+                      <th className="py-3.5 px-4">Total</th>
+                      <th className="py-3.5 px-3">Estado</th>
+                      <th className="py-3.5 px-3 text-center">Detalle</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs">
+                    {loading ? (
+                      <tr>
+                        <td colSpan="9" className="py-12 text-center text-slate-400">
+                          <div className="inline-flex items-center gap-2">
+                            <RefreshCw className="animate-spin text-emerald-600" size={20} />
+                            <span>Cargando historial de ventas...</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : salesHistory.length === 0 ? (
+                      <tr>
+                        <td colSpan="9" className="py-12 text-center text-slate-400">
+                          <Wallet size={32} className="mx-auto mb-2 opacity-40" />
+                          <p className="font-medium text-slate-600">No se encontraron ventas registradas</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      salesHistory.map(sale => (
+                        <React.Fragment key={sale.id}>
+                          <tr className="hover:bg-slate-50/80 transition-colors cursor-pointer" onClick={() => fetchSaleDetail(sale.id)}>
+                            <td className="py-3.5 px-4 font-mono font-bold text-emerald-700">{sale.sale_number}</td>
+                            <td className="py-3.5 px-4 text-slate-600">
+                              {new Date(sale.created_at).toLocaleString('es-DO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                            </td>
+                            <td className="py-3.5 px-4 font-medium text-slate-700">{sale.client_name || 'Consumidor Final'}</td>
+                            <td className="py-3.5 px-3 font-medium text-slate-600">{sale.user_name || '-'}</td>
+                            <td className="py-3.5 px-4 font-semibold text-slate-700">RD$ {parseFloat(sale.subtotal || 0).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+                            <td className="py-3.5 px-3 font-semibold text-rose-500">{parseFloat(sale.discount || 0) > 0 ? `- RD$ ${parseFloat(sale.discount).toLocaleString('es-DO', { minimumFractionDigits: 2 })}` : '-'}</td>
+                            <td className="py-3.5 px-4 font-extrabold text-emerald-700">RD$ {parseFloat(sale.total || 0).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+                            <td className="py-3.5 px-3">
+                              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                                sale.status === 'completada' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                                sale.status === 'anulada' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                                'bg-amber-50 text-amber-700 border border-amber-200'
+                              }`}>
+                                {sale.status === 'completada' ? 'Completada' : sale.status === 'anulada' ? 'Anulada' : sale.status || 'Completada'}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-3 text-center">
+                              <button className="p-1 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors" title="Ver productos">
+                                <Eye size={16} />
+                              </button>
+                            </td>
+                          </tr>
+
+                          {/* Expanded sale detail row */}
+                          {expandedSaleId === sale.id && (
+                            <tr>
+                              <td colSpan="9" className="p-0 bg-slate-50">
+                                <div className="px-6 py-4 border-l-4 border-emerald-500">
+                                  {loadingSaleDetail ? (
+                                    <div className="flex items-center gap-2 text-xs text-slate-500 py-3">
+                                      <RefreshCw className="animate-spin" size={14} />
+                                      <span>Cargando detalle de venta...</span>
+                                    </div>
+                                  ) : saleDetail ? (
+                                    <div className="flex flex-col gap-3">
+                                      <h4 className="text-xs font-black text-slate-800 uppercase tracking-wider">
+                                        Productos de la Venta {saleDetail.sale_number}
+                                      </h4>
+                                      <table className="w-full text-xs border-collapse">
+                                        <thead>
+                                          <tr className="text-[10px] font-bold text-slate-500 border-b border-slate-200 uppercase">
+                                            <th className="py-2 px-3 text-left">Producto</th>
+                                            <th className="py-2 px-3 text-left">Código</th>
+                                            <th className="py-2 px-3 text-center">Cant.</th>
+                                            <th className="py-2 px-3 text-right">Precio Unit.</th>
+                                            <th className="py-2 px-3 text-right">Descuento</th>
+                                            <th className="py-2 px-3 text-right">Subtotal</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-100">
+                                          {(saleDetail.items || []).map((item, idx) => (
+                                            <tr key={idx} className="hover:bg-white transition-colors">
+                                              <td className="py-2 px-3 font-semibold text-slate-800">{item.product_name || `Producto #${item.product_id}`}</td>
+                                              <td className="py-2 px-3 font-mono text-slate-500">{item.code || '-'}</td>
+                                              <td className="py-2 px-3 text-center font-bold text-slate-700">{item.quantity}</td>
+                                              <td className="py-2 px-3 text-right text-slate-700">RD$ {parseFloat(item.unit_price).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+                                              <td className="py-2 px-3 text-right text-rose-500">{parseFloat(item.discount || 0) > 0 ? `- ${parseFloat(item.discount).toFixed(2)}` : '-'}</td>
+                                              <td className="py-2 px-3 text-right font-bold text-emerald-700">RD$ {parseFloat(item.subtotal).toLocaleString('es-DO', { minimumFractionDigits: 2 })}</td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+
+                                      {/* Payment methods */}
+                                      {saleDetail.payments && saleDetail.payments.length > 0 && (
+                                        <div className="flex items-center gap-4 mt-1 pt-2 border-t border-slate-200">
+                                          <span className="text-[10px] font-bold text-slate-500 uppercase">Métodos de pago:</span>
+                                          {saleDetail.payments.map((p, idx) => (
+                                            <span key={idx} className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                                              p.payment_method === 'tarjeta' ? 'bg-purple-50 text-purple-700 border border-purple-200' :
+                                              p.payment_method === 'transferencia' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                                              'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                            }`}>
+                                              {p.payment_method} — RD$ {parseFloat(p.amount).toLocaleString('es-DO', { minimumFractionDigits: 2 })}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <p className="text-xs text-slate-400">No se pudo cargar el detalle.</p>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              ) : (
+                /* === DEFAULT: Movements Table === */
+                <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/60 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     <th className="py-3.5 px-4">Hora</th>
@@ -651,6 +868,7 @@ const Caja = () => {
                   )}
                 </tbody>
               </table>
+              )}
             </div>
 
             {/* PAGINATION FOOTER */}

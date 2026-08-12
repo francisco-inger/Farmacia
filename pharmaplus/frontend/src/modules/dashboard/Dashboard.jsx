@@ -104,7 +104,7 @@ const Dashboard = () => {
   const alertsList = d.alerts || [];
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 h-full relative">
+    <div className="flex flex-col xl:flex-row gap-6 h-full relative">
       
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col gap-6">
@@ -126,7 +126,7 @@ const Dashboard = () => {
         </div>
 
         {/* Top Cards Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-5 gap-3">
           
           <div 
             onClick={() => navigate('/pos')}
@@ -227,10 +227,10 @@ const Dashboard = () => {
         </div>
 
         {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           
           {/* Main Chart */}
-          <div className="card lg:col-span-1 xl:col-span-1 min-h-[300px] flex flex-col p-4">
+          <div className="card md:col-span-2 xl:col-span-1 min-h-[300px] flex flex-col p-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-sm text-main">Ventas de los últimos 7 días</h3>
               <span className="text-[10px] font-semibold text-muted bg-background px-2.5 py-1 rounded-md border border-border">Últimos 7 días</span>
@@ -349,7 +349,7 @@ const Dashboard = () => {
         </div>
 
         {/* Bottom Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-[250px]">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 flex-1 min-h-[250px]">
           
           <div className="card flex flex-col p-4">
             <h3 className="font-bold text-sm text-main mb-4">Ventas por método de pago</h3>
@@ -379,7 +379,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="card flex flex-col p-4">
+          <div className="card md:col-span-2 xl:col-span-1 flex flex-col p-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-bold text-sm text-main">Top 5 productos más vendidos</h3>
               <button onClick={() => navigate('/productos')} className="text-[10px] font-bold text-primary hover:underline">Ver todos →</button>
@@ -438,7 +438,7 @@ const Dashboard = () => {
       </div>
 
       {/* AI Assistant Sidebar Area */}
-      <div className="w-full lg:w-[320px] flex flex-col shrink-0 gap-4">
+      <div className="w-full xl:w-[320px] flex flex-col shrink-0 gap-4">
         
         {/* Assistant Header */}
         <div className="card flex items-center justify-between p-3 shrink-0">
@@ -447,10 +447,10 @@ const Dashboard = () => {
               <Sparkles size={20} />
             </div>
             <div>
-              <p className="text-sm font-bold text-main leading-tight">Asistente IA Pharma</p>
+              <p className="text-sm font-bold text-main leading-tight">Asistente PharmaPlus</p>
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-success"></span>
-                <span className="text-[10px] text-muted leading-tight">En línea (Groq Powered)</span>
+                <span className="text-[10px] text-muted leading-tight">En línea</span>
               </div>
             </div>
           </div>
@@ -575,7 +575,7 @@ const Dashboard = () => {
             </div>
             
             <div className="flex justify-between items-center mt-2">
-              <p className="text-[9px] text-muted leading-tight">PharmaPlus AI • Groq Model</p>
+              <p className="text-[9px] text-muted leading-tight">PharmaPlus • Asistente Activo</p>
               <button 
                 onClick={() => navigate('/ia')}
                 className="w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center shadow-xs hover:scale-105 transition-transform"

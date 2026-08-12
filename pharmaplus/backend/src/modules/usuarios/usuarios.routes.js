@@ -3,7 +3,7 @@ const ctrl = require('./usuarios.controller');
 const { authMiddleware } = require('../../middleware/authMiddleware');
 const { requireAdmin } = require('../../middleware/roleMiddleware');
 const router = express.Router();
-router.get('/', authMiddleware, requireAdmin, ctrl.getAll);
+router.get('/', authMiddleware, ctrl.getAll);
 router.get('/roles', authMiddleware, ctrl.getRoles);
 router.post('/roles', authMiddleware, requireAdmin, ctrl.createRole);
 router.post('/', authMiddleware, requireAdmin, ctrl.create);

@@ -22,6 +22,8 @@ async function runSeed() {
 
   // ─── USUARIOS ─────────────────────────────────────────────────────────────
   const defaultHash = await bcrypt.hash('pharmaplus123', rounds);
+  const adminHash = await bcrypt.hash('admin123', rounds);
+  const cajeroHash = await bcrypt.hash('cajero123', rounds);
   const getRoleId = (roleName) => db.prepare(`SELECT id FROM roles WHERE name = ? OR name LIKE ?`).get(roleName, `%${roleName}%`)?.id || 1;
 
   const sampleUsers = [
@@ -43,7 +45,9 @@ async function runSeed() {
   `);
 
   sampleUsers.forEach(u => {
-    insertUser.run(u.name, u.email, defaultHash, getRoleId(u.role), u.phone, u.is_active);
+    const hash = u.email === 'admin@pharmaplus.do' ? adminHash :
+                 u.email === 'cajero@pharmaplus.do' ? cajeroHash : defaultHash;
+    insertUser.run(u.name, u.email, hash, getRoleId(u.role), u.phone, u.is_active);
   });
 
   // ─── CATEGORÍAS ──────────────────────────────────────────────────────────
@@ -179,6 +183,17 @@ async function runSeed() {
     const existingSale = db.prepare(`SELECT id FROM sales WHERE sale_number = 'VTA-2026-0001'`).get();
     if (!existingSale) {
       const saleResult = insertSale.run('VTA-2026-0001', client1.id, adminUser.id, 760, 760, 'completada');
+      // Create cash register for admin if not exists
+      const cashRegInsert = db.prepare(`INSERT OR IGNORE INTO cash_registers (name, user_id, initial_amount, status) VALUES (?, ?, ?, ?)`);
+      cashRegInsert.run('Caja Principal', adminUser.id, 0, 'abierta');
+      const cashReg = db.prepare(`SELECT id FROM cash_registers WHERE user_id = ?`).get(adminUser.id);
+      // Associate sale with cash register
+      if (cashReg) {
+        db.prepare(`UPDATE sales SET cash_register_id = ? WHERE id = ?`).run(cashReg.id, saleResult.lastInsertRowid);
+        // Record cash movement for the sale
+        const cashMoveInsert = db.prepare(`INSERT INTO cash_movements (cash_register_id, movement_type, amount, payment_method, reference_id, description, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)`);
+        cashMoveInsert.run(cashReg.id, 'venta', 760, 'efectivo', saleResult.lastInsertRowid, 'Venta VTA-2026-0001', adminUser.id);
+      }
       if (saleResult.lastInsertRowid) {
         insertSaleItem.run(saleResult.lastInsertRowid, parProd.id, 2, parProd.sale_price, parProd.sale_price * 2);
         if (vtcProd) insertSaleItem.run(saleResult.lastInsertRowid, vtcProd.id, 2, vtcProd.sale_price, vtcProd.sale_price * 2);

@@ -27,6 +27,7 @@ import Caja from './modules/cajas/Caja';
 import Integraciones from './modules/integraciones/Integraciones';
 import Usuarios from './modules/usuarios/Usuarios';
 import Reportes from './modules/reportes/Reportes';
+import Auditoria from './modules/auditoria/Auditoria';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useContext(AuthContext);
@@ -46,6 +47,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/pos" element={<ProtectedRoute><POS /></ProtectedRoute>} />
       
       {/* Protected Routes inside Layout */}
       <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
@@ -54,8 +56,6 @@ const AppRoutes = () => {
         <Route path="productos" element={<Productos />} />
         <Route path="inventario" element={<Inventario />} />
         <Route path="clientes" element={<Clientes />} />
-        <Route path="pos" element={<POS />} />
-        <Route path="ia" element={<AsistenteIA />} />
         
         {/* Placeholder routes for all modules to prevent 404s while building */}
         <Route path="recetas" element={<Recetas />} />
@@ -66,10 +66,11 @@ const AppRoutes = () => {
         <Route path="rrhh" element={<ProtectedRoute allowedRoles={['admin']}><RRHH /></ProtectedRoute>} />
         <Route path="cajas" element={<Caja />} />
         <Route path="integraciones" element={<Integraciones />} />
+        <Route path="ia" element={<AsistenteIA />} />
         
         {/* Admin only routes */}
         <Route path="usuarios" element={<ProtectedRoute allowedRoles={['admin']}><Usuarios /></ProtectedRoute>} />
-        <Route path="auditoria" element={<ProtectedRoute allowedRoles={['admin']}><div className="p-6"><h1>Auditoría (En desarrollo)</h1></div></ProtectedRoute>} />
+        <Route path="auditoria" element={<ProtectedRoute allowedRoles={['admin']}><Auditoria /></ProtectedRoute>} />
         <Route path="reportes" element={<ProtectedRoute allowedRoles={['admin']}><Reportes /></ProtectedRoute>} />
         <Route path="configuracion" element={<ProtectedRoute allowedRoles={['admin']}><Configuracion /></ProtectedRoute>} />
       </Route>

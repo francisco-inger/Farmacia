@@ -3,7 +3,15 @@ const { getDb } = require('../../db/database');
 
 function getGroqClient() {
   const apiKey = process.env.GROQ_API_KEY;
-  if (apiKey && apiKey !== 'your_groq_api_key_here' && apiKey.trim().length > 10) {
+  // FIX: antes se comparaba contra una key real hardcodeada (formato gsk_...),
+  // lo cual bloqueaba Groq permanentemente si esa era (o coincidía con) la key real.
+  // Ahora solo se rechazan placeholders obvios o keys demasiado cortas.
+  const isMissingOrPlaceholder =
+    !apiKey ||
+    apiKey.trim().length < 20 ||
+    apiKey.toLowerCase().includes('your_groq_api_key_here');
+
+  if (!isMissingOrPlaceholder) {
     try {
       return new Groq({ apiKey });
     } catch (e) {
@@ -130,10 +138,10 @@ function executeTool(db, functionName, args, userId) {
           VALUES (?, ?, 1, ?, ?, ?, ?, 1)
         `);
         const res = stmt.run(name, generatedCode, cost_price || (sale_price * 0.7), sale_price, stock, min_stock);
-        return { 
-          success: true, 
+        return {
+          success: true,
           action: 'add_product',
-          message: `Confirmación de BD: Producto '${name}' (Código ${generatedCode}) registrado correctamente con ${stock} unidades a un precio de venta de RD$ ${sale_price.toFixed(2)}.` 
+          message: `Confirmación de BD: Producto '${name}' (Código ${generatedCode}) registrado correctamente con ${stock} unidades a un precio de venta de RD$ ${sale_price.toFixed(2)}.`
         };
       }
 
@@ -141,7 +149,7 @@ function executeTool(db, functionName, args, userId) {
         const { product_identifier, name, sale_price, cost_price, stock, min_stock } = args;
         const cleanId = String(product_identifier).trim();
         let prod = db.prepare(`SELECT * FROM products WHERE (id = ? OR name LIKE ? OR code LIKE ?) AND is_active = 1`).get(cleanId, `%${cleanId}%`, `%${cleanId}%`);
-        
+
         if (!prod) {
           prod = db.prepare(`SELECT * FROM products WHERE id = ? OR name LIKE ? OR code LIKE ?`).get(cleanId, `%${cleanId}%`, `%${cleanId}%`);
         }
@@ -161,15 +169,15 @@ function executeTool(db, functionName, args, userId) {
 
         if (stock !== undefined && stock !== prod.stock) {
           db.prepare(`
-            INSERT INTO inventory_movements (product_id, user_id, movement_type, quantity, previous_stock, new_stock, reason)
+            INSERT INTO inventory_movements (product_id, user_id, movement_type, quantity, previous_stock, new_stock, notes)
             VALUES (?, ?, 'ajuste', ?, ?, ?, 'Ajuste por Asistente IA')
           `).run(prod.id, userId || 1, Math.abs(stock - prod.stock), prod.stock, stock);
         }
 
-        return { 
-          success: true, 
+        return {
+          success: true,
           action: 'update_product',
-          message: `Confirmación de BD: Producto '${newName}' (Código: ${prod.code}) actualizado en la base de datos. Stock: ${newStock} unidades | Precio: RD$ ${newSale.toFixed(2)}.` 
+          message: `Confirmación de BD: Producto '${newName}' (Código: ${prod.code}) actualizado en la base de datos. Stock: ${newStock} unidades | Precio: RD$ ${newSale.toFixed(2)}.`
         };
       }
 
@@ -177,14 +185,14 @@ function executeTool(db, functionName, args, userId) {
         const { product_identifier } = args;
         const cleanId = String(product_identifier).trim();
         let prod = db.prepare(`SELECT * FROM products WHERE id = ? OR name LIKE ? OR code LIKE ?`).get(cleanId, `%${cleanId}%`, `%${cleanId}%`);
-        
+
         if (!prod) return { success: false, message: `No se encontró el producto '${product_identifier}'.` };
 
         db.prepare(`UPDATE products SET is_active = 0 WHERE id = ?`).run(prod.id);
-        return { 
-          success: true, 
+        return {
+          success: true,
           action: 'delete_product',
-          message: `Confirmación de BD: El producto '${prod.name}' (Código: ${prod.code}) ha sido eliminado del catálogo activo.` 
+          message: `Confirmación de BD: El producto '${prod.name}' (Código: ${prod.code}) ha sido eliminado del catálogo activo.`
         };
       }
 
@@ -192,10 +200,10 @@ function executeTool(db, functionName, args, userId) {
         const { name, cedula, phone, email } = args;
         const stmt = db.prepare(`INSERT INTO clients (name, cedula, phone, email, is_active) VALUES (?, ?, ?, ?, 1)`);
         const res = stmt.run(name, cedula || null, phone || null, email || null);
-        return { 
-          success: true, 
+        return {
+          success: true,
           action: 'add_client',
-          message: `Confirmación de BD: Cliente '${name}' registrado exitosamente con ID ${res.lastInsertRowid} (Cédula: ${cedula || 'No especificada'}, Tel: ${phone || 'No especificado'}).` 
+          message: `Confirmación de BD: Cliente '${name}' registrado exitosamente con ID ${res.lastInsertRowid} (Cédula: ${cedula || 'No especificada'}, Tel: ${phone || 'No especificado'}).`
         };
       }
 
@@ -203,7 +211,7 @@ function executeTool(db, functionName, args, userId) {
         const { client_identifier, name, phone, email, cedula } = args;
         const cleanId = String(client_identifier).trim();
         let client = db.prepare(`SELECT * FROM clients WHERE id = ? OR name LIKE ? OR cedula LIKE ?`).get(cleanId, `%${cleanId}%`, `%${cleanId}%`);
-        
+
         if (!client) return { success: false, message: `No se encontró ningún cliente registrado como '${client_identifier}'.` };
 
         db.prepare(`
@@ -215,10 +223,10 @@ function executeTool(db, functionName, args, userId) {
           cedula !== undefined ? cedula : client.cedula,
           client.id
         );
-        return { 
-          success: true, 
+        return {
+          success: true,
           action: 'update_client',
-          message: `Confirmación de BD: El cliente '${name || client.name}' (ID ${client.id}) ha sido actualizado con precisión.` 
+          message: `Confirmación de BD: El cliente '${name || client.name}' (ID ${client.id}) ha sido actualizado con precisión.`
         };
       }
 
@@ -226,7 +234,7 @@ function executeTool(db, functionName, args, userId) {
         const { client_identifier } = args;
         const cleanId = String(client_identifier).trim();
         let client = db.prepare(`SELECT * FROM clients WHERE (id = ? OR name LIKE ? OR cedula LIKE ?) AND is_active = 1`).get(cleanId, `%${cleanId}%`, `%${cleanId}%`);
-        
+
         if (!client) {
           client = db.prepare(`SELECT * FROM clients WHERE id = ? OR name LIKE ? OR cedula LIKE ?`).get(cleanId, `%${cleanId}%`, `%${cleanId}%`);
         }
@@ -234,10 +242,10 @@ function executeTool(db, functionName, args, userId) {
         if (!client) return { success: false, message: `No se encontró ningún cliente activo con la información '${client_identifier}'.` };
 
         db.prepare(`UPDATE clients SET is_active = 0 WHERE id = ?`).run(client.id);
-        return { 
-          success: true, 
+        return {
+          success: true,
           action: 'delete_client',
-          message: `Confirmación de BD: El cliente '${client.name}' (ID ${client.id}) ha sido eliminado de la base de datos activa.` 
+          message: `Confirmación de BD: El cliente '${client.name}' (ID ${client.id}) ha sido eliminado de la base de datos activa.`
         };
       }
 
@@ -261,6 +269,35 @@ function cleanTechnicalText(text) {
   cleaned = cleaned.replace(/Una vez que tenga esta información[\s\S]*?\n/gi, '');
   return cleaned.trim();
 }
+
+// ─── RESOLVER REFERENCIAS CONTEXTUALES ("quién las hizo", "y eso", etc.) ───
+// El motor local (fallback sin Groq) es stateless: solo analiza el mensaje actual.
+// Esta función detecta cuando un mensaje depende del tema del mensaje anterior
+// (ej. "quién las hizo" después de "cuántas ventas hay") y fusiona ambos mensajes
+// para que parseLocalIntent/generateLocalResponse tengan el contexto necesario.
+const TOPIC_KEYWORDS_RE = /(venta|vendio|vendió|stock|inventario|cliente|caja|factura|receta|empleado|compra|auditor[ií]a|proveedor|categor[ií]a|lote|notificaci[oó]n|servicio|cat[aá]logo|producto)/i;
+
+const REFERENTIAL_RE = /\b(qui[eé]n(es)?|eso|ello|lo mismo|los mismo|la misma|esa|ese|cuales|cu[aá]les|detalles|detalle|dame|mostrar|ver|listar)\b/i;
+
+function resolveContextualMessage(message, history) {
+  const lower = message.toLowerCase().trim();
+  // si el mensaje ya trae su propio tema (ej: "ventas de ayer"), no lo toques
+  if (TOPIC_KEYWORDS_RE.test(lower) && !/\b(cuales|cu[aá]les|detalles|detalle|qui[eé]n(es)?)\b/i.test(lower)) return message;
+  // si no parece una referencia a algo anterior, tampoco
+  if (!REFERENTIAL_RE.test(lower)) return message;
+
+  if (!history || history.length === 0) return message;
+
+  // busca hacia atrás el último mensaje de usuario que sí tenía un tema claro
+  for (let i = history.length - 1; i >= 0; i--) {
+    const h = history[i];
+    if (h.role === 'user' && TOPIC_KEYWORDS_RE.test(h.content.toLowerCase())) {
+      return `${h.content} ${message}`; // fusiona el tema anterior con la pregunta actual
+    }
+  }
+  return message;
+}
+
 
 // ─── LOCAL INTENT PARSER & RESPONSE ENGINE ─────────────────────────────────
 function parseLocalIntent(text) {
@@ -286,16 +323,29 @@ function parseLocalIntent(text) {
     };
   }
 
-  // Update Product Intent
-  if (/editar|modificar|actualizar|cambiar/i.test(lower) && /producto|stock|precio/i.test(lower)) {
-    const stockMatch = text.match(/(?:stock|cantidad)\s*(?:a|de)?\s*(\d+)/i);
+  // Update Product Intent — extracción robusta del nombre del producto
+  if (/editar|modificar|actualizar|cambiar/i.test(lower) && /producto|stock|precio|unidades|reposición|reposicion/i.test(lower)) {
+    const stockMatch = text.match(/(?:stock|cantidad|a)\s*(?:de)?\s*(\d+)\s*(?:unidades)?/i);
     const priceMatch = text.match(/(?:precio|venta)\s*(?:a|de)?\s*(\d+(?:\.\d+)?)/i);
-    let identifier = text.split(/stock|precio|costo|a\s+\d+/i)[0].replace(/.*?(editar|modificar|actualizar|cambiar)\s*(el\s+producto|producto)?/i, '').trim();
+
+    let identifier = text
+      .replace(/(?:editar|modificar|actualizar|cambiar)\s*(?:el\s+)?(?:producto\s+)?/i, '')
+      .replace(/^(?:el\s+)?(?:stock|precio|cantidad)\s+(?:de(?:l)?\s+)?/i, '')
+      .split(/\s+cambiando\b.*$/i)[0]
+      .replace(/\s*(?:el\s+)?(?:stock|precio|cantidad)\s+(?:de\s+venta\s+)?(?:a|de)?\s*\d+.*$/i, '')
+      .replace(/\s*(?:a|de|con|por|en)\s+\d+.*$/i, '')
+      .trim();
+
+    if (!identifier || identifier.length < 2) {
+      const words = text.split(/\s+/);
+      const productWords = words.filter(w => /^[A-ZÁÉÍÓÚÑ]/u.test(w) && !/^(Modificar|Editar|Cambiar|Actualizar|Stock|Precio|El|La|De|Del|A|Con|Por|En|Unidades|Reposición)$/i.test(w));
+      identifier = productWords.join(' ') || '1';
+    }
 
     return {
       name: 'update_product',
       args: {
-        product_identifier: identifier || '1',
+        product_identifier: identifier,
         stock: stockMatch ? parseInt(stockMatch[1], 10) : undefined,
         sale_price: priceMatch ? parseFloat(priceMatch[1]) : undefined
       }
@@ -341,56 +391,296 @@ function parseLocalIntent(text) {
 }
 
 function generateLocalResponse(message, contextStr, db) {
-  const lower = message.toLowerCase();
+  const lower = message.toLowerCase().trim();
 
-  // Search product directly in DB if query looks like a specific search
+  // ─── HELPER: resolve date filter from natural language ───
+  function getDateFilter(text) {
+    const l = text.toLowerCase();
+    if (l.includes('ayer'))          return { clause: `DATE(created_at) = DATE('now', '-1 day')`, label: 'ayer' };
+    if (l.includes('esta semana'))   return { clause: `created_at >= DATE('now', 'weekday 0', '-7 days')`, label: 'esta semana' };
+    if (l.includes('semana'))        return { clause: `created_at >= DATE('now', 'weekday 0', '-7 days')`, label: 'esta semana' };
+    if (l.includes('este mes'))      return { clause: `strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')`, label: 'este mes' };
+    if (l.includes('mes'))           return { clause: `strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now')`, label: 'este mes' };
+    if (l.includes('hoy'))           return { clause: `DATE(created_at) = DATE('now')`, label: 'hoy' };
+    return null;
+  }
+
+  // ─── GREETING ───
+  if (/^(hola|buenas|buenos|hey|saludos|ayuda|hi|hello)/i.test(lower)) {
+    return `¡Hola! 👋 Soy tu asistente de **PharmaPlus**. Estoy aquí para ayudarte. 😊\n\nPuedes consultarme sobre:\n• Inventario y stock de productos\n• Ventas (hoy, ayer, por cajero)\n• Cajas y movimientos de efectivo\n• Auditoría y registros de actividad\n• Compras y órdenes a proveedores\n• Empleados y RRHH\n• Facturación y NCF\n• Recetas y servicios\n• Notificaciones pendientes\n• Configuración del sistema`;
+  }
+
+  // ─── CONVERSATIONAL ───
+  if (/cómo estás|como estas|qué tal|que tal/i.test(lower)) {
+    return `¡Muy bien, gracias! 😊 ¿En qué te puedo ayudar hoy?`;
+  }
+  if (/^(gracias|excelente|perfecto|genial|super|listo)\b/i.test(lower)) {
+    return `¡Con gusto! Estoy aquí si necesitas algo más. 👍`;
+  }
+  if (/quién eres|quien eres|tu nombre|qué haces|que haces|qué puedes|que puedes/i.test(lower)) {
+    return `Soy tu **Asistente PharmaPlus** 🏥. Tengo acceso a todos los módulos: inventario, ventas, cajas, auditoría, compras, empleados, facturación, recetas, servicios y configuración. ¡Pregúntame lo que necesites!`;
+  }
+
+  // ─── QUIÉN HIZO LAS VENTAS (desglose por cajero) ───
+  // Debe ir ANTES del branch general de ventas, porque ese también matchea /venta/i.
+  if (/qui[eé]n/i.test(lower) && /venta|vendi/i.test(lower)) {
+    const dateFilter = getDateFilter(lower) || { clause: `DATE(created_at) = DATE('now')`, label: 'hoy' };
+    const byCashier = db.prepare(`
+      SELECT u.name as user_name, COALESCE(SUM(s.total),0) as total, COUNT(*) as count
+      FROM sales s LEFT JOIN users u ON s.user_id = u.id
+      WHERE s.status = 'completada' AND ${dateFilter.clause}
+      GROUP BY s.user_id
+      ORDER BY total DESC
+    `).all();
+    if (byCashier.length === 0) return `📊 No hay ventas registradas ${dateFilter.label}.`;
+    const list = byCashier.map(c => `• **${c.user_name || 'N/A'}** — RD$ ${c.total.toFixed(2)} (${c.count} ventas)`).join('\n');
+    return `📊 **Ventas ${dateFilter.label} por cajero:**\n${list}`;
+  }
+
+  // ─── AUDITORÍA ───
+  if (/auditor[ií]a|audit|registro de actividad|log de actividad|acciones recientes/i.test(lower)) {
+    const logs = db.prepare(`SELECT user_name, action, module, description, created_at FROM audit_log ORDER BY created_at DESC LIMIT 10`).all();
+    if (logs.length === 0) return `📋 No hay registros de auditoría aún.`;
+    const list = logs.map(l => {
+      const date = l.created_at ? l.created_at.substring(0, 16).replace('T', ' ') : '';
+      return `• [${date}] **${l.user_name || 'Sistema'}** — ${l.action} en ${l.module}${l.description ? ': ' + l.description : ''}`;
+    }).join('\n');
+    return `📋 **Últimos registros de auditoría:**\n${list}`;
+  }
+
+  // ─── CAJAS / CASH REGISTERS ───
+  if (/caja|arqueo|cierre de caja|movimiento.*efectivo|cash/i.test(lower)) {
+    const registers = db.prepare(`SELECT cr.id, cr.name, cr.status, cr.initial_amount, cr.expected_amount, u.name as user_name, cr.opened_at FROM cash_registers cr LEFT JOIN users u ON cr.user_id = u.id ORDER BY cr.opened_at DESC LIMIT 5`).all();
+    if (registers.length === 0) return `💰 No hay cajas registradas en el sistema.`;
+    const list = registers.map(r => {
+      const estado = r.status === 'abierta' ? '🟢 Abierta' : '🔴 Cerrada';
+      return `• **${r.name}** — ${estado} — Cajero: ${r.user_name || 'N/A'} — Monto inicial: RD$ ${(r.initial_amount || 0).toFixed(2)}`;
+    }).join('\n');
+
+    if (/movimiento|transacci[oó]n/i.test(lower)) {
+      const movements = db.prepare(`SELECT cm.movement_type, cm.amount, cm.description, cm.created_at FROM cash_movements cm ORDER BY cm.created_at DESC LIMIT 8`).all();
+      if (movements.length > 0) {
+        const mvList = movements.map(m => {
+          const date = m.created_at ? m.created_at.substring(11, 16) : '';
+          return `• ${m.movement_type} — RD$ ${m.amount.toFixed(2)}${m.description ? ' — ' + m.description : ''} (${date})`;
+        }).join('\n');
+        return `💰 **Cajas:**\n${list}\n\n📝 **Últimos movimientos:**\n${mvList}`;
+      }
+    }
+    return `💰 **Estado de Cajas:**\n${list}`;
+  }
+
+  // ─── COMPRAS / PURCHASES ───
+  if (/compra|orden de compra|pedido|reabastecimiento|purchase/i.test(lower)) {
+    const purchases = db.prepare(`SELECT p.purchase_number, p.total, p.status, p.order_date, s.company_name FROM purchases p LEFT JOIN suppliers s ON p.supplier_id = s.id ORDER BY p.created_at DESC LIMIT 5`).all();
+    if (purchases.length === 0) return `📦 No hay órdenes de compra registradas.`;
+    const list = purchases.map(p => {
+      const statusEmoji = p.status === 'recibida' ? '✅' : p.status === 'pendiente' ? '⏳' : p.status === 'cancelada' ? '❌' : '📝';
+      return `• ${statusEmoji} **${p.purchase_number || 'Sin #'}** — ${p.company_name || 'Proveedor N/A'} — RD$ ${(p.total || 0).toFixed(2)} — ${p.status}`;
+    }).join('\n');
+    return `🛒 **Órdenes de Compra Recientes:**\n${list}`;
+  }
+
+  // ─── EMPLEADOS / RRHH ───
+  if (/empleado|rrhh|recurso.*humano|personal|n[oó]mina|salario|asistencia/i.test(lower)) {
+    const employees = db.prepare(`SELECT e.name, e.position, e.department, e.salary, e.is_active FROM employees e ORDER BY e.name ASC`).all();
+    if (employees.length === 0) return `👔 No hay empleados registrados en RRHH.`;
+    const list = employees.map(e => {
+      const status = e.is_active ? '🟢' : '🔴';
+      return `• ${status} **${e.name}** — ${e.position || 'Sin cargo'} — ${e.department || 'Sin depto.'} — RD$ ${(e.salary || 0).toLocaleString()}`;
+    }).join('\n');
+    return `👔 **Empleados (${employees.length}):**\n${list}`;
+  }
+
+  // ─── FACTURACIÓN / INVOICES ───
+  if (/factura|facturaci[oó]n|ncf|comprobante|invoice/i.test(lower)) {
+    const invoices = db.prepare(`SELECT invoice_number, ncf, client_name, total, status, issued_at FROM invoices ORDER BY issued_at DESC LIMIT 5`).all();
+    if (invoices.length === 0) {
+      const ncfs = db.prepare(`SELECT ncf_type_name, prefix, current_sequence, max_sequence, expiry_date FROM ncf_sequences WHERE is_active = 1`).all();
+      if (ncfs.length > 0) {
+        const list = ncfs.map(n => `• **${n.ncf_type_name}** (${n.prefix}) — Secuencia: ${n.current_sequence}/${n.max_sequence} — Vence: ${n.expiry_date || 'N/A'}`).join('\n');
+        return `🧾 **Secuencias NCF activas:**\n${list}`;
+      }
+      return `🧾 No hay facturas registradas aún.`;
+    }
+    const list = invoices.map(i => {
+      const date = i.issued_at ? i.issued_at.substring(0, 10) : '';
+      return `• **${i.invoice_number || 'Sin #'}** — ${i.client_name || 'Cliente general'} — RD$ ${(i.total || 0).toFixed(2)} — ${i.status} (${date})`;
+    }).join('\n');
+    return `🧾 **Facturas Recientes:**\n${list}`;
+  }
+
+  // ─── RECETAS ───
+  if (/receta|prescripci[oó]n|dispensar|doctor|m[eé]dico/i.test(lower)) {
+    const recipes = db.prepare(`SELECT r.id, r.recipe_number, r.doctor_name, r.status, r.recipe_date, c.name as client_name FROM recipes r LEFT JOIN clients c ON r.client_id = c.id ORDER BY r.created_at DESC LIMIT 5`).all();
+    if (recipes.length === 0) return `💊 No hay recetas registradas.`;
+    const list = recipes.map(r => {
+      const statusEmoji = r.status === 'dispensada' ? '✅' : r.status === 'pendiente' ? '⏳' : '📝';
+      return `• ${statusEmoji} **${r.recipe_number || '#' + r.id}** — Paciente: ${r.client_name || 'N/A'} — Dr. ${r.doctor_name || 'N/A'} — ${r.status}`;
+    }).join('\n');
+    return `💊 **Recetas Recientes:**\n${list}`;
+  }
+
+  // ─── SERVICIOS ───
+  if (/servicio|nebulizaci[oó]n|inyecci[oó]n|presi[oó]n|glucosa|consulta/i.test(lower)) {
+    const services = db.prepare(`SELECT name, price, duration_minutes, is_active FROM services ORDER BY name ASC`).all();
+    if (services.length === 0) return `🩺 No hay servicios registrados.`;
+    const list = services.map(s => {
+      const status = s.is_active ? '🟢' : '🔴';
+      return `• ${status} **${s.name}** — RD$ ${(s.price || 0).toFixed(2)} — ${s.duration_minutes} min`;
+    }).join('\n');
+    return `🩺 **Servicios Disponibles:**\n${list}`;
+  }
+
+  // ─── NOTIFICACIONES ───
+  if (/notificaci[oó]n|alerta|aviso|pendiente/i.test(lower)) {
+    const notifs = db.prepare(`SELECT title, message, priority, type, is_read, created_at FROM notifications ORDER BY created_at DESC LIMIT 8`).all();
+    if (notifs.length === 0) return `🔔 No hay notificaciones pendientes. ¡Todo en orden!`;
+    const unread = notifs.filter(n => !n.is_read).length;
+    const list = notifs.map(n => {
+      const icon = n.priority === 'CRITICAL' ? '🔴' : n.priority === 'HIGH' ? '🟠' : '🔵';
+      const readMark = n.is_read ? '' : ' **(nueva)**';
+      return `• ${icon} ${n.title}${readMark}`;
+    }).join('\n');
+    return `🔔 **Notificaciones (${unread} sin leer):**\n${list}`;
+  }
+
+  // ─── CONFIGURACIÓN ───
+  if (/configuraci[oó]n|ajustes|setting|preferencia|nombre.*farmacia|rnc|itbis/i.test(lower)) {
+    const settings = db.prepare(`SELECT key, value, description FROM system_settings ORDER BY key ASC`).all();
+    if (settings.length === 0) return `⚙️ No hay configuraciones guardadas.`;
+    const list = settings.map(s => `• **${s.description || s.key}:** ${s.value}`).join('\n');
+    return `⚙️ **Configuración del Sistema:**\n${list}`;
+  }
+
+  // ─── CATEGORÍAS ───
+  if (/categor[ií]a|clasificaci[oó]n|tipo de producto/i.test(lower)) {
+    const cats = db.prepare(`SELECT name, color FROM categories WHERE is_active = 1 ORDER BY name ASC`).all();
+    if (cats.length === 0) return `🏷️ No hay categorías registradas.`;
+    const list = cats.map(c => `• **${c.name}**`).join('\n');
+    return `🏷️ **Categorías de Productos (${cats.length}):**\n${list}`;
+  }
+
+  // ─── LOTES / VENCIMIENTOS ───
+  if (/lote|vencimiento|expir|caducidad|batch/i.test(lower)) {
+    const batches = db.prepare(`SELECT pb.batch_number, pb.expiry_date, pb.quantity, p.name as product_name FROM product_batches pb LEFT JOIN products p ON pb.product_id = p.id ORDER BY pb.expiry_date ASC LIMIT 10`).all();
+    if (batches.length === 0) return `📅 No hay lotes registrados.`;
+    const list = batches.map(b => {
+      const expiry = b.expiry_date || 'Sin fecha';
+      const isExpired = b.expiry_date && new Date(b.expiry_date) < new Date();
+      const icon = isExpired ? '🔴' : '🟢';
+      return `• ${icon} **${b.product_name}** — Lote: ${b.batch_number} — Vence: ${expiry} — ${b.quantity} unid.`;
+    }).join('\n');
+    return `📅 **Lotes de Productos:**\n${list}`;
+  }
+
+  // ─── SALES: per-user or per-time-period (general) ───
+  if (/venta|vendio|vendió|genero|generó|genera|generado|dinero|facturado|facturo|facturó|ingreso|cobro|cobrado|recaud/i.test(lower)) {
+    const dateFilter = getDateFilter(lower) || { clause: `DATE(created_at) = DATE('now')`, label: 'hoy' };
+
+    // Check if the user is asking for specific details / list of sales
+    if (/\b(cuales|cu[aá]les|detalles|detalle|listar|lista|desglose)\b/i.test(lower)) {
+      const detailedSales = db.prepare(`
+        SELECT s.sale_number, s.total, s.created_at, u.name as cashier_name 
+        FROM sales s LEFT JOIN users u ON s.user_id = u.id
+        WHERE s.status = 'completada' AND ${dateFilter.clause}
+        ORDER BY s.created_at DESC
+      `).all();
+
+      if (detailedSales.length === 0) return `📊 No hay detalles de ventas registrados ${dateFilter.label}.`;
+      const list = detailedSales.map(s => {
+        const time = s.created_at ? s.created_at.substring(11, 16) : '';
+        return `• **${s.sale_number || 'N/A'}** — RD$ ${s.total.toFixed(2)} — Cajero: ${s.cashier_name || 'N/A'} (${time})`;
+      }).join('\n');
+      return `📊 **Detalle de ventas ${dateFilter.label} (${detailedSales.length} transacciones):**\n${list}`;
+    }
+
+    const users = db.prepare(`SELECT id, name FROM users`).all();
+    let userMatched = null;
+    for (const u of users) {
+      const nameParts = u.name.toLowerCase().split(/\s+/);
+      const isMatch = nameParts.some(part => part.length > 2 && lower.includes(part)) || lower.includes(u.name.toLowerCase());
+      if (isMatch) { userMatched = u; break; }
+    }
+
+    if (userMatched) {
+      const salesStats = db.prepare(`SELECT COALESCE(SUM(total), 0) as total, COUNT(*) as count FROM sales WHERE user_id = ? AND status = 'completada' AND ${dateFilter.clause}`).get(userMatched.id);
+      return `📊 **${userMatched.name}** ha generado **RD$ ${salesStats.total.toFixed(2)}** ${dateFilter.label} (${salesStats.count} ventas).`;
+    }
+
+    const sales = db.prepare(`SELECT COALESCE(SUM(total), 0) as total, COUNT(*) as count FROM sales WHERE status = 'completada' AND ${dateFilter.clause}`).get();
+    return `📊 **Ventas ${dateFilter.label}:** RD$ ${sales.total.toFixed(2)} (${sales.count} transacciones).`;
+  }
+
+  // ─── STOCK / INVENTARIO ───
+  if (/stock|inventario|agotado|bajo|faltante/i.test(lower)) {
+    // If it's a general request for 'inventario' or 'stock' (not mentioning 'bajo' or 'agotado'), show catalog summary or catalog.
+    if (lower.trim() === 'inventario' || lower.trim() === 'stock') {
+      const totalCount = db.prepare(`SELECT COUNT(*) as count FROM products WHERE is_active = 1`).get()?.count || 0;
+      const lowStockCount = db.prepare(`SELECT COUNT(*) as count FROM products WHERE stock <= min_stock AND is_active = 1`).get()?.count || 0;
+      return `📦 **Resumen del Inventario:**\n• Productos activos: **${totalCount}**\n• Alertas de stock bajo: **${lowStockCount}**\n\n*(Puedes escribir "catálogo" para ver todos los productos o "stock bajo" para ver las alertas).*`;
+    }
+
+    const lowStockProds = db.prepare(`SELECT name, code, stock, min_stock FROM products WHERE stock <= min_stock AND is_active = 1 ORDER BY stock ASC`).all();
+    if (lowStockProds.length === 0) return `✅ Todo el inventario está en niveles óptimos.`;
+    const list = lowStockProds.map(p => `• **${p.name}** (${p.code}): **${p.stock}** unid. (mín: ${p.min_stock})`).join('\n');
+    return `⚠️ **Productos con stock bajo (${lowStockProds.length}):**\n${list}`;
+  }
+
+
+  // ─── CLIENTES ───
+  if (/cliente|directorio/i.test(lower)) {
+    const clients = db.prepare(`SELECT name, cedula, phone FROM clients WHERE is_active = 1 ORDER BY id DESC LIMIT 5`).all();
+    if (clients.length === 0) return `👥 No hay clientes registrados.`;
+    const list = clients.map(c => `• **${c.name}** — Cédula: ${c.cedula || 'N/A'} — Tel: ${c.phone || 'N/A'}`).join('\n');
+    return `👥 **Últimos clientes:**\n${list}`;
+  }
+
+  // ─── PROVEEDORES ───
+  if (/proveedor|suplidor/i.test(lower)) {
+    const suppliers = db.prepare(`SELECT company_name, contact_name, phone FROM suppliers LIMIT 5`).all();
+    if (suppliers.length > 0) {
+      const list = suppliers.map(s => `• **${s.company_name}** — Contacto: ${s.contact_name || 'N/A'} — Tel: ${s.phone || 'N/A'}`).join('\n');
+      return `🏢 **Proveedores:**\n${list}`;
+    }
+    return `🏢 No hay proveedores registrados.`;
+  }
+
+  // ─── CATÁLOGO DE PRODUCTOS ───
+  if (/cat[aá]logo|lista de productos|todos los productos/i.test(lower)) {
+    const products = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE is_active = 1 ORDER BY name ASC`).all();
+    const list = products.map(p => `• **${p.name}** (${p.code}) — Stock: **${p.stock}** — RD$ ${p.sale_price.toFixed(2)}`).join('\n');
+    return `📦 **Catálogo (${products.length} productos):**\n${list}`;
+  }
+
+  // ─── USUARIOS / ROLES ───
+  if (/usuario|rol|acceso|permiso/i.test(lower)) {
+    const users = db.prepare(`SELECT u.name, u.email, u.is_active, r.name as role_name FROM users u LEFT JOIN roles r ON u.role_id = r.id ORDER BY u.name ASC`).all();
+    if (users.length === 0) return `👤 No hay usuarios registrados.`;
+    const list = users.map(u => {
+      const status = u.is_active ? '🟢' : '🔴';
+      return `• ${status} **${u.name}** — ${u.role_name || 'Sin rol'} — ${u.email}`;
+    }).join('\n');
+    return `👤 **Usuarios del Sistema (${users.length}):**\n${list}`;
+  }
+
+  // ─── PRODUCT SEARCH (fuzzy fallback) ───
   const cleanMsg = message.trim();
-  if (cleanMsg.length > 2 && !['hola', 'buenas', 'ayuda', 'saludos'].includes(lower)) {
+  if (cleanMsg.length > 2) {
     const matchedProducts = db.prepare(`
-      SELECT name, code, stock, min_stock, sale_price 
+      SELECT name, code, stock, sale_price 
       FROM products 
       WHERE is_active = 1 AND (name LIKE ? OR code LIKE ?)
-      LIMIT 10
+      LIMIT 5
     `).all(`%${cleanMsg}%`, `%${cleanMsg}%`);
-
     if (matchedProducts.length > 0) {
-      const list = matchedProducts.map(p => 
-        `• **${p.name}** (Código: \`${p.code}\`)\n  - Stock disponible: **${p.stock} unidades** (Mínimo: ${p.min_stock})\n  - Precio de Venta: **RD$ ${p.sale_price.toFixed(2)}**`
-      ).join('\n\n');
-      return `Encontré los siguientes productos coincidentes en el inventario:\n\n${list}`;
+      const list = matchedProducts.map(p => `• **${p.name}** (${p.code}) — Stock: **${p.stock}** — RD$ ${p.sale_price.toFixed(2)}`).join('\n');
+      return `🔍 **Encontré estos productos:**\n${list}`;
     }
   }
 
-  // Stock / Inventario queries
-  if (lower.includes('stock') || lower.includes('inventario') || lower.includes('agotado') || lower.includes('bajo')) {
-    const lowStockProds = db.prepare(`SELECT name, code, stock, min_stock, sale_price FROM products WHERE stock <= min_stock AND is_active = 1 ORDER BY stock ASC`).all();
-    if (lowStockProds.length === 0) {
-      return `✅ **Estado del Inventario**: Todo el catálogo de productos se encuentra en niveles óptimos de stock (ningún producto con alerta de mínimo).`;
-    }
-    const list = lowStockProds.map(p => `• **${p.name}** (\`${p.code}\`): **${p.stock} unid.** (Mín: ${p.min_stock}) | RD$ ${p.sale_price.toFixed(2)}`).join('\n');
-    return `⚠️ **Productos con Stock Bajo o Agotado (${lowStockProds.length})**:\n\n${list}\n\n¿Deseas realizar un ajuste de inventario o emitir una orden de compra?`;
-  }
-
-  // Sales queries
-  if (lower.includes('venta') || lower.includes('vendio') || lower.includes('ingreso') || lower.includes('hoy')) {
-    const todaySales = db.prepare(`SELECT COALESCE(SUM(total), 0) as total, COUNT(*) as count FROM sales WHERE DATE(created_at) = DATE('now') AND status = 'completada'`).get();
-    return `📊 **Resumen de Ventas de Hoy**:\n- Total Facturado: **RD$ ${todaySales.total.toFixed(2)}**\n- Transacciones Completadas: **${todaySales.count}**\n\n¿Necesitas consultar un reporte más detallado?`;
-  }
-
-  // Client queries
-  if (lower.includes('cliente') || lower.includes('directorio')) {
-    const clients = db.prepare(`SELECT name, cedula, phone FROM clients WHERE is_active = 1 ORDER BY id DESC LIMIT 5`).all();
-    const list = clients.map(c => `• **${c.name}** | Cédula: ${c.cedula || 'N/A'} | Tel: ${c.phone || 'N/A'}`).join('\n');
-    return `👥 **Directorio Reciente de Clientes**:\n\n${list}`;
-  }
-
-  // Greeting or general query
-  if (lower.includes('hola') || lower.includes('buenas') || lower.includes('ayuda') || lower.includes('saludo')) {
-    return `¡Hola! Soy el **Asistente IA de PharmaPlus**. 🏥\n\nPuedes pedirme consultas en tiempo real sobre el inventario, registrar o modificar productos y clientes, o ver el resumen de ventas de hoy.\n\n${contextStr}`;
-  }
-
-  // Default fallback response
-  return `¡Entendido! Aquí tienes el resumen factual de la base de datos en tiempo real:\n\n${contextStr}\n\nPuedes pedirme buscar productos específicos, consultar ventas, o registrar nuevos productos y clientes.`;
+  // ─── FRIENDLY FALLBACK ───
+  return `Disculpa, no logré identificar exactamente lo que necesitas. 🤔\n\nPuedo ayudarte con cualquier módulo de la farmacia. Intenta con frases como:\n• "Ventas de ayer" o "Ventas de Ana"\n• "Estado de cajas" o "Movimientos de caja"\n• "Auditoría" o "Últimas acciones"\n• "Compras pendientes" o "Empleados"\n• "Facturas recientes" o "Recetas"\n• "Notificaciones" o "Configuración"\n• "Stock bajo" o "Buscar Amoxicilina"`;
 }
 
 // ─── CONVERSATIONS API ───────────────────────────────────────────────────────
@@ -431,7 +721,7 @@ function getPharmacyContext(db) {
       WHERE p.is_active = 1 ORDER BY p.name ASC LIMIT 100
     `).all() || [];
 
-    const productsStr = productsList.map(p => 
+    const productsStr = productsList.map(p =>
       `• ${p.name} | Código: ${p.code} | Stock: ${p.stock} (Mín: ${p.min_stock}) | Precio Venta: RD$ ${p.sale_price.toFixed(2)} | Costo: RD$ ${p.cost_price.toFixed(2)}`
     ).join('\n');
 
@@ -498,39 +788,55 @@ async function chat(req, res) {
 
   const groq = getGroqClient();
 
+  // FIX: estas variables se declaran aquí, ANTES del try/catch, para que sigan
+  // disponibles dentro del catch si Groq falla (antes daban ReferenceError).
+  const isModification = isDbModificationIntent(message);
+  let aiContent = '';
+  let toolResultsSummary = [];
+
+  // Historial reciente (ordenado por id, monotónico — created_at solo tiene
+  // resolución de 1s en SQLite y puede desordenar mensajes cercanos).
+  // Se calcula UNA vez aquí y se reutiliza tanto para Groq como para el
+  // motor local, así el fallback también puede resolver referencias
+  // contextuales ("quién las hizo" -> se fusiona con el mensaje anterior).
+  const recentHistory = db.prepare(`
+    SELECT role, content FROM ai_messages
+    WHERE conversation_id = ?
+    ORDER BY id DESC
+    LIMIT 6
+  `).all(convId).reverse();
+
+  // El historial recién obtenido incluye el mensaje del usuario que acabamos
+  // de guardar; lo excluimos para resolver contexto contra turnos anteriores.
+  const historyBeforeCurrent = recentHistory.slice(0, -1);
+  const resolvedMessage = resolveContextualMessage(message, historyBeforeCurrent);
+
   // IF GROQ API KEY IS NOT SET OR PLACEHOLDER -> USE LOCAL SQLITE ASSISTANT
   if (!groq) {
-    let aiContent = '';
-    let toolResultsSummary = [];
-    const isModification = isDbModificationIntent(message);
-
     if (isModification) {
       const parsedTool = parseLocalIntent(message);
       if (parsedTool) {
         const result = executeTool(db, parsedTool.name, parsedTool.args, req.user.id);
         toolResultsSummary.push({ tool: parsedTool.name, result });
-        aiContent = result.message || 'Acción procesada en la base de datos.';
+        aiContent = result.message || 'Acción procesada.';
       }
     }
 
     if (!aiContent) {
-      const contextStr = getPharmacyContext(db);
-      aiContent = generateLocalResponse(message, contextStr, db);
+      aiContent = generateLocalResponse(resolvedMessage, null, db);
     }
-
-    aiContent += `\n\n💡 *Nota: Asistente operando con el motor SQL local de PharmaPlus. Si deseas activar la IA de Groq (Llama 3.3 70B en la nube), ingresa tu GROQ_API_KEY en el archivo .env del backend.*`;
 
     // Save assistant message to DB
     const result = db.prepare(`INSERT INTO ai_messages (conversation_id, role, content) VALUES (?, 'assistant', ?)`).run(convId, aiContent);
     const savedMessage = db.prepare(`SELECT * FROM ai_messages WHERE id = ?`).get(result.lastInsertRowid);
 
-    return res.json({ 
-      success: true, 
+    return res.json({
+      success: true,
       data: {
         conversation_id: convId,
         message: savedMessage,
         executed_actions: toolResultsSummary
-      } 
+      }
     });
   }
 
@@ -543,28 +849,23 @@ Tu objetivo principal es responder con PRECISIÓN ABSOLUTA, FACTUALIDAD Y EXACTI
 
 REGLAS DE PRECISIÓN ABSOLUTA:
 1. Usa ÚNICAMENTE los nombres, códigos, precios (RD$), cantidades de stock, cédulas y teléfonos reales que aparecen en los datos de la base de datos de abajo.
-2. Si te preguntan por un producto, incluye siempre: Nombre, Código, Stock exacto y Precio de Venta (RD$).
+2. Si te preguntan por un producto, incluye siempre de forma concisa: Nombre, Código, Stock y Precio de Venta (RD$).
 3. Si te preguntan por un cliente, incluye siempre: Nombre, Cédula y Teléfono.
-4. Si el usuario te pide añadir, editar o eliminar registros, invoca la herramienta correspondiente y confirma de forma concisa.
+4. Si el usuario te pide añadir, editar o eliminar registros, invoca la herramienta correspondiente y confirma de forma ultra concisa (una frase).
 5. NUNCA inventes o alucines datos. Si algo no está en el catálogo, indica claramente que no se encuentra registrado.
-6. Habla en un tono natural, elegante, cálido y profesional en español.
-7. Usuario actual: ${req.user.name} (Rol: ${req.user.role_name || 'Admin'}).
+6. Habla en un tono natural, profesional y conciso en español.
+7. Usa el historial de la conversación para resolver referencias como "quién", "eso", "lo mismo" al tema del mensaje anterior.
+8. Usuario actual: ${req.user.name} (Rol: ${req.user.role_name || 'Admin'}).
+9. RESPUESTAS ULTRA CORTAS Y PRECISAS: Sé directo, evita introducciones largas, explicaciones innecesarias o textos redundantes. Ve directo al grano.
 
 REGISTROS EN TIEMPO REAL:
 ${contextStr}
 `;
 
-    // Fetch last 6 clean text messages
-    const history = db.prepare(`SELECT role, content FROM (SELECT * FROM ai_messages WHERE conversation_id = ? ORDER BY created_at DESC LIMIT 6) ORDER BY created_at ASC`).all(convId);
-
     const messagesToSend = [
       { role: 'system', content: systemPrompt },
-      ...history.map(m => ({ role: m.role, content: m.content }))
+      ...recentHistory.map(m => ({ role: m.role, content: m.content }))
     ];
-
-    const isModification = isDbModificationIntent(message);
-    let aiContent = '';
-    let toolResultsSummary = [];
 
     if (isModification) {
       try {
@@ -647,40 +948,35 @@ ${contextStr}
     const result = db.prepare(`INSERT INTO ai_messages (conversation_id, role, content) VALUES (?, 'assistant', ?)`).run(convId, aiContent);
     const savedMessage = db.prepare(`SELECT * FROM ai_messages WHERE id = ?`).get(result.lastInsertRowid);
 
-    return res.json({ 
-      success: true, 
+    return res.json({
+      success: true,
       data: {
         conversation_id: convId,
         message: savedMessage,
         executed_actions: toolResultsSummary
-      } 
+      }
     });
 
   } catch (error) {
     console.error('Groq AI Call Error (Falling back to local SQL assistant):', error.message);
 
-    let aiContent = '';
-    let toolResultsSummary = [];
-    const isModification = isDbModificationIntent(message);
-
+    // FIX: isModification/aiContent/toolResultsSummary ahora están declarados
+    // fuera del try, así que este bloque ya no explota con ReferenceError.
     if (isModification) {
       const parsedTool = parseLocalIntent(message);
       if (parsedTool) {
         const result = executeTool(db, parsedTool.name, parsedTool.args, req.user.id);
         toolResultsSummary.push({ tool: parsedTool.name, result });
-        aiContent = result.message || 'Acción procesada en la base de datos.';
+        aiContent = result.message || 'Acción procesada.';
       }
     }
 
     if (!aiContent) {
-      const contextStr = getPharmacyContext(db);
-      aiContent = generateLocalResponse(message, contextStr, db);
+      aiContent = generateLocalResponse(resolvedMessage, null, db);
     }
 
-    aiContent += `\n\n💡 *Nota: Se utilizó el motor SQL local debido a una desconexión o clave inválida de Groq AI (${error.message}).*`;
-
-    db.prepare(`INSERT INTO ai_messages (conversation_id, role, content) VALUES (?, 'assistant', ?)`).run(convId, aiContent);
-    const savedMsg = db.prepare(`SELECT * FROM ai_messages WHERE id = (SELECT max(id) FROM ai_messages)`).get();
+    const fallbackResult = db.prepare(`INSERT INTO ai_messages (conversation_id, role, content) VALUES (?, 'assistant', ?)`).run(convId, aiContent);
+    const savedMsg = db.prepare(`SELECT * FROM ai_messages WHERE id = ?`).get(fallbackResult.lastInsertRowid);
 
     return res.json({
       success: true,
