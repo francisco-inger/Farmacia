@@ -9,6 +9,7 @@ const { runSupplierProducts } = require('./db/migrations/003_create_supplier_pro
 const { runAddSupplierFields } = require('./db/migrations/004_add_supplier_fields');
 const { runCleanRoles } = require('./db/migrations/005_clean_roles');
 const { up: runLoyaltyFields } = require('./db/migrations/007_add_loyalty_fields');
+const { up: runEmployeeFields } = require('./db/migrations/008_employee_fields');
 const { runSeed } = require('./db/seed');
 const { errorMiddleware } = require('./middleware/errorMiddleware');
 
@@ -151,7 +152,19 @@ app.get('/api/health', (req, res) => {
 app.use(errorMiddleware);
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 PharmaPlus Backend corriendo en http://localhost:${PORT}`);
-  console.log(`   Verifique variables de entorno en .env`);
+  try {
+    runMigrations();
+    runIntegracionesMigrations();
+    runSupplierProducts();
+    runAddSupplierFields();
+    runCleanRoles();
+    runLoyaltyFields();
+    runEmployeeFields();
+    await runSeed();
+    console.log('✅ Migraciones y semillas verificadas');
+  } catch (err) {
+    console.error('⚠️ Error en migraciones de inicio:', err.message);
+  }
 });

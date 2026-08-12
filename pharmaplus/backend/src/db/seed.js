@@ -6,7 +6,6 @@ async function runSeed() {
   const rounds = parseInt(process.env.BCRYPT_ROUNDS) || 10;
 
   // ─── ROLES ────────────────────────────────────────────────────────────────
-  // Solo dos roles en el sistema
   const roles = [
     { name: 'Administrador', description: 'Acceso total y configuración del sistema' },
     { name: 'Cajero',        description: 'Acceso exclusivo al sistema POS y caja' },
@@ -85,15 +84,6 @@ async function runSeed() {
     p.concentration, p.cost, p.price, p.stock, p.min_stock, p.recipe || 0, supId1
   ));
 
-  // ─── LOTES ───────────────────────────────────────────────────────────────
-  const par = db.prepare(`SELECT id FROM products WHERE code = 'PAR500'`).get();
-  const amo = db.prepare(`SELECT id FROM products WHERE code = 'AMO500'`).get();
-  const vtc = db.prepare(`SELECT id FROM products WHERE code = 'VTC500'`).get();
-  const insertBatch = db.prepare(`INSERT OR IGNORE INTO product_batches (product_id, batch_number, expiry_date, quantity) VALUES (?, ?, ?, ?)`);
-  if (par) insertBatch.run(par.id, 'LOT-2026-001', '2027-06-30', 450);
-  if (amo) insertBatch.run(amo.id, 'LOT-2026-002', '2026-10-15', 180);
-  if (vtc) insertBatch.run(vtc.id, 'LOT-2026-003', '2027-12-31', 350);
-
   // ─── CLIENTES ─────────────────────────────────────────────────────────────
   const clients = [
     { name: 'María González',  cedula: '001-2345678-9', phone: '829-555-1001', email: 'maria@email.com' },
@@ -147,63 +137,53 @@ async function runSeed() {
   const insertSetting = db.prepare(`INSERT OR IGNORE INTO system_settings (key, value, description) VALUES (?, ?, ?)`);
   settings.forEach(s => insertSetting.run(s.key, s.value, s.desc));
 
-  // ─── EMPLEADOS (ficha de RRHH vinculada al usuario) ─────────────────────
-  // Nota: users = cuenta de login | employees = ficha de empleado con datos de RRHH
+  // ─── EMPLEADOS (ficha de RRHH de la farmacia) ────────────────────────────
   const adminUser  = db.prepare(`SELECT id FROM users WHERE email = 'admin@pharmaplus.do'`).get();
   const cajeroUser = db.prepare(`SELECT id FROM users WHERE email = 'cajero@pharmaplus.do'`).get();
 
-  if (adminUser && cajeroUser) {
-    const insertEmp = db.prepare(`
-      INSERT OR IGNORE INTO employees (user_id, name, cedula, phone, position, department, hire_date, salary)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    insertEmp.run(adminUser.id,  'Admin Farmacia',    '001-0000001-1', '809-000-0001', 'Administrador General', 'Administración', '2024-01-01', 75000);
-    insertEmp.run(cajeroUser.id, 'Juan Pérez Cajero', '001-0000002-2', '809-000-0002', 'Cajero',                'Ventas',         '2024-03-15', 35000);
-  }
+  const employeeSeeds = [
+    { user_id: adminUser?.id, name: 'Admin Farmacia', cedula: '001-0000001-1', phone: '809-000-0001', email: 'admin@pharmaplus.do', position: 'Administrador General', department: 'Administración', hire_date: '2024-01-01', birth_date: '1988-06-15', salary: 75000, civil_status: 'Casado', emergency_contact: 'Esposa: 809-555-0199' },
+    { user_id: cajeroUser?.id, name: 'Juan Pérez', cedula: '001-0000002-2', phone: '809-000-0002', email: 'cajero@pharmaplus.do', position: 'Cajero Principal', department: 'Caja', hire_date: '2024-03-15', birth_date: '1995-10-22', salary: 35000, civil_status: 'Soltero', emergency_contact: 'Madre: 809-555-0288' },
+    { name: 'Luisa Suárez', cedula: '001-1754320-9', phone: '809-650-5714', email: 'luisasuarez@pharmaplus.do', position: 'Cajera Nocturna', department: 'Caja', hire_date: '2024-05-10', birth_date: '1997-04-12', salary: 28000, civil_status: 'Soltera', emergency_contact: 'Padre: 809-555-0377' },
+    { name: 'Dra. Carolina Peralta', cedula: '001-0847392-1', phone: '809-555-0104', email: 'cperalta@pharmaplus.do', position: 'Farmacéutica Titular', department: 'Dispensación', hire_date: '2023-01-15', birth_date: '1985-09-08', salary: 65000, civil_status: 'Casada', emergency_contact: 'Esposo: 809-555-0466' },
+    { name: 'Dr. Miguel Alcántara', cedula: '001-0938210-4', phone: '809-555-0105', email: 'malcantara@pharmaplus.do', position: 'Farmacéutico Regente', department: 'Dispensación', hire_date: '2023-04-01', birth_date: '1986-11-19', salary: 60000, civil_status: 'Casado', emergency_contact: 'Esposa: 809-555-0555' },
+    { name: 'Ana María Gómez', cedula: '001-1122334-5', phone: '809-555-0106', email: 'agomez@pharmaplus.do', position: 'Auxiliar de Farmacia', department: 'Dispensación', hire_date: '2023-06-20', birth_date: '1996-03-30', salary: 30000, civil_status: 'Soltera', emergency_contact: 'Madre: 809-555-0644' },
+    { name: 'Roberto Fernández', cedula: '001-2233445-6', phone: '809-555-0107', email: 'rfernandez@pharmaplus.do', position: 'Encargado de Almacén', department: 'Almacén', hire_date: '2023-02-10', birth_date: '1990-07-14', salary: 38000, civil_status: 'Unión Libre', emergency_contact: 'Hermano: 809-555-0733' },
+    { name: 'Carlos Eduardo Reyes', cedula: '001-3344556-7', phone: '809-555-0108', email: 'creyes@pharmaplus.do', position: 'Auxiliar de Almacén', department: 'Almacén', hire_date: '2023-08-15', birth_date: '1998-01-05', salary: 25000, civil_status: 'Soltero', emergency_contact: 'Padre: 809-555-0822' },
+    { name: 'Lic. Carmen Rosario', cedula: '001-4455667-8', phone: '809-555-0109', email: 'crosario@pharmaplus.do', position: 'Contable General', department: 'Administración', hire_date: '2022-11-01', birth_date: '1989-02-25', salary: 55000, civil_status: 'Casada', emergency_contact: 'Esposo: 809-555-0911' },
+    { name: 'Pedro José Tavárez', cedula: '001-5566778-9', phone: '809-555-0110', email: 'ptavarez@pharmaplus.do', position: 'Mensajero / Delivery', department: 'Logística', hire_date: '2024-02-01', birth_date: '1999-12-17', salary: 22000, civil_status: 'Soltero', emergency_contact: 'Madre: 809-555-1010' },
+    { name: 'José Luis Castillo', cedula: '001-6677889-0', phone: '809-555-0111', email: 'jcastillo@pharmaplus.do', position: 'Soporte Técnico & IT', department: 'Sistemas', hire_date: '2023-09-01', birth_date: '1993-05-03', salary: 45000, civil_status: 'Casado', emergency_contact: 'Esposa: 809-555-1121' },
+    { name: 'Ramón Antonio Batista', cedula: '001-7788990-1', phone: '809-555-0112', email: 'rbatista@pharmaplus.do', position: 'Oficial de Seguridad', department: 'Seguridad', hire_date: '2023-03-01', birth_date: '1982-11-11', salary: 24000, civil_status: 'Casado', emergency_contact: 'Esposa: 809-555-1232' },
+    { name: 'Elena Mercedes Ruiz', cedula: '001-8899001-2', phone: '809-555-0113', email: 'eruiz@pharmaplus.do', position: 'Auxiliar de Limpieza', department: 'Mantenimiento', hire_date: '2023-07-01', birth_date: '1987-08-28', salary: 20000, civil_status: 'Soltera', emergency_contact: 'Hija: 809-555-1343' },
+    { name: 'Francisco Javier Peña', cedula: '001-9900112-3', phone: '809-555-0114', email: 'fpena@pharmaplus.do', position: 'Cajero Fin de Semana', department: 'Caja', hire_date: '2024-04-15', birth_date: '2000-06-09', salary: 26000, civil_status: 'Soltero', emergency_contact: 'Madre: 809-555-1454' },
+    { name: 'María Teresa Díaz', cedula: '001-1029384-5', phone: '809-555-0115', email: 'mdiaz@pharmaplus.do', position: 'Supervisora de Atención', department: 'Servicio al Cliente', hire_date: '2023-10-01', birth_date: '1994-01-21', salary: 32000, civil_status: 'Unión Libre', emergency_contact: 'Madre: 809-555-1565' },
+  ];
 
-  // ─── VENTA DE MUESTRA ────────────────────────────────────────────────────
-  const client1  = db.prepare(`SELECT id FROM clients WHERE cedula = '001-2345678-9'`).get();
-  const parProd  = db.prepare(`SELECT id, sale_price FROM products WHERE code = 'PAR500'`).get();
-  const vtcProd  = db.prepare(`SELECT id, sale_price FROM products WHERE code = 'VTC500'`).get();
+  const insertEmp = db.prepare(`
+    INSERT OR IGNORE INTO employees (user_id, name, cedula, phone, email, position, department, hire_date, birth_date, salary, civil_status, emergency_contact, is_active)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+  `);
 
-  if (parProd && client1 && adminUser) {
-    const existingSale = db.prepare(`SELECT id FROM sales WHERE sale_number = 'VTA-2026-0001'`).get();
-    if (!existingSale) {
-      const saleResult = db.prepare(
-        `INSERT OR IGNORE INTO sales (sale_number, client_id, user_id, subtotal, total, status) VALUES (?, ?, ?, ?, ?, ?)`
-      ).run('VTA-2026-0001', client1.id, adminUser.id, 760, 760, 'completada');
+  employeeSeeds.forEach(e => {
+    insertEmp.run(
+      e.user_id || null, e.name, e.cedula, e.phone, e.email, e.position, e.department,
+      e.hire_date, e.birth_date, e.salary, e.civil_status, e.emergency_contact
+    );
+  });
 
-      // Crear caja para admin si no existe
-      db.prepare(`INSERT OR IGNORE INTO cash_registers (name, user_id, initial_amount, status) VALUES (?, ?, ?, ?)`).run('Caja Principal', adminUser.id, 0, 'abierta');
-      const cashReg = db.prepare(`SELECT id FROM cash_registers WHERE user_id = ?`).get(adminUser.id);
+  // ─── ASISTENCIAS DE HOY ──────────────────────────────────────────────────
+  const todayStr = new Date().toISOString().split('T')[0];
+  const allEmps = db.prepare(`SELECT id FROM employees WHERE is_active = 1`).all();
+  const insertAtt = db.prepare(`INSERT OR IGNORE INTO attendance (employee_id, date, check_in, status) VALUES (?, ?, ?, ?)`);
 
-      if (cashReg && saleResult.lastInsertRowid) {
-        db.prepare(`UPDATE sales SET cash_register_id = ? WHERE id = ?`).run(cashReg.id, saleResult.lastInsertRowid);
-        db.prepare(`INSERT INTO cash_movements (cash_register_id, movement_type, amount, payment_method, reference_id, description, user_id) VALUES (?, ?, ?, ?, ?, ?, ?)`)
-          .run(cashReg.id, 'venta', 760, 'efectivo', saleResult.lastInsertRowid, 'Venta VTA-2026-0001', adminUser.id);
-        db.prepare(`INSERT INTO sale_items (sale_id, product_id, quantity, unit_price, subtotal) VALUES (?, ?, ?, ?, ?)`)
-          .run(saleResult.lastInsertRowid, parProd.id, 2, parProd.sale_price, parProd.sale_price * 2);
-        if (vtcProd) db.prepare(`INSERT INTO sale_items (sale_id, product_id, quantity, unit_price, subtotal) VALUES (?, ?, ?, ?, ?)`)
-          .run(saleResult.lastInsertRowid, vtcProd.id, 2, vtcProd.sale_price, vtcProd.sale_price * 2);
-        db.prepare(`INSERT INTO sale_payments (sale_id, payment_method, amount) VALUES (?, ?, ?)`)
-          .run(saleResult.lastInsertRowid, 'efectivo', 760);
-      }
-    }
-  }
+  allEmps.slice(0, 10).forEach((e, idx) => {
+    const times = ['07:45', '07:55', '08:00', '08:02', '08:14', '08:25'];
+    const time = times[idx % times.length];
+    const status = idx === 4 ? 'tarde' : 'presente';
+    insertAtt.run(e.id, todayStr, time, status);
+  });
 
-  // ─── NOTIFICACIONES DE MUESTRA ───────────────────────────────────────────
-  if (adminUser) {
-    const insertNotif = db.prepare(`INSERT OR IGNORE INTO notifications (user_id, type, title, message, module, priority) VALUES (?, ?, ?, ?, ?, ?)`);
-    insertNotif.run(adminUser.id, 'stock_low',       'Stock bajo: Complejo B',           'El producto Complejo B tiene solo 8 unidades (mínimo: 20)',              'inventario', 'HIGH');
-    insertNotif.run(adminUser.id, 'stock_low',       'Stock bajo: Loratadina 10mg',      'El producto Loratadina 10mg tiene solo 3 unidades (mínimo: 25)',          'inventario', 'HIGH');
-    insertNotif.run(adminUser.id, 'out_of_stock',    'Producto agotado: Ambroxol Jarabe','El producto Ambroxol Jarabe está agotado',                               'inventario', 'CRITICAL');
-    insertNotif.run(adminUser.id, 'purchase_pending','Compra pendiente de recibir',       'Existe una orden de compra pendiente de recepción',                      'compras',    'MEDIUM');
-    insertNotif.run(adminUser.id, 'system',          '¡Bienvenido a PharmaPlus!',         'El sistema ha sido configurado. Ingresa con admin@pharmaplus.do / admin123.', 'sistema', 'LOW');
-  }
-
-  console.log('✅ Seed completado exitosamente');
-  console.log('   👤 admin@pharmaplus.do  / admin123   → Rol: Administrador');
-  console.log('   👤 cajero@pharmaplus.do / cajero123  → Rol: Cajero (solo POS)');
+  console.log('✅ Seed completado exitosamente con plantilla completa de empleados');
 }
 
 module.exports = { runSeed };
