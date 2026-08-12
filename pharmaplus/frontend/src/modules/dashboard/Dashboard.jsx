@@ -109,25 +109,19 @@ const Dashboard = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col gap-6">
         
-        {/* Unified Dashboard Header Card */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+        {/* Sleek Professional Dashboard Header Banner */}
+        <div className="bg-[#16a085] rounded-2xl p-4 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-4 overflow-hidden relative">
+          <div className="flex items-center gap-3 z-10">
+            <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Resumen Operativo de Farmacia</h2>
+          </div>
+          
+          <div className="shrink-0 h-14 overflow-hidden rounded-xl border border-white/30 shadow-sm z-10">
             <img 
               src="/modules/dashboard.png" 
-              alt="Dashboard" 
-              className="w-14 h-14 rounded-2xl object-cover border border-emerald-100 shadow-sm shrink-0"
+              alt="Resumen Operativo" 
+              className="h-full w-48 md:w-60 object-cover rounded-xl"
               onError={(e) => { e.target.style.display = 'none'; }}
             />
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Panel Principal</h1>
-                <span className="bg-emerald-50 text-[#16a085] text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  En línea
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 font-medium">Resumen general de operaciones de farmacia, ventas y control de stock</p>
-            </div>
           </div>
         </div>
 
@@ -147,7 +141,7 @@ const Dashboard = () => {
                 <h3 className="text-base font-bold text-main leading-tight truncate">{formatCurrency(s.today_sales)}</h3>
               </div>
             </div>
-            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] gap-1">
+            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] gap-1">
               <span className="text-success font-bold whitespace-nowrap">↑ Actualizado</span>
               <span className="text-primary group-hover:underline font-semibold whitespace-nowrap">Ir a POS →</span>
             </div>
@@ -166,7 +160,7 @@ const Dashboard = () => {
                 <h3 className="text-base font-bold text-main leading-tight">{s.today_transactions}</h3>
               </div>
             </div>
-            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] gap-1">
+            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] gap-1">
               <span className="text-muted font-medium whitespace-nowrap">Facturas hoy</span>
               <span className="text-primary group-hover:underline font-semibold whitespace-nowrap">Ver detalle →</span>
             </div>
@@ -185,9 +179,9 @@ const Dashboard = () => {
                 <h3 className="text-base font-bold text-main leading-tight truncate">{formatCurrency(s.avg_ticket)}</h3>
               </div>
             </div>
-            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] gap-1">
+            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] gap-1">
               <span className="text-muted font-medium whitespace-nowrap">Por compra</span>
-              <span className="text-primary group-hover:underline font-semibold whitespace-nowrap">Reportes →</span>
+              <span className="text-primary group-hover:underline font-semibold whitespace-nowrap">Informes →</span>
             </div>
           </div>
 
@@ -205,7 +199,7 @@ const Dashboard = () => {
                 <h3 className="text-base font-bold text-main leading-tight">{s.low_stock}</h3>
               </div>
             </div>
-            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] gap-1">
+            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] gap-1">
               <span className="text-emerald-700 font-bold whitespace-nowrap">✓ Control de stock</span>
               <span className="text-[#16a085] group-hover:underline font-semibold whitespace-nowrap">Ver inventario →</span>
             </div>
@@ -224,7 +218,7 @@ const Dashboard = () => {
                 <h3 className="text-base font-bold text-main leading-tight">{s.active_cashes} / {s.total_cashes}</h3>
               </div>
             </div>
-            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] gap-1">
+            <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] gap-1">
               <span className="text-success font-bold whitespace-nowrap">Turno en curso</span>
               <span className="text-primary group-hover:underline font-semibold whitespace-nowrap">Cajas →</span>
             </div>
