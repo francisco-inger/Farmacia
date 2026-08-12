@@ -2,7 +2,7 @@ const { getDb } = require('../../db/database');
 
 function createSale(req, res) {
   const db = getDb();
-  const { client_id, items, payments, recipe_id, discount = 0, notes } = req.body;
+  const { client_id, items, payments, discount = 0, points_discount = 0, notes } = req.body;
   if (!items || items.length === 0) return res.status(400).json({ success: false, message: 'Se requiere al menos un producto' });
   if (!payments || payments.length === 0) return res.status(400).json({ success: false, message: 'Se requiere al menos un método de pago' });
 
@@ -29,20 +29,22 @@ function createSale(req, res) {
       processedItems.push({ ...item, unit_price: product.sale_price, subtotal: itemSubtotal - itemDiscount, product });
     }
 
-    const total = subtotal - discount;
+    // Total: subtotal minus item discounts, minus points discount
+    const totalDiscount = parseFloat(discount) + parseFloat(points_discount);
+    const total = Math.max(0, subtotal - totalDiscount);
 
-    // Verificar pagos
+    // Verificar pagos (puntos ya descontados del total)
     const totalPayments = payments.reduce((sum, p) => sum + p.amount, 0);
-    if (totalPayments < total) throw new Error('El monto pagado es insuficiente');
+    if (totalPayments < total - 0.01) throw new Error('El monto pagado es insuficiente');
 
     // Buscar caja abierta del usuario
     const cashRegister = db.prepare(`SELECT id FROM cash_registers WHERE user_id = ? AND status = 'abierta' ORDER BY opened_at DESC LIMIT 1`).get(req.user.id);
 
     // Crear venta
     const saleResult = db.prepare(`
-      INSERT INTO sales (sale_number, client_id, user_id, cash_register_id, recipe_id, subtotal, discount, total, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(saleNumber, client_id || null, req.user.id, cashRegister?.id || null, recipe_id || null, subtotal, discount, total, notes || null);
+      INSERT INTO sales (sale_number, client_id, user_id, cash_register_id, subtotal, discount, total, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(saleNumber, client_id || null, req.user.id, cashRegister?.id || null, subtotal, totalDiscount, total, notes || null);
     const saleId = saleResult.lastInsertRowid;
 
     // Crear items y descontar inventario
@@ -68,14 +70,33 @@ function createSale(req, res) {
       }
     }
 
+    // Actualizar puntos y nivel de fidelización del cliente
+    if (client_id) {
+      const client = db.prepare(`SELECT * FROM clients WHERE id = ?`).get(client_id);
+      if (client) {
+        const pointsEarned = Math.floor(total / 100); // 1 punto por cada RD$ 100
+        const pointsRedeemed = parseFloat(points_discount) || 0;
+        const newPoints = Math.max(0, (client.points || 0) - pointsRedeemed) + pointsEarned;
+        const newTotalSpent = (client.total_spent || 0) + total;
+        const newTotalPurchases = (client.total_purchases || 0) + 1;
+        const newTier = newTotalSpent >= 1500 ? 'Oro' : newTotalSpent >= 500 ? 'Plata' : 'Bronce';
+        db.prepare(
+          `UPDATE clients SET points = ?, tier = ?, total_spent = ?, total_purchases = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`
+        ).run(newPoints, newTier, newTotalSpent, newTotalPurchases, client_id);
+      }
+    }
+
     // Auditoría
     db.prepare(`INSERT INTO audit_log (user_id, user_name, action, module, description, reference_id) VALUES (?, ?, 'VENTA_CREADA', 'pos', ?, ?)`).run(req.user.id, req.user.name, `Venta ${saleNumber} por RD$ ${total.toFixed(2)}`, saleId);
 
     const sale = db.prepare(`SELECT * FROM sales WHERE id = ?`).get(saleId);
     const saleItems = db.prepare(`SELECT si.*, p.name as product_name FROM sale_items si JOIN products p ON si.product_id = p.id WHERE si.sale_id = ?`).all(saleId);
     const salePayments = db.prepare(`SELECT * FROM sale_payments WHERE sale_id = ?`).all(saleId);
-    return { ...sale, items: saleItems, payments: salePayments, change: totalPayments - total };
+    // Return updated client points if applicable
+    const updatedClient = client_id ? db.prepare(`SELECT id, points, tier, total_spent, total_purchases FROM clients WHERE id = ?`).get(client_id) : null;
+    return { ...sale, items: saleItems, payments: salePayments, change: totalPayments - total, updatedClient };
   });
+
 
   try {
     const result = transaction();

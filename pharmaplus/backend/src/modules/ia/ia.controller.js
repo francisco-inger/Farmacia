@@ -510,17 +510,6 @@ function generateLocalResponse(message, contextStr, db) {
     return `🧾 **Facturas Recientes:**\n${list}`;
   }
 
-  // ─── RECETAS ───
-  if (/receta|prescripci[oó]n|dispensar|doctor|m[eé]dico/i.test(lower)) {
-    const recipes = db.prepare(`SELECT r.id, r.recipe_number, r.doctor_name, r.status, r.recipe_date, c.name as client_name FROM recipes r LEFT JOIN clients c ON r.client_id = c.id ORDER BY r.created_at DESC LIMIT 5`).all();
-    if (recipes.length === 0) return `💊 No hay recetas registradas.`;
-    const list = recipes.map(r => {
-      const statusEmoji = r.status === 'dispensada' ? '✅' : r.status === 'pendiente' ? '⏳' : '📝';
-      return `• ${statusEmoji} **${r.recipe_number || '#' + r.id}** — Paciente: ${r.client_name || 'N/A'} — Dr. ${r.doctor_name || 'N/A'} — ${r.status}`;
-    }).join('\n');
-    return `💊 **Recetas Recientes:**\n${list}`;
-  }
-
   // ─── SERVICIOS ───
   if (/servicio|nebulizaci[oó]n|inyecci[oó]n|presi[oó]n|glucosa|consulta/i.test(lower)) {
     const services = db.prepare(`SELECT name, price, duration_minutes, is_active FROM services ORDER BY name ASC`).all();

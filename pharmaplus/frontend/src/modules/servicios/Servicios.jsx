@@ -21,6 +21,11 @@ const Servicios = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeCategory, setActiveCategory] = useState('Todos'); // 'Todos', 'Clínicos', 'Laboratorio', 'Vacunación', 'Bienestar', 'Administrativos'
   const [statusFilter, setStatusFilter] = useState('Todos'); // 'Todos', 'Activo', 'Inactivo'
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [sortBy, setSortBy] = useState('default');
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false);
+
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(8);
   const [total, setTotal] = useState(0);
@@ -35,20 +40,12 @@ const Servicios = () => {
   // Clients & Employee List for Booking
   const [clientsList, setClientsList] = useState([]);
 
-  // Form State (New / Edit Service)
   const [serviceForm, setServiceForm] = useState({
     id: null,
-    code: 'SRV-009',
+    client_id: '',
     name: '',
-    category: 'Clínicos',
-    duration_minutes: 15,
     price: 150,
-    is_active: 1,
-    description: '',
-    assigned_personnel: 'Enfermería',
-    requirements: 'Ninguno',
-    equipment: 'Esfigmomanómetro',
-    schedule: 'Lunes a Viernes: 8:00 a.m. - 6:00 p.m.'
+    description: ''
   });
 
   // Booking Form State
@@ -241,11 +238,23 @@ const Servicios = () => {
         list = list.filter(s => s.category === activeCategory);
       }
 
-      // Filter by Status
-      if (statusFilter === 'Activo') {
-        list = list.filter(s => s.is_active === 1);
-      } else if (statusFilter === 'Inactivo') {
-        list = list.filter(s => s.is_active === 0);
+      // Filter by Min / Max Price
+      if (minPrice) {
+        list = list.filter(s => s.price >= Number(minPrice));
+      }
+      if (maxPrice) {
+        list = list.filter(s => s.price <= Number(maxPrice));
+      }
+
+      // Sorting
+      if (sortBy === 'name_asc') {
+        list.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (sortBy === 'name_desc') {
+        list.sort((a, b) => b.name.localeCompare(a.name));
+      } else if (sortBy === 'price_asc') {
+        list.sort((a, b) => a.price - b.price);
+      } else if (sortBy === 'price_desc') {
+        list.sort((a, b) => b.price - a.price);
       }
 
       setServices(list);
@@ -270,9 +279,21 @@ const Servicios = () => {
     }
   };
 
+  const resetFilters = () => {
+    setSearchTerm('');
+    setActiveCategory('Todos');
+    setStatusFilter('Todos');
+    setMinPrice('');
+    setMaxPrice('');
+    setSortBy('default');
+    setPage(1);
+  };
+
+  const activeFiltersCount = (searchTerm ? 1 : 0) + (activeCategory !== 'Todos' ? 1 : 0) + (statusFilter !== 'Todos' ? 1 : 0) + (minPrice ? 1 : 0) + (maxPrice ? 1 : 0) + (sortBy !== 'default' ? 1 : 0);
+
   useEffect(() => {
     fetchServicesData();
-  }, [activeCategory, statusFilter, page, limit]);
+  }, [activeCategory, statusFilter, minPrice, maxPrice, sortBy, page, limit]);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -300,17 +321,10 @@ const Servicios = () => {
     setIsEditMode(false);
     setServiceForm({
       id: null,
-      code: `SRV-00${services.length + 1}`,
+      client_id: clientsList.length > 0 ? clientsList[0].id : '',
       name: '',
-      category: 'Clínicos',
-      duration_minutes: 15,
       price: 150.00,
-      is_active: 1,
-      description: '',
-      assigned_personnel: 'Enfermería',
-      requirements: 'Ninguno',
-      equipment: 'Equipo estándar',
-      schedule: 'Lunes a Viernes: 8:00 a.m. - 6:00 p.m.'
+      description: ''
     });
     setIsServiceModalOpen(true);
   };
@@ -322,17 +336,10 @@ const Servicios = () => {
     setIsEditMode(true);
     setServiceForm({
       id: s.id,
-      code: s.code,
+      client_id: '',
       name: s.name,
-      category: s.category,
-      duration_minutes: s.duration_minutes,
       price: s.price,
-      is_active: s.is_active,
-      description: s.description || '',
-      assigned_personnel: s.assigned_personnel || 'Enfermería',
-      requirements: s.requirements || 'Ninguno',
-      equipment: s.equipment || 'Esfigmomanómetro',
-      schedule: s.schedule || 'Lunes a Viernes: 8:00 a.m. - 6:00 p.m.'
+      description: s.description || ''
     });
     setIsServiceModalOpen(true);
   };
@@ -342,31 +349,23 @@ const Servicios = () => {
     e.preventDefault();
     try {
       if (isEditMode) {
-        setServices(prev => prev.map(s => s.id === serviceForm.id ? { ...s, ...serviceForm } : s));
-        if (selectedService?.id === serviceForm.id) {
-          setSelectedService(prev => ({ ...prev, ...serviceForm }));
-        }
+        await api.put(`/services/${serviceForm.id}`, {
+          name: serviceForm.name,
+          description: serviceForm.description,
+          price: serviceForm.price
+        });
         showToast(`Servicio "${serviceForm.name}" actualizado correctamente`);
       } else {
-        try {
-          await api.post('/services', {
-            name: serviceForm.name,
-            description: serviceForm.description,
-            price: serviceForm.price,
-            duration_minutes: serviceForm.duration_minutes
-          });
-        } catch (e) {}
-
-        const newSrv = {
-          ...serviceForm,
-          id: Date.now(),
-          icon_type: 'HeartPulse'
-        };
-        setServices(prev => [newSrv, ...prev]);
-        setSelectedService(newSrv);
+        await api.post('/services', {
+          client_id: serviceForm.client_id,
+          name: serviceForm.name,
+          description: serviceForm.description,
+          price: serviceForm.price
+        });
         showToast(`Nuevo servicio "${serviceForm.name}" creado con éxito`);
       }
       setIsServiceModalOpen(false);
+      fetchServicesData();
     } catch (err) {
       showToast('Error al guardar el servicio', 'warning');
     }
@@ -376,10 +375,10 @@ const Servicios = () => {
   const handleDeleteService = async () => {
     if (!selectedService) return;
     try {
-      setServices(prev => prev.filter(s => s.id !== selectedService.id));
+      await api.delete(`/services/${selectedService.id}`);
       setIsDeleteModalOpen(false);
       showToast(`Servicio "${selectedService.name}" eliminado correctamente`, 'info');
-      setSelectedService(services.find(s => s.id !== selectedService.id) || null);
+      fetchServicesData();
     } catch (err) {
       showToast('Error eliminando el servicio', 'warning');
     }
@@ -506,11 +505,20 @@ const Servicios = () => {
         <div className="flex items-center gap-2">
           {/* Filter Button */}
           <button
-            onClick={() => showToast('Filtros avanzados activos', 'info')}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold transition-all shadow-sm active:scale-95"
+            onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all shadow-sm active:scale-95 ${
+              isFilterPanelOpen || activeFiltersCount > 0
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-700 shadow-emerald-500/10'
+                : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700'
+            }`}
           >
             <Filter size={18} />
             <span>Filtros</span>
+            {activeFiltersCount > 0 && (
+              <span className="w-5 h-5 rounded-full bg-emerald-600 text-white text-[10px] font-bold flex items-center justify-center">
+                {activeFiltersCount}
+              </span>
+            )}
           </button>
 
           {/* New Service Button */}
@@ -523,6 +531,88 @@ const Servicios = () => {
           </button>
         </div>
       </div>
+
+      {/* ─── EXPANDABLE FILTER PANEL ───────────────────────────────────────── */}
+      {isFilterPanelOpen && (
+        <div className="bg-white rounded-2xl border border-emerald-100 shadow-md p-4 flex flex-col gap-4 animate-fade-in text-xs">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+            <div className="flex items-center gap-2">
+              <Filter className="text-emerald-600" size={16} />
+              <span className="font-bold text-slate-800 text-sm">Filtros Avanzados de Servicios</span>
+              {activeFiltersCount > 0 && (
+                <span className="bg-emerald-100 text-emerald-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                  {activeFiltersCount} activo{activeFiltersCount > 1 ? 's' : ''}
+                </span>
+              )}
+            </div>
+            <button
+              onClick={resetFilters}
+              className="text-slate-400 hover:text-emerald-600 font-semibold text-xs flex items-center gap-1 transition-colors"
+            >
+              <RefreshCw size={12} />
+              <span>Limpiar filtros</span>
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            {/* Rango de Precio Min */}
+            <div className="flex flex-col gap-1">
+              <label className="font-semibold text-slate-700">Precio Mínimo (RD$)</label>
+              <input
+                type="number"
+                placeholder="0.00"
+                min="0"
+                className="input text-xs"
+                value={minPrice}
+                onChange={(e) => { setMinPrice(e.target.value); setPage(1); }}
+              />
+            </div>
+
+            {/* Rango de Precio Max */}
+            <div className="flex flex-col gap-1">
+              <label className="font-semibold text-slate-700">Precio Máximo (RD$)</label>
+              <input
+                type="number"
+                placeholder="Ej. 1000.00"
+                min="0"
+                className="input text-xs"
+                value={maxPrice}
+                onChange={(e) => { setMaxPrice(e.target.value); setPage(1); }}
+              />
+            </div>
+
+            {/* Ordenar Por */}
+            <div className="flex flex-col gap-1">
+              <label className="font-semibold text-slate-700">Ordenar Por</label>
+              <select
+                className="input text-xs"
+                value={sortBy}
+                onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
+              >
+                <option value="default">Por defecto (Recientes)</option>
+                <option value="name_asc">Nombre (A-Z)</option>
+                <option value="name_desc">Nombre (Z-A)</option>
+                <option value="price_asc">Precio: Menor a Mayor</option>
+                <option value="price_desc">Precio: Mayor a Menor</option>
+              </select>
+            </div>
+
+            {/* Estado */}
+            <div className="flex flex-col gap-1">
+              <label className="font-semibold text-slate-700">Estado del Servicio</label>
+              <select
+                className="input text-xs"
+                value={statusFilter}
+                onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+              >
+                <option value="Todos">Todos los Estados</option>
+                <option value="Activo">Solo Activos</option>
+                <option value="Inactivo">Solo Inactivos</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── TABS & STATUS DROPDOWN BAR ────────────────────────────────────── */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-200 pb-1">
@@ -927,16 +1017,19 @@ const Servicios = () => {
       >
         <form onSubmit={handleSaveServiceSubmit} className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-4">
-            
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-700">Código de Servicio *</label>
-              <input
+            <div className="col-span-2 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-700">Cliente (Paciente) *</label>
+              <select
+                className="input text-sm"
+                value={serviceForm.client_id}
+                onChange={(e) => setServiceForm({ ...serviceForm, client_id: e.target.value })}
                 required
-                type="text"
-                className="input text-sm font-mono font-bold"
-                value={serviceForm.code}
-                onChange={(e) => setServiceForm({ ...serviceForm, code: e.target.value })}
-              />
+              >
+                <option value="">-- Seleccionar Cliente --</option>
+                {clientsList.map(c => (
+                  <option key={c.id} value={c.id}>{c.name} {c.cedula ? `(${c.cedula})` : ''}</option>
+                ))}
+              </select>
             </div>
 
             <div className="flex flex-col gap-1">
@@ -948,33 +1041,6 @@ const Servicios = () => {
                 className="input text-sm"
                 value={serviceForm.name}
                 onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-700">Categoría *</label>
-              <select
-                className="input text-sm"
-                value={serviceForm.category}
-                onChange={(e) => setServiceForm({ ...serviceForm, category: e.target.value })}
-              >
-                <option value="Clínicos">Clínicos</option>
-                <option value="Laboratorio">Laboratorio</option>
-                <option value="Vacunación">Vacunación</option>
-                <option value="Bienestar">Bienestar</option>
-                <option value="Administrativos">Administrativos</option>
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-700">Duración (minutos) *</label>
-              <input
-                required
-                type="number"
-                min="5"
-                className="input text-sm"
-                value={serviceForm.duration_minutes}
-                onChange={(e) => setServiceForm({ ...serviceForm, duration_minutes: Number(e.target.value) })}
               />
             </div>
 
@@ -991,51 +1057,16 @@ const Servicios = () => {
               />
             </div>
 
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-700">Estado *</label>
-              <select
-                className="input text-sm font-semibold"
-                value={serviceForm.is_active}
-                onChange={(e) => setServiceForm({ ...serviceForm, is_active: Number(e.target.value) })}
-              >
-                <option value={1}>Activo</option>
-                <option value={0}>Inactivo</option>
-              </select>
-            </div>
-
             <div className="col-span-2 flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-700">Descripción del Servicio</label>
+              <label className="text-xs font-semibold text-slate-700">Notas / Descripción</label>
               <textarea
-                rows={2}
+                rows={3}
                 className="input text-sm"
-                placeholder="Breve descripción del servicio ofrecido..."
+                placeholder="Breve descripción del servicio o nota médica..."
                 value={serviceForm.description}
                 onChange={(e) => setServiceForm({ ...serviceForm, description: e.target.value })}
               />
             </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-700">Personal Asignado</label>
-              <input
-                type="text"
-                placeholder="Ej. Enfermería, Bioanalista"
-                className="input text-sm"
-                value={serviceForm.assigned_personnel}
-                onChange={(e) => setServiceForm({ ...serviceForm, assigned_personnel: e.target.value })}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-700">Equipos / Materiales</label>
-              <input
-                type="text"
-                placeholder="Ej. Esfigmomanómetro"
-                className="input text-sm"
-                value={serviceForm.equipment}
-                onChange={(e) => setServiceForm({ ...serviceForm, equipment: e.target.value })}
-              />
-            </div>
-
           </div>
 
           <div className="flex justify-end gap-3 mt-3 pt-3 border-t border-slate-100">

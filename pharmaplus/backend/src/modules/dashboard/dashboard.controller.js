@@ -10,7 +10,7 @@ function getDashboardStats(req, res) {
       FROM sales WHERE DATE(created_at) = DATE('now') AND status = 'completada'
     `).get() || { total: 0, count: 0 };
 
-    // Total de ventas acumuladas (para fallback si hoy es 0)
+    // Total de ventas acumuladas
     const allSales = db.prepare(`
       SELECT COALESCE(SUM(total), 0) as total, COUNT(*) as count
       FROM sales WHERE status = 'completada'
@@ -22,10 +22,10 @@ function getDashboardStats(req, res) {
       FROM sales WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now') AND status = 'completada'
     `).get() || { total: 0, count: 0 };
 
-    // Ticket promedio del día o general
-    const effectiveTotal = todaySales.count > 0 ? todaySales.total : allSales.total;
-    const effectiveCount = todaySales.count > 0 ? todaySales.count : (allSales.count || 1);
-    const avgTicket = effectiveTotal > 0 ? (effectiveTotal / effectiveCount) : 0;
+    // Ticket promedio real del día o general
+    const avgTicket = todaySales.count > 0 
+      ? (todaySales.total / todaySales.count) 
+      : (allSales.count > 0 ? (allSales.total / allSales.count) : 0);
 
     // Productos totales, stock bajo, agotados
     const productsCount = db.prepare(`SELECT COUNT(*) as count FROM products WHERE is_active = 1`).get() || { count: 0 };
@@ -49,76 +49,49 @@ function getDashboardStats(req, res) {
     const activeCashes = db.prepare(`SELECT COUNT(*) as count FROM cash_registers WHERE status = 'abierta'`).get() || { count: 0 };
     const totalCashes = db.prepare(`SELECT COUNT(*) as count FROM cash_registers`).get() || { count: 0 };
 
-    // Ventas últimos 7 días
-    let last7Days = db.prepare(`
+    // Ventas reales de los últimos 7 días
+    const last7DaysReal = db.prepare(`
       SELECT DATE(created_at) as date, COALESCE(SUM(total), 0) as total, COUNT(*) as count
       FROM sales WHERE created_at >= DATE('now', '-6 days') AND status = 'completada'
       GROUP BY DATE(created_at) ORDER BY date
     `).all() || [];
 
-    // If less than 7 days of real sales exist, generate a complete 7-day structure
-    if (last7Days.length < 7) {
-      const days = [];
-      const baseTotal = todaySales.total > 0 ? todaySales.total : 45000;
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split('T')[0];
-        const dayLabel = d.toLocaleDateString('es-DO', { day: 'numeric', month: 'short' });
-        const found = last7Days.find(x => x.date === dateStr);
-        days.push({
-          date: dayLabel,
-          total: found ? found.total : Math.round(baseTotal * (0.6 + Math.random() * 0.8)),
-          count: found ? found.count : Math.floor(5 + Math.random() * 20)
-        });
-      }
-      last7Days = days;
+    const last7Days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().split('T')[0];
+      const dayLabel = d.toLocaleDateString('es-DO', { day: 'numeric', month: 'short' });
+      const found = last7DaysReal.find(x => x.date === dateStr);
+      last7Days.push({
+        date: dayLabel,
+        total: found ? found.total : 0,
+        count: found ? found.count : 0
+      });
     }
 
-    // Ventas por categoría
-    let salesByCategory = db.prepare(`
-      SELECT c.name, COALESCE(SUM(si.subtotal), 0) as total, COUNT(*) as count
+    // Ventas reales por categoría
+    const salesByCategory = db.prepare(`
+      SELECT c.name, COALESCE(SUM(si.subtotal), 0) as total, COUNT(DISTINCT s.id) as count
       FROM sale_items si
       JOIN products p ON si.product_id = p.id
       JOIN categories c ON p.category_id = c.id
       JOIN sales s ON si.sale_id = s.id
       WHERE s.status = 'completada'
-      GROUP BY c.id ORDER BY total DESC LIMIT 6
+      GROUP BY c.id ORDER BY total DESC
     `).all() || [];
 
-    if (salesByCategory.length === 0) {
-      salesByCategory = db.prepare(`
-        SELECT c.name, COUNT(p.id) * 100 as total
-        FROM categories c
-        LEFT JOIN products p ON p.category_id = c.id
-        GROUP BY c.id ORDER BY total DESC LIMIT 5
-      `).all() || [
-        { name: 'Analgésicos', total: 45 },
-        { name: 'Antibióticos', total: 25 },
-        { name: 'Vitaminas', total: 18 },
-        { name: 'Antigripales', total: 12 }
-      ];
-    }
-
-    // Ventas por método de pago
-    let paymentMethods = db.prepare(`
+    // Ventas reales por método de pago
+    const paymentMethods = db.prepare(`
       SELECT sp.payment_method, COALESCE(SUM(sp.amount), 0) as total, COUNT(*) as count
       FROM sale_payments sp
       JOIN sales s ON sp.sale_id = s.id
       WHERE s.status = 'completada'
-      GROUP BY sp.payment_method
+      GROUP BY sp.payment_method ORDER BY total DESC
     `).all() || [];
 
-    if (paymentMethods.length === 0) {
-      paymentMethods = [
-        { payment_method: 'efectivo', count: 65, total: 15200 },
-        { payment_method: 'tarjeta', count: 30, total: 9800 },
-        { payment_method: 'transferencia', count: 5, total: 2400 }
-      ];
-    }
-
-    // Top 5 productos más vendidos
-    let topProducts = db.prepare(`
+    // Top 5 productos más vendidos reales
+    const topProducts = db.prepare(`
       SELECT p.name, SUM(si.quantity) as qty, SUM(si.subtotal) as total
       FROM sale_items si
       JOIN products p ON si.product_id = p.id
@@ -127,14 +100,7 @@ function getDashboardStats(req, res) {
       GROUP BY p.id ORDER BY qty DESC LIMIT 5
     `).all() || [];
 
-    if (topProducts.length === 0) {
-      topProducts = db.prepare(`
-        SELECT name, stock as qty, (sale_price * 10) as total
-        FROM products WHERE is_active = 1 ORDER BY stock DESC LIMIT 5
-      `).all();
-    }
-
-    // Resumen de inventario
+    // Resumen de inventario real
     const inventorySummary = db.prepare(`
       SELECT
         COUNT(*) as total_products,
@@ -145,7 +111,7 @@ function getDashboardStats(req, res) {
       FROM products
     `).get() || { total_products: 0, total_stock: 0, inventory_value: 0, active_products: 0, inactive_products: 0 };
 
-    // Alertas recientes
+    // Alertas reales de productos en stock bajo o agotado
     const alertProducts = db.prepare(`
       SELECT p.id, p.name, p.stock, p.min_stock,
         CASE WHEN p.stock = 0 THEN 'agotado'
@@ -163,10 +129,10 @@ function getDashboardStats(req, res) {
       success: true,
       data: {
         stats: {
-          today_sales: todaySales.total || 12450.00,
-          today_transactions: todaySales.count || 28,
-          avg_ticket: avgTicket || 444.64,
-          month_sales: monthSales.total || 185400.00,
+          today_sales: todaySales.total,
+          today_transactions: todaySales.count,
+          avg_ticket: avgTicket,
+          month_sales: monthSales.total,
           products_count: productsCount.count,
           low_stock: lowStock.count,
           out_of_stock: outOfStock.count,

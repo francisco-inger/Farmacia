@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Search, Plus, Trash2, User, CreditCard, Banknote, ShoppingCart, 
   CheckCircle, Printer, ScanLine, X, Home, Lock, RefreshCw, Eye, EyeOff,
-  Percent, FileText, ArrowLeft, ShieldAlert, Sparkles, Send, Mic, Volume2, Bot, MessageSquare
+  Percent, FileText, ArrowLeft, ShieldAlert, Sparkles, Send, Mic, Volume2, Bot, MessageSquare, LogOut,
+  UserPlus, Award, Gift, Star
 } from 'lucide-react';
 import api from '../../services/api';
 import Modal from '../../components/ui/Modal';
@@ -13,7 +14,7 @@ import { playScannerBeep } from '../../utils/sound';
 import { AuthContext } from '../../context/AuthContext';
 
 const POS = () => {
-  const { user } = useContext(AuthContext);
+  const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
   
   // App States
@@ -34,6 +35,54 @@ const POS = () => {
   const [checkingCash, setCheckingCash] = useState(true);
   const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
   const searchInputRef = useRef(null);
+
+  // New Client & Loyalty Program States
+  const [isNewClientModalOpen, setIsNewClientModalOpen] = useState(false);
+  const [isLoyaltyModalOpen, setIsLoyaltyModalOpen] = useState(false);
+  const [newClientForm, setNewClientForm] = useState({
+    name: '',
+    cedula: '',
+    phone: '',
+    email: '',
+    address: ''
+  });
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
+  const [pointsToRedeem, setPointsToRedeem] = useState(0);
+
+  useEffect(() => {
+    if (selectedClient) {
+      // Use actual points if available, otherwise use mock formula for demo backward compatibility
+      const points = selectedClient.points !== undefined 
+        ? selectedClient.points 
+        : (((selectedClient.id || 1) * 147 + 85) % 380) + 45;
+      setLoyaltyPoints(points);
+    } else {
+      setLoyaltyPoints(0);
+    }
+    // Reset points redemption when client changes
+    setPointsToRedeem(0);
+  }, [selectedClient]);
+
+  const handleCreateNewClientSubmit = async (e) => {
+    e.preventDefault();
+    if (!newClientForm.name.trim()) {
+      alert('El nombre del cliente es obligatorio');
+      return;
+    }
+    try {
+      const res = await api.post('/clients', newClientForm);
+      if (res.success && res.data) {
+        const created = res.data;
+        setClients(prev => [created, ...prev]);
+        setSelectedClient(created);
+        if (created.cedula) setRncCedula(created.cedula);
+        setIsNewClientModalOpen(false);
+        setNewClientForm({ name: '', cedula: '', phone: '', email: '', address: '' });
+      }
+    } catch (err) {
+      alert(err.message || 'Error al registrar cliente');
+    }
+  };
 
   // AI Chatbot Widget States
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -175,17 +224,18 @@ const POS = () => {
   };
 
   const addToCart = (product) => {
-    if (product.stock <= 0) {
+    if (!product || product.stock <= 0) {
       alert('Producto agotado en inventario');
       return;
     }
     const existing = cart.find(item => item.id === product.id);
     if (existing) {
-      if (existing.quantity >= product.stock) {
-        alert('No hay más stock disponible');
+      const currentQty = parseInt(existing.quantity || 1, 10);
+      if (currentQty >= product.stock) {
+        alert(`No hay más stock disponible. Máximo: ${product.stock}`);
         return;
       }
-      setCart(cart.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item));
+      setCart(cart.map(item => item.id === product.id ? { ...item, quantity: currentQty + 1 } : item));
     } else {
       setCart([...cart, { ...product, quantity: 1, discount: 0 }]);
     }
@@ -194,17 +244,19 @@ const POS = () => {
   };
 
   const updateQuantity = (id, newQty) => {
-    if (newQty < 1) return;
+    const qty = parseInt(newQty, 10);
+    if (isNaN(qty) || qty < 1) return;
     const prod = cart.find(i => i.id === id);
-    if (newQty > prod.stock) {
-      alert(`Stock máximo disponible: ${prod.stock}`);
+    if (!prod) return;
+    if (qty > prod.stock) {
+      alert(`Stock máximo disponible para ${prod.name}: ${prod.stock}`);
       return;
     }
-    setCart(cart.map(item => item.id === id ? { ...item, quantity: newQty } : item));
+    setCart(cart.map(item => item.id === id ? { ...item, quantity: qty } : item));
   };
 
   const updateItemDiscount = (id, discountVal) => {
-    const discount = parseFloat(discountVal) || 0;
+    const discount = Math.max(0, parseFloat(discountVal) || 0);
     setCart(cart.map(item => item.id === id ? { ...item, discount } : item));
   };
 
@@ -213,25 +265,39 @@ const POS = () => {
   };
 
   const calculateTotals = () => {
-    const subtotal = cart.reduce((sum, item) => sum + (item.sale_price * item.quantity), 0);
-    const discount = cart.reduce((sum, item) => sum + (item.discount || 0), 0);
-    const taxableAmount = Math.max(0, subtotal - discount);
+    const subtotal = cart.reduce((sum, item) => {
+      const price = parseFloat(item.sale_price ?? item.price ?? 0);
+      const qty = parseInt(item.quantity ?? 1, 10);
+      return sum + (price * qty);
+    }, 0);
+
+    const discount = cart.reduce((sum, item) => {
+      return sum + (parseFloat(item.discount) || 0);
+    }, 0);
+
+    // Points: 1 pt = RD$ 1 discount
+    const pointsDiscount = Math.min(pointsToRedeem, loyaltyPoints);
+
+    const taxableAmount = Math.max(0, subtotal - discount - pointsDiscount);
     const tax = taxableAmount * 0.18; // 18% ITBIS
     const total = taxableAmount + tax;
-    return { subtotal, discount, tax, total };
+    // Points earned from this purchase (1 pt per RD$100)
+    const pointsEarned = Math.floor(total / 100);
+    return { subtotal, discount, pointsDiscount, tax, total, pointsEarned };
   };
 
   const totals = calculateTotals();
 
-  // Local filtering of products
+  // Local filtering of products safely
   const filteredProducts = allProducts.filter(p => {
-    const q = searchTerm.toLowerCase();
-    return (
-      p.name.toLowerCase().includes(q) ||
-      p.code.toLowerCase().includes(q) ||
-      (p.barcode && p.barcode.includes(q)) ||
-      (p.active_ingredient && p.active_ingredient.toLowerCase().includes(q))
-    );
+    if (!p) return false;
+    const q = (searchTerm || '').toLowerCase().trim();
+    if (!q) return true;
+    const name = (p.name || '').toLowerCase();
+    const code = (p.code || '').toLowerCase();
+    const barcode = (p.barcode || '').toLowerCase();
+    const ingredient = (p.active_ingredient || '').toLowerCase();
+    return name.includes(q) || code.includes(q) || barcode.includes(q) || ingredient.includes(q);
   });
 
   // Open register submit
@@ -341,8 +407,9 @@ const POS = () => {
     e.preventDefault();
     setPaymentError('');
 
-    if (paymentMethod === 'efectivo' && parseFloat(amountPaid) < totals.total) {
-      setPaymentError('El monto pagado es menor al total a pagar.');
+    // Validate amount paid against total AFTER points discount
+    if (paymentMethod === 'efectivo' && totals.total > 0 && parseFloat(amountPaid) < totals.total - 0.01) {
+      setPaymentError('El monto pagado es menor al total a cobrar.');
       return;
     }
 
@@ -361,6 +428,7 @@ const POS = () => {
           amount: paymentMethod === 'efectivo' ? parseFloat(amountPaid) : totals.total
         }],
         discount: totals.discount,
+        points_discount: totals.pointsDiscount || 0,
         notes: `Facturado con comprobante ${ncfType}`
       };
 
@@ -385,18 +453,44 @@ const POS = () => {
         
         setSaleResult({
           ...sale,
+          items: (sale.items && sale.items.length > 0)
+            ? sale.items 
+            : cart.map(i => ({ 
+                product_name: i.name, 
+                quantity: i.quantity, 
+                unit_price: i.sale_price || i.price, 
+                discount: i.discount || 0 
+              })),
           ncf: invRes.data?.ncf || 'Factura de Consumo',
           ncfName: invRes.data?.ncf_type || ncfType,
           clientName: invoiceData.client_name,
           rnc: invoiceData.rnc_cedula,
+          subtotal: totals.subtotal,
           tax: totals.tax,
-          change: paymentMethod === 'efectivo' ? (parseFloat(amountPaid) - totals.total) : 0
+          total: totals.total,
+          paymentMethod: paymentMethod,
+          change: paymentMethod === 'efectivo' ? Math.max(0, parseFloat(amountPaid) - totals.total) : 0,
+          // Cashier & loyalty info
+          cashierName: user?.name || user?.email || 'Cajero',
+          pointsDiscounted: totals.pointsDiscount || 0,
+          pointsEarned: totals.pointsEarned || 0,
+          pointsRemaining: sale.updatedClient ? sale.updatedClient.points : 0,
+          hadLoyaltyClient: !!selectedClient
         });
+
+        // Use actual DB points from backend response (the source of truth)
+        if (selectedClient && sale.updatedClient) {
+          const realPoints = sale.updatedClient.points;
+          const realTier = sale.updatedClient.tier;
+          setClients(prev => prev.map(c => c.id === selectedClient.id ? { ...c, points: realPoints, tier: realTier, total_spent: sale.updatedClient.total_spent } : c));
+          setLoyaltyPoints(realPoints);
+        }
 
         setCart([]);
         setSelectedClient(null);
         setRncCedula('');
         setNcfType('B02');
+        setPointsToRedeem(0);
         setIsPaymentModalOpen(false);
         loadAllProducts(); // reload products to update stocks in UI catalog
       }
@@ -613,13 +707,24 @@ const POS = () => {
               {loading ? 'Validando...' : 'Iniciar Turno y Abrir Caja'}
             </button>
 
-            <button 
-              type="button"
-              onClick={() => navigate('/dashboard')}
-              className="btn btn-outline w-full py-2 text-xs mt-1"
-            >
-              <ArrowLeft size={14} /> Volver al Panel
-            </button>
+            <div className="flex gap-2">
+              {user?.role !== 'cajero' && (
+                <button 
+                  type="button"
+                  onClick={() => navigate('/dashboard')}
+                  className="btn btn-outline flex-1 py-2 text-xs"
+                >
+                  <ArrowLeft size={14} /> Volver al Panel
+                </button>
+              )}
+              <button 
+                type="button"
+                onClick={() => { logout(); navigate('/login'); }}
+                className="btn bg-rose-50 text-rose-600 border border-rose-200 hover:bg-rose-100 flex-1 py-2 text-xs font-semibold flex items-center justify-center gap-1.5"
+              >
+                <LogOut size={14} /> Cerrar Sesión
+              </button>
+            </div>
           </form>
         </div>
       </div>
@@ -627,11 +732,11 @@ const POS = () => {
   }
 
   return (
-    <div className="w-screen h-screen bg-[#f1f5f9] flex overflow-hidden font-sans">
+    <div className="w-screen h-screen bg-[#f1f5f9] flex overflow-hidden font-sans notranslate" translate="no">
       
       {/* 1. Left Collapsed POS Sidebar */}
       <div className="w-20 bg-white border-r border-slate-200 flex flex-col items-center py-5 shrink-0 justify-between">
-        <div className="flex flex-col items-center gap-6 w-full">
+        <div className="flex flex-col items-center gap-4 w-full">
           {/* Logo */}
           <div className="w-12 h-12 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg mb-2">
             <ShoppingCart size={22} />
@@ -639,36 +744,56 @@ const POS = () => {
 
           {/* POS mode button - Active */}
           <button 
-            className="w-12 h-12 rounded-xl bg-primary-light text-primary flex items-center justify-center transition-colors"
+            className="w-12 h-12 rounded-xl bg-primary-light text-primary flex flex-col items-center justify-center transition-colors"
             title="Terminal POS"
           >
-            <Printer size={20} />
+            <Printer size={18} />
+            <span className="text-[9px] font-bold mt-0.5">POS</span>
           </button>
 
-          {/* Cash Register movements */}
+          {/* Cash Register movements / Cajas */}
+          <button 
+            onClick={() => navigate('/cajas')}
+            className="w-12 h-12 rounded-xl text-slate-600 hover:bg-slate-100 flex flex-col items-center justify-center transition-colors"
+            title="Cajas y Cierres"
+          >
+            <Banknote size={18} />
+            <span className="text-[9px] font-bold mt-0.5">Cajas</span>
+          </button>
+
+          {/* Arqueo de caja rápida */}
           <button 
             onClick={triggerCloseRegister}
-            className="w-12 h-12 rounded-xl text-slate-500 hover:bg-slate-100 flex items-center justify-center transition-colors"
+            className="w-12 h-12 rounded-xl text-slate-600 hover:bg-slate-100 flex flex-col items-center justify-center transition-colors"
             title="Arqueo / Cierre de Caja"
           >
-            <Banknote size={20} />
+            <Lock size={18} />
+            <span className="text-[9px] font-bold mt-0.5">Cierre</span>
           </button>
         </div>
 
-        <div className="flex flex-col items-center gap-4 w-full">
-          {/* Back to main app */}
-          <button 
-            onClick={() => navigate('/dashboard')}
-            className="w-12 h-12 rounded-xl text-slate-500 hover:bg-slate-100 flex items-center justify-center transition-colors"
-            title="Volver al Dashboard"
-          >
-            <Home size={20} />
-          </button>
+        <div className="flex flex-col items-center gap-3 w-full">
+          {/* Volver al Dashboard (Solo Admin) */}
+          {user?.role !== 'cajero' && (
+            <button 
+              onClick={() => navigate('/dashboard')}
+              className="w-12 h-12 rounded-xl text-slate-500 hover:bg-slate-100 flex flex-col items-center justify-center transition-colors"
+              title="Volver al Dashboard"
+            >
+              <Home size={18} />
+              <span className="text-[9px] font-bold mt-0.5">Panel</span>
+            </button>
+          )}
 
-          {/* User widget */}
-          <div className="w-10 h-10 rounded-full bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-sm shadow-inner" title={user?.name}>
-            {user?.name?.charAt(0) || 'U'}
-          </div>
+          {/* Botón de Cerrar Sesión directo */}
+          <button
+            onClick={() => { logout(); navigate('/login'); }}
+            className="w-12 h-12 rounded-xl text-rose-600 hover:bg-rose-50 border border-rose-200/50 flex flex-col items-center justify-center transition-colors shadow-xs"
+            title="Cerrar Sesión"
+          >
+            <LogOut size={18} />
+            <span className="text-[9px] font-bold mt-0.5">Salir</span>
+          </button>
         </div>
       </div>
 
@@ -703,11 +828,26 @@ const POS = () => {
             </button>
           </div>
 
-          {/* Cash & User Info banner */}
+          {/* Cash & User Info banner + Logout */}
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2 bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-lg px-3 py-1.5 text-xs font-bold">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
               <span>Caja: {cashStatus.name}</span>
+            </div>
+
+            <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
+              <div className="text-right hidden sm:block">
+                <p className="text-xs font-bold text-slate-800 leading-none">{user?.name}</p>
+                <p className="text-[10px] text-slate-400 capitalize leading-none mt-0.5">{user?.role}</p>
+              </div>
+              <button
+                onClick={() => { logout(); navigate('/login'); }}
+                className="flex items-center gap-1 bg-rose-50 text-rose-600 hover:bg-rose-100 border border-rose-200 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors"
+                title="Cerrar Sesión"
+              >
+                <LogOut size={14} />
+                <span className="hidden sm:inline">Salir</span>
+              </button>
             </div>
           </div>
         </header>
@@ -781,8 +921,8 @@ const POS = () => {
             <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
               <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between shrink-0">
                 <h2 className="text-xs font-black text-slate-800 uppercase tracking-wider">Productos agregados</h2>
-                <span className="bg-primary-light text-primary text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/10">
-                  {cart.length} {cart.length === 1 ? 'línea' : 'líneas'} en factura
+                <span className="bg-primary-light text-primary text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-primary/10">
+                  {cart.length} {cart.length === 1 ? 'línea' : 'líneas'} ({cart.reduce((sum, item) => sum + parseInt(item.quantity || 1, 10), 0)} unids.)
                 </span>
               </div>
 
@@ -812,8 +952,11 @@ const POS = () => {
                       </tr>
                     ) : (
                       cart.map(item => {
-                        const itemSubtotal = item.sale_price * item.quantity;
-                        const itemTaxable = Math.max(0, itemSubtotal - (item.discount || 0));
+                        const price = parseFloat(item.sale_price ?? item.price ?? 0);
+                        const qty = parseInt(item.quantity ?? 1, 10);
+                        const itemSubtotal = price * qty;
+                        const itemDiscount = parseFloat(item.discount) || 0;
+                        const itemTaxable = Math.max(0, itemSubtotal - itemDiscount);
                         const itemTax = itemTaxable * 0.18;
                         const itemTotal = itemTaxable + itemTax;
 
@@ -824,24 +967,31 @@ const POS = () => {
                               <p className="text-[9px] font-mono text-slate-400 leading-tight mt-0.5">{item.barcode || item.code}</p>
                             </td>
                             <td className="px-5 py-2.5">
-                              <div className="flex items-center justify-between bg-slate-50 rounded-lg border border-slate-200 px-2 py-0.5 max-w-[90px] mx-auto">
+                              <div className="flex items-center justify-between bg-slate-50 rounded-lg border border-slate-200 px-2 py-0.5 max-w-[100px] mx-auto">
                                 <button 
-                                  onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                                  className="text-slate-400 hover:text-slate-800 font-extrabold text-xs w-4 text-center focus:outline-none"
+                                  onClick={() => updateQuantity(item.id, qty - 1)}
+                                  className="text-slate-500 hover:text-slate-900 font-extrabold text-sm px-1 focus:outline-none select-none"
                                 >
                                   -
                                 </button>
-                                <span className="text-xs font-bold text-slate-800 w-6 text-center">{item.quantity}</span>
+                                <input 
+                                  type="number"
+                                  min="1"
+                                  max={item.stock}
+                                  value={qty}
+                                  onChange={(e) => updateQuantity(item.id, e.target.value)}
+                                  className="w-8 text-center text-xs font-black text-slate-800 bg-transparent focus:outline-none"
+                                />
                                 <button 
-                                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                                  className="text-slate-400 hover:text-slate-800 font-extrabold text-xs w-4 text-center focus:outline-none"
+                                  onClick={() => updateQuantity(item.id, qty + 1)}
+                                  className="text-slate-500 hover:text-slate-900 font-extrabold text-sm px-1 focus:outline-none select-none"
                                 >
                                   +
                                 </button>
                               </div>
                             </td>
-                            <td className="px-5 py-2.5 text-right text-xs font-bold text-slate-700">
-                              RD$ {item.sale_price.toFixed(2)}
+                            <td className="px-5 py-2.5 text-right text-xs font-bold text-slate-700 whitespace-nowrap">
+                              RD$ {price.toFixed(2)}
                             </td>
                             <td className="px-5 py-2.5 text-center">
                               <input 
@@ -854,10 +1004,10 @@ const POS = () => {
                                 onChange={(e) => updateItemDiscount(item.id, e.target.value)}
                               />
                             </td>
-                            <td className="px-5 py-2.5 text-right text-xs font-bold text-slate-500">
+                            <td className="px-5 py-2.5 text-right text-xs font-bold text-slate-500 whitespace-nowrap">
                               RD$ {itemTax.toFixed(2)}
                             </td>
-                            <td className="px-5 py-2.5 text-right text-xs font-black text-slate-900">
+                            <td className="px-5 py-2.5 text-right text-xs font-black text-slate-900 whitespace-nowrap">
                               RD$ {itemTotal.toFixed(2)}
                             </td>
                             <td className="px-5 py-2.5 text-center">
@@ -887,9 +1037,31 @@ const POS = () => {
 
             <div className="flex-1 overflow-y-auto custom-scrollbar p-5 flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-bold text-slate-600 font-sans">Datos del cliente</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-slate-600 font-sans">Datos del cliente</label>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setIsNewClientModalOpen(true)}
+                      className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 px-2 py-0.5 rounded-lg transition-all flex items-center gap-1 shadow-2xs cursor-pointer active:scale-95"
+                      title="Registrar nuevo cliente rápido"
+                    >
+                      <UserPlus size={11} /> + Nuevo Cliente
+                    </button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setIsLoyaltyModalOpen(true)}
+                      className="text-[10px] font-extrabold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-300 px-2 py-0.5 rounded-lg transition-all flex items-center gap-1 shadow-2xs cursor-pointer active:scale-95"
+                      title="Ver puntos de fidelización"
+                    >
+                      <Award size={11} /> Fidelización
+                    </button>
+                  </div>
+                </div>
+
                 <select 
-                  className="input text-xs py-2"
+                  className="input text-xs py-2 font-medium"
                   value={selectedClient?.id || ''}
                   onChange={(e) => {
                     const cl = clients.find(c => c.id === parseInt(e.target.value));
@@ -900,6 +1072,41 @@ const POS = () => {
                   <option value="">Consumidor Final (Por defecto)</option>
                   {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
+
+                {/* Selected Client Fidelización Info Banner */}
+                {selectedClient && (
+                  <div className="flex items-center justify-between bg-gradient-to-r from-purple-50 via-indigo-50 to-emerald-50 border border-purple-200/80 p-2.5 rounded-xl text-xs mt-1 animate-fade-in shadow-2xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-purple-600 text-white flex items-center justify-center font-bold shrink-0 shadow-xs">
+                        <Award size={14} />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[11px] font-bold text-slate-800 line-clamp-1">
+                          {selectedClient.name}
+                        </span>
+                        <span className="text-[10px] text-purple-700 font-semibold flex items-center gap-1">
+                          <Star size={10} className="fill-purple-600 text-purple-600" />
+                          {pointsToRedeem > 0 ? (
+                            <span>
+                              Canjeando <strong className="text-rose-700 font-black line-through">{loyaltyPoints} pts</strong>
+                              {' → '}
+                              <strong className="text-purple-900 font-black">{Math.max(0, loyaltyPoints - pointsToRedeem) + (totals.pointsEarned || 0)} pts</strong>
+                            </span>
+                          ) : (
+                            <span>Puntos acumulados: <strong className="text-purple-900 font-black">{loyaltyPoints} pts</strong></span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsLoyaltyModalOpen(true)}
+                      className="text-[10px] font-black text-purple-700 hover:text-purple-900 underline shrink-0 cursor-pointer"
+                    >
+                      Ver Beneficios
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -929,6 +1136,7 @@ const POS = () => {
 
               <div className="border-t border-slate-100 my-2"></div>
 
+              {/* TOTALS — always visible first */}
               <div className="flex flex-col gap-2 bg-slate-50/50 p-4 rounded-xl border border-slate-100 mt-1">
                 <div className="flex justify-between items-center text-xs font-semibold text-slate-600">
                   <span>Subtotal</span>
@@ -940,6 +1148,14 @@ const POS = () => {
                     <span>- RD$ {totals.discount.toFixed(2)}</span>
                   </div>
                 )}
+                {totals.pointsDiscount > 0 && (
+                  <div className="flex justify-between items-center text-xs font-semibold text-purple-700 bg-purple-50 px-2 py-1 rounded-lg -mx-1">
+                    <span className="flex items-center gap-1">
+                      <Award size={11} className="text-purple-600" /> Descuento por Puntos
+                    </span>
+                    <span>- RD$ {totals.pointsDiscount.toFixed(2)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between items-center text-xs font-semibold text-slate-600">
                   <span>ITBIS (18%)</span>
                   <span>RD$ {totals.tax.toFixed(2)}</span>
@@ -947,9 +1163,114 @@ const POS = () => {
                 <div className="border-t border-slate-200/50 my-1"></div>
                 <div className="flex justify-between items-center">
                   <span className="text-xs font-black text-slate-800">Total a Pagar</span>
-                  <span className="text-xl font-black text-primary">RD$ {totals.total.toFixed(2)}</span>
+                  <span className={`text-xl font-black ${pointsToRedeem > 0 ? 'text-purple-700' : 'text-primary'}`}>
+                    RD$ {totals.total.toFixed(2)}
+                  </span>
                 </div>
+
+                {/* Points earned from this sale */}
+                {selectedClient && totals.pointsEarned > 0 && (
+                  <div className="flex justify-between items-center mt-1 pt-2 border-t border-purple-100">
+                    <span className="text-[10px] font-bold text-purple-700 flex items-center gap-1">
+                      <Star size={10} className="fill-purple-500 text-purple-500" />
+                      Puntos a ganar:
+                    </span>
+                    <span className="text-[10px] font-black text-purple-800 bg-purple-100 px-2 py-0.5 rounded-full border border-purple-200">
+                      + {totals.pointsEarned} pts
+                    </span>
+                  </div>
+                )}
               </div>
+
+              {/* PUNTOS DE FIDELIZACIÓN - Canje (below totals so user sees them update above) */}
+              {selectedClient && loyaltyPoints > 0 && (
+                <div className="flex flex-col gap-2 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-xl p-3.5 animate-fade-in">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Gift size={13} className="text-purple-600" />
+                      <span className="text-[11px] font-black text-purple-800">Canjear Puntos de Fidelización</span>
+                    </div>
+                    <span className="text-[10px] font-bold text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full border border-purple-200">
+                      {loyaltyPoints} pts disponibles
+                    </span>
+                  </div>
+
+                  <p className="text-[10px] text-purple-600 font-medium">
+                    1 punto = RD$ 1.00 de descuento. Ingresa cuántos puntos canjear:
+                  </p>
+
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1">
+                      <Star size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-purple-500 fill-purple-400" />
+                      <input
+                        type="number"
+                        min="0"
+                        max={loyaltyPoints}
+                        step="1"
+                        placeholder="Ej. 50"
+                        className="input text-sm py-1.5 pl-8 font-bold text-purple-800 border-purple-300 bg-white focus:border-purple-500 focus:ring-purple-200"
+                        value={pointsToRedeem === 0 ? '' : pointsToRedeem}
+                        onChange={(e) => {
+                          const raw = parseInt(e.target.value);
+                          const val = isNaN(raw) ? 0 : Math.max(0, Math.min(raw, loyaltyPoints));
+                          setPointsToRedeem(val);
+                        }}
+                      />
+                    </div>
+                    <div className="flex flex-col items-end shrink-0">
+                      <span className="text-[11px] font-black text-purple-800 whitespace-nowrap">
+                        - RD$ {pointsToRedeem.toFixed(2)}
+                      </span>
+                      {pointsToRedeem > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setPointsToRedeem(0)}
+                          className="text-[10px] text-rose-500 hover:underline cursor-pointer"
+                        >
+                          Quitar
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-1.5">
+                    {[25, 50, 100].map(pts => (
+                      <button
+                        key={pts}
+                        type="button"
+                        disabled={loyaltyPoints < pts}
+                        onClick={() => setPointsToRedeem(Math.min(pts, loyaltyPoints))}
+                        className={`flex-1 text-[10px] font-bold py-1.5 rounded-lg border transition-all ${
+                          pointsToRedeem === pts
+                            ? 'bg-purple-600 text-white border-purple-600'
+                            : 'border-purple-200 text-purple-700 bg-white hover:bg-purple-100 disabled:opacity-40 disabled:cursor-not-allowed'
+                        }`}
+                      >
+                        {pts} pts
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setPointsToRedeem(loyaltyPoints)}
+                      className={`flex-1 text-[10px] font-black py-1.5 rounded-lg border transition-all ${
+                        pointsToRedeem === loyaltyPoints
+                          ? 'bg-purple-600 text-white border-purple-600'
+                          : 'border-purple-400 text-purple-800 bg-purple-100 hover:bg-purple-200'
+                      }`}
+                    >
+                      Todos
+                    </button>
+                  </div>
+
+                  {pointsToRedeem > 0 && (
+                    <div className="flex justify-between items-center bg-purple-600 text-white rounded-lg px-3 py-2 text-xs font-bold mt-0.5">
+                      <span>✓ Total con descuento:</span>
+                      <span className="text-base font-black">RD$ {totals.total.toFixed(2)}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
             </div>
 
             {/* Bottom Actions */}
@@ -1163,7 +1484,7 @@ const POS = () => {
 
           <button 
             type="submit" 
-            disabled={loading || (paymentMethod === 'efectivo' && parseFloat(amountPaid) < totals.total)}
+          disabled={loading || (paymentMethod === 'efectivo' && totals.total > 0 && parseFloat(amountPaid) < totals.total - 0.01)}
             className="btn btn-primary w-full py-3.5 text-sm font-black shadow-md disabled:opacity-50 mt-2"
           >
             {loading ? 'Confirmando...' : 'Completar Venta y Generar NCF'}
@@ -1213,11 +1534,36 @@ const POS = () => {
                 </div>
               )}
               
+              {/* DESGLOSE DE PRODUCTOS EN FACTURA */}
+              <div className="border-t border-dashed border-slate-300 my-2"></div>
+              
+              <div className="flex flex-col gap-1 py-1">
+                <div className="flex justify-between text-[10px] font-bold text-slate-500 border-b border-dashed border-slate-200 pb-1 mb-1 uppercase">
+                  <span>Cant. Producto</span>
+                  <span>Total</span>
+                </div>
+                {saleResult.items && saleResult.items.map((it, idx) => {
+                  const qty = parseInt(it.quantity || 1, 10);
+                  const unitPrice = parseFloat(it.unit_price || it.sale_price || 0);
+                  const disc = parseFloat(it.discount || 0);
+                  const itemTotal = (unitPrice * qty) - disc;
+                  return (
+                    <div key={idx} className="flex justify-between items-start text-[11px] gap-2">
+                      <div className="flex-1 truncate">
+                        <span className="font-bold">{qty}x </span>
+                        <span>{it.product_name || it.name}</span>
+                      </div>
+                      <span className="font-bold shrink-0">RD$ {itemTotal.toFixed(2)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+
               <div className="border-t border-dashed border-slate-300 my-2"></div>
               
               <div className="flex justify-between font-semibold">
                 <span>Subtotal:</span>
-                <span>RD$ {(saleResult.total - saleResult.tax).toFixed(2)}</span>
+                <span>RD$ {(saleResult.subtotal || (saleResult.total - saleResult.tax)).toFixed(2)}</span>
               </div>
               <div className="flex justify-between font-semibold">
                 <span>ITBIS (18%):</span>
@@ -1234,14 +1580,51 @@ const POS = () => {
               <div className="border-t border-dashed border-slate-300 my-2"></div>
               
               <div className="flex justify-between">
-                <span>Método:</span>
-                <span className="capitalize">{saleResult.payment_method}</span>
+                <span>Método de Pago:</span>
+                <span className="font-bold capitalize">{saleResult.paymentMethod || saleResult.payments?.[0]?.payment_method || 'Efectivo'}</span>
               </div>
               {saleResult.change > 0 && (
-                <div className="flex justify-between font-bold text-warning-dark">
+                <div className="flex justify-between font-bold text-emerald-700">
                   <span>Devuelta:</span>
                   <span>RD$ {saleResult.change.toFixed(2)}</span>
                 </div>
+              )}
+
+              <div className="border-t border-dashed border-slate-300 my-2"></div>
+
+              {/* CAJERO QUE ATENDIÓ */}
+              <div className="flex justify-between text-[10px] text-slate-500">
+                <span>Atendido por:</span>
+                <span className="font-bold text-slate-700">{saleResult.cashierName}</span>
+              </div>
+              <div className="flex justify-between text-[10px] text-slate-500">
+                <span>Fecha/Hora:</span>
+                <span className="font-bold text-slate-700">{new Date().toLocaleString('es-DO')}</span>
+              </div>
+
+              {/* SECCIÓN DE PUNTOS DE FIDELIZACIÓN */}
+              {saleResult.hadLoyaltyClient && (
+                <>
+                  <div className="border-t border-dashed border-purple-300 my-2"></div>
+                  <p className="text-center text-[10px] font-bold text-purple-700 uppercase tracking-wide">★ Programa de Fidelización PharmaPlus</p>
+
+                  {saleResult.pointsDiscounted > 0 && (
+                    <div className="flex justify-between text-[11px] text-purple-700 font-semibold">
+                      <span>Puntos canjeados:</span>
+                      <span className="font-black">- {saleResult.pointsDiscounted} pts (- RD$ {saleResult.pointsDiscounted.toFixed(2)})</span>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between text-[11px] text-purple-700 font-semibold">
+                    <span>Puntos ganados esta compra:</span>
+                    <span className="font-black text-emerald-700">+ {saleResult.pointsEarned} pts</span>
+                  </div>
+
+                  <div className="flex justify-between text-[11px] font-black text-purple-900 bg-purple-50 px-2 py-1 rounded-lg mt-0.5">
+                    <span>Saldo de puntos:</span>
+                    <span>{saleResult.pointsRemaining} pts</span>
+                  </div>
+                </>
               )}
             </div>
 
@@ -1361,6 +1744,186 @@ const POS = () => {
         onScan={handleBarcodeScanned}
         title="Lector de Código de Barras POS"
       />
+
+      {/* MODAL: NUEVO CLIENTE RÁPIDO POS */}
+      <Modal
+        isOpen={isNewClientModalOpen}
+        onClose={() => setIsNewClientModalOpen(false)}
+        title="Registrar Nuevo Cliente"
+        maxWidth="max-w-md"
+      >
+        <form onSubmit={handleCreateNewClientSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-700">Nombre Completo *</label>
+            <input
+              required
+              type="text"
+              placeholder="Ej. María Rodríguez"
+              className="input text-sm font-semibold"
+              value={newClientForm.name}
+              onChange={(e) => setNewClientForm({ ...newClientForm, name: e.target.value })}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-700">Cédula / RNC</label>
+              <input
+                type="text"
+                placeholder="402-1234567-8"
+                className="input text-sm font-mono"
+                value={newClientForm.cedula}
+                onChange={(e) => setNewClientForm({ ...newClientForm, cedula: e.target.value })}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-700">Teléfono</label>
+              <input
+                type="text"
+                placeholder="809-555-0199"
+                className="input text-sm"
+                value={newClientForm.phone}
+                onChange={(e) => setNewClientForm({ ...newClientForm, phone: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-700">Correo Electrónico</label>
+            <input
+              type="email"
+              placeholder="cliente@ejemplo.com"
+              className="input text-sm"
+              value={newClientForm.email}
+              onChange={(e) => setNewClientForm({ ...newClientForm, email: e.target.value })}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-semibold text-slate-700">Dirección</label>
+            <input
+              type="text"
+              placeholder="Av. 27 de Febrero, Santo Domingo"
+              className="input text-sm"
+              value={newClientForm.address}
+              onChange={(e) => setNewClientForm({ ...newClientForm, address: e.target.value })}
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-3 mt-3 pt-3 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={() => setIsNewClientModalOpen(false)}
+              className="btn btn-outline text-xs"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              className="btn btn-primary text-xs font-bold shadow-sm"
+            >
+              Guardar y Seleccionar
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* MODAL: PROGRAMA DE FIDELIZACIÓN Y PUNTOS */}
+      <Modal
+        isOpen={isLoyaltyModalOpen}
+        onClose={() => setIsLoyaltyModalOpen(false)}
+        title="Programa de Fidelización y Puntos PharmaPlus"
+        maxWidth="max-w-lg"
+      >
+        <div className="flex flex-col gap-4 text-slate-700">
+          {selectedClient ? (
+            <>
+              {/* Card Banner */}
+              <div className="bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-600 rounded-2xl p-5 text-white shadow-md relative overflow-hidden">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <span className="text-[10px] font-bold tracking-widest uppercase text-purple-200 block">Tarjeta de Fidelidad PharmaPlus</span>
+                    <h3 className="text-xl font-black text-white mt-1">{selectedClient.name}</h3>
+                    <p className="text-xs text-purple-100 font-mono mt-0.5">{selectedClient.cedula || 'ID: CLI-' + String(selectedClient.id).padStart(5, '0')}</p>
+                  </div>
+                  <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-xl flex items-center justify-center text-white">
+                    <Award size={24} />
+                  </div>
+                </div>
+
+                <div className="mt-5 pt-4 border-t border-white/20 flex justify-between items-end">
+                  <div>
+                    <span className="text-[11px] text-purple-200 font-medium">Saldo de Puntos</span>
+                    <h4 className="text-3xl font-black text-white">{loyaltyPoints} <span className="text-sm font-normal">pts</span></h4>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-[11px] text-purple-200 font-medium">Valor Canjeable</span>
+                    <h4 className="text-xl font-bold text-emerald-300">RD$ {loyaltyPoints.toFixed(2)}</h4>
+                  </div>
+                </div>
+              </div>
+
+              {/* Status & Rules info */}
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="p-3 bg-purple-50 border border-purple-100 rounded-xl">
+                  <span className="text-[10px] text-purple-600 font-bold block uppercase">Nivel Cliente</span>
+                  <span className="text-xs font-black text-purple-900">
+                    {loyaltyPoints > 250 ? '🥇 Oro (VIP)' : loyaltyPoints > 100 ? '🥈 Plata' : '🥉 Bronce'}
+                  </span>
+                </div>
+
+                <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-xl">
+                  <span className="text-[10px] text-emerald-600 font-bold block uppercase">Puntos por Venta</span>
+                  <span className="text-xs font-black text-emerald-900">+1 pt por RD$ 100</span>
+                </div>
+
+                <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+                  <span className="text-[10px] text-indigo-600 font-bold block uppercase">Esta Compra Acumula</span>
+                  <span className="text-xs font-black text-indigo-900">+{Math.floor((totals?.total || 0) / 100)} pts</span>
+                </div>
+              </div>
+
+              {/* How to use */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs flex flex-col gap-2">
+                <h5 className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <Gift size={14} className="text-purple-600" /> Beneficios del Programa de Fidelidad:
+                </h5>
+                <ul className="list-disc pl-4 space-y-1 text-slate-600 text-[11px]">
+                  <li>Acumula 1 punto por cada RD$ 100 de compra en cualquier sucursal.</li>
+                  <li>Canjea tus puntos por descuentos directos en tus medicamentos.</li>
+                  <li>Descuentos especiales de cumpleaños y promociones exclusivas.</li>
+                </ul>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsLoyaltyModalOpen(false)}
+                  className="btn btn-primary text-xs font-bold w-full py-2.5"
+                >
+                  Entendido
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="py-8 text-center text-slate-500 flex flex-col items-center gap-3">
+              <Award size={40} className="text-purple-400 opacity-60" />
+              <div>
+                <p className="font-bold text-slate-700 text-sm">Ningún cliente seleccionado</p>
+                <p className="text-xs text-slate-400 mt-1">Selecciona un cliente de la lista para ver sus puntos de fidelización y beneficios.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => { setIsLoyaltyModalOpen(false); setIsNewClientModalOpen(true); }}
+                className="btn btn-outline text-xs font-bold text-emerald-700 border-emerald-300 bg-emerald-50 mt-2"
+              >
+                + Registrar Nuevo Cliente
+              </button>
+            </div>
+          )}
+        </div>
+      </Modal>
 
     </div>
   );

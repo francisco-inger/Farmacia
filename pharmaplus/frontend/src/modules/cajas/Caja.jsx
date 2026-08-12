@@ -27,8 +27,13 @@ const Caja = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(8);
-  const [total, setTotal] = useState(24);
-  const [selectedDate, setSelectedDate] = useState('15/08/2026');
+  const [total, setTotal] = useState(0);
+  const [paymentBreakdown, setPaymentBreakdown] = useState([]);
+  const todayISO = new Date().toISOString().split('T')[0];
+  const [selectedDate, setSelectedDate] = useState(todayISO);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterMethod, setFilterMethod] = useState(''); // 'Efectivo','Tarjeta','Transferencia',''
+  const [filterType, setFilterType] = useState('');   // 'venta','ingreso','egreso',''
 
   // Sales History State
   const [salesHistory, setSalesHistory] = useState([]);
@@ -197,11 +202,15 @@ const Caja = () => {
             let ventasTotal = 0;
             let ingresosTotal = 0;
             let egresosTotal = 0;
+            const pmMap = {};
             
             rawMovements.forEach(m => {
               const amt = parseFloat(m.amount) || 0;
               if (m.movement_type === 'venta') {
                 ventasTotal += amt;
+                // Tally payment method
+                const pm = (m.payment_method || 'Efectivo');
+                pmMap[pm] = (pmMap[pm] || 0) + amt;
               } else if (m.movement_type === 'ingreso') {
                 ingresosTotal += amt;
               } else if (['retiro', 'devolucion', 'gasto'].includes(m.movement_type)) {
@@ -209,41 +218,45 @@ const Caja = () => {
               }
             });
 
+            const pmTotal = Object.values(pmMap).reduce((a, b) => a + b, 0) || 1;
+            const pmBreakdown = Object.entries(pmMap).map(([method, total]) => ({
+              method,
+              total,
+              pct: ((total / pmTotal) * 100).toFixed(1)
+            }));
+            setPaymentBreakdown(pmBreakdown);
+
+            const balanceCalculated = (parseFloat(cashObj.initial_amount) || 0) + ventasTotal + ingresosTotal - egresosTotal;
             setKpis({
               ventas: ventasTotal,
-              ingresos: ingresosTotal,
+              ingresos: ventasTotal + ingresosTotal,
               egresos: egresosTotal,
-              balance: cashObj.initial_amount + ventasTotal + ingresosTotal - egresosTotal,
+              balance: balanceCalculated,
               count: rawMovements.filter(m => m.movement_type === 'venta').length
             });
 
             list = rawMovements.map(m => ({
               id: m.id,
+              rawDate: m.created_at || '',
               time: new Date(m.created_at || Date.now()).toLocaleTimeString('es-DO', { hour: '2-digit', minute: '2-digit' }),
               type: m.movement_type === 'venta' ? 'Venta' : m.movement_type === 'ingreso' ? 'Ingreso' : m.movement_type === 'apertura' ? 'Apertura' : m.movement_type === 'cierre' ? 'Cierre' : 'Egreso',
               typeBadge: m.movement_type === 'venta' ? 'emerald' : (m.movement_type === 'ingreso' || m.movement_type === 'apertura') ? 'sky' : 'rose',
-              doc: m.movement_type === 'venta' ? `FAC-${String(m.id).padStart(6, '0')}` : m.movement_type === 'ingreso' ? `ING-${String(m.id).padStart(6, '0')}` : m.movement_type === 'apertura' ? `APE-${String(m.id).padStart(6, '0')}` : m.movement_type === 'cierre' ? `CIE-${String(m.id).padStart(6, '0')}` : `EGR-${String(m.id).padStart(6, '0')}`,
+              doc: m.movement_type === 'venta' ? `FAC-${String(m.reference_id || m.id).padStart(6, '0')}` : m.movement_type === 'ingreso' ? `ING-${String(m.id).padStart(6, '0')}` : m.movement_type === 'apertura' ? `APE-${String(m.id).padStart(6, '0')}` : m.movement_type === 'cierre' ? `CIE-${String(m.id).padStart(6, '0')}` : `EGR-${String(m.id).padStart(6, '0')}`,
               description: m.description || (m.movement_type === 'venta' ? 'Venta a consumidor final' : m.movement_type === 'apertura' ? 'Apertura de turno' : m.movement_type === 'cierre' ? 'Cierre de turno' : 'Movimiento de caja'),
               method: m.payment_method || 'Efectivo',
-              methodBadge: (m.payment_method || 'Efectivo') === 'Tarjeta' ? 'purple' : (m.payment_method || 'Efectivo') === 'Transferencia' ? 'amber' : 'emerald',
+              methodBadge: (m.payment_method || '').toLowerCase() === 'tarjeta' ? 'purple' : (m.payment_method || '').toLowerCase() === 'transferencia' ? 'amber' : 'emerald',
               amount: parseFloat(m.amount || 0).toLocaleString('es-DO', { minimumFractionDigits: 2 }),
               isOutflow: ['retiro', 'devolucion', 'gasto'].includes(m.movement_type),
-              user: m.user_name || 'Ana Cajera'
+              user: m.user_name || user?.name || '-'
             }));
           }
         } catch (e) {
           console.error(e);
         }
       } else {
-        list = sampleMovements;
         setCurrentRegister(null);
-        setKpis({
-          ventas: 25450.00,
-          ingresos: 25850.00,
-          egresos: 400.00,
-          balance: 25450.00,
-          count: 24
-        });
+        setKpis({ ventas: 0, ingresos: 0, egresos: 0, balance: 0, count: 0 });
+        setPaymentBreakdown([]);
       }
 
       // Filter by Tab
@@ -255,6 +268,26 @@ const Caja = () => {
         list = list.filter(m => m.type === 'Egreso' || m.isOutflow);
       } else if (activeTab === 'Cierres de caja' || activeTab === 'Arqueos') {
         list = list.filter(m => m.type === 'Cierre');
+      }
+
+      // Filter by Date
+      if (selectedDate) {
+        list = list.filter(m => {
+          if (!m.rawDate) return true;
+          return m.rawDate.startsWith(selectedDate);
+        });
+      }
+
+      // Filter by Method
+      if (filterMethod) {
+        list = list.filter(m => (m.method || '').toLowerCase() === filterMethod.toLowerCase());
+      }
+
+      // Filter by Type
+      if (filterType) {
+        const typeMap = { 'venta': 'Venta', 'ingreso': 'Ingreso', 'egreso': 'Egreso' };
+        const typeLabel = typeMap[filterType] || filterType;
+        list = list.filter(m => m.type === typeLabel);
       }
 
       // Filter Search
@@ -311,7 +344,7 @@ const Caja = () => {
 
   useEffect(() => {
     fetchCashData();
-  }, [activeTab, page, limit]);
+  }, [activeTab, page, limit, selectedDate, filterMethod, filterType]);
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -575,13 +608,29 @@ const Caja = () => {
       </div>
 
       {/* ─── SEARCH & ACTION BAR ─────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
         
         <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto flex-1">
-          {/* Date Selector */}
-          <div className="flex items-center gap-2 bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 shadow-sm cursor-pointer hover:bg-slate-50 transition-colors shrink-0">
-            <Calendar size={16} className="text-slate-400" />
-            <span>Hoy, {selectedDate}</span>
+          {/* Date Selector - funcional */}
+          <div className="relative flex items-center gap-2 bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 shadow-sm hover:border-emerald-400 transition-colors shrink-0 cursor-pointer">
+            <Calendar size={16} className="text-emerald-600 shrink-0" />
+            <span className="text-slate-500 text-[11px] font-medium shrink-0">Fecha:</span>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => { setSelectedDate(e.target.value); setPage(1); }}
+              className="bg-transparent text-xs font-semibold text-slate-700 focus:outline-none cursor-pointer w-[120px]"
+            />
+            {selectedDate !== todayISO && (
+              <button
+                onClick={() => setSelectedDate(todayISO)}
+                className="ml-1 text-slate-400 hover:text-rose-500 transition-colors"
+                title="Volver a hoy"
+              >
+                <X size={13} />
+              </button>
+            )}
           </div>
 
           {/* Search Input */}
@@ -599,11 +648,15 @@ const Caja = () => {
 
         <div className="flex items-center gap-3 shrink-0">
           <button
-            onClick={() => showToast('Filtros de caja aplicados', 'info')}
-            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-sm font-semibold transition-all shadow-sm active:scale-95"
+            onClick={() => setShowFilters(f => !f)}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-semibold transition-all shadow-sm active:scale-95 ${
+              showFilters || filterMethod || filterType
+                ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
+                : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-700'
+            }`}
           >
             <Filter size={18} />
-            <span>Filtros</span>
+            <span>Filtros{(filterMethod || filterType) ? ` (${[filterMethod, filterType].filter(Boolean).length})` : ''}</span>
           </button>
 
           <button
@@ -614,6 +667,62 @@ const Caja = () => {
             <span>Nuevo movimiento</span>
           </button>
         </div>
+      </div>
+
+      {/* ─── PANEL DE FILTROS ─────────────────────────────────────────────── */}
+      {showFilters && (
+        <div className="flex flex-wrap items-end gap-4 p-4 bg-white border border-slate-200 rounded-2xl shadow-sm">
+          {/* Método de Pago */}
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Método de pago</label>
+            <div className="flex gap-2">
+              {['', 'Efectivo', 'Tarjeta', 'Transferencia'].map(m => (
+                <button
+                  key={m || 'all-pm'}
+                  onClick={() => { setFilterMethod(m); setPage(1); }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                    filterMethod === m
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-emerald-400'
+                  }`}
+                >
+                  {m || 'Todos'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Tipo de movimiento */}
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">Tipo</label>
+            <div className="flex gap-2">
+              {[{v:'', l:'Todos'},{v:'venta',l:'Venta'},{v:'ingreso',l:'Ingreso'},{v:'egreso',l:'Egreso'}].map(t => (
+                <button
+                  key={t.v || 'all-type'}
+                  onClick={() => { setFilterType(t.v); setPage(1); }}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                    filterType === t.v
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'bg-white text-slate-600 border-slate-200 hover:border-emerald-400'
+                  }`}
+                >
+                  {t.l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Limpiar filtros */}
+          {(filterMethod || filterType) && (
+            <button
+              onClick={() => { setFilterMethod(''); setFilterType(''); setPage(1); }}
+              className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold text-rose-600 border border-rose-200 bg-rose-50 hover:bg-rose-100 transition-all"
+            >
+              <X size={13} /> Limpiar filtros
+            </button>
+          )}
+        </div>
+      )}
       </div>
 
       {/* ─── MAIN CONTENT GRID (2 COLUMNS) ─────────────────────────────────── */}
@@ -1017,8 +1126,12 @@ const Caja = () => {
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <div className="flex items-center gap-2">
                 <h3 className="font-bold text-slate-900 text-base">Sesión de caja</h3>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                  Abierta
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border ${
+                  currentRegister?.status === 'abierta'
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-slate-100 text-slate-600 border-slate-200'
+                }`}>
+                  {currentRegister?.status === 'abierta' ? 'Abierta' : currentRegister ? 'Cerrada' : 'Sin sesión'}
                 </span>
               </div>
               <button className="p-1 rounded-lg text-slate-400 hover:text-slate-700 transition-colors">
@@ -1030,30 +1143,47 @@ const Caja = () => {
             <div className="space-y-2 text-xs divide-y divide-slate-100">
               <div className="pt-1 flex justify-between">
                 <span className="text-slate-400 font-medium">Cajero</span>
-                <span className="font-bold text-slate-800">Ana Cajera</span>
+                <span className="font-bold text-slate-800">
+                  {currentRegister?.user_name || currentRegister?.opened_by_name || 'N/A'}
+                </span>
               </div>
 
               <div className="pt-2 flex justify-between">
                 <span className="text-slate-400 font-medium">Fecha de apertura</span>
-                <span className="font-semibold text-slate-800">15/08/2026 08:00 a.m.</span>
+                <span className="font-semibold text-slate-800">
+                  {currentRegister?.opened_at
+                    ? new Date(currentRegister.opened_at).toLocaleString('es-DO', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                    : 'N/A'}
+                </span>
               </div>
 
               <div className="pt-2 flex justify-between">
                 <span className="text-slate-400 font-medium">Fondo inicial</span>
-                <span className="font-bold text-slate-800">RD$ 5,000.00</span>
+                <span className="font-bold text-slate-800">
+                  RD$ {parseFloat(currentRegister?.initial_amount || 0).toLocaleString('es-DO', { minimumFractionDigits: 2 })}
+                </span>
               </div>
 
               <div className="pt-2 flex justify-between">
                 <span className="text-slate-400 font-medium">Caja / Terminal</span>
-                <span className="font-semibold text-slate-800">Caja Principal</span>
+                <span className="font-semibold text-slate-800">
+                  {currentRegister?.name || currentRegister?.register_name || 'N/A'}
+                </span>
               </div>
 
               <div className="pt-2 flex justify-between items-center">
                 <span className="text-slate-400 font-medium">Estado</span>
-                <span className="inline-flex items-center gap-1.5 text-emerald-600 font-bold">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                  En operación
-                </span>
+                {currentRegister?.status === 'abierta' ? (
+                  <span className="inline-flex items-center gap-1.5 text-emerald-600 font-bold">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    En operación
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center gap-1.5 text-slate-500 font-bold">
+                    <span className="w-2 h-2 rounded-full bg-slate-400"></span>
+                    {currentRegister ? 'Cerrada' : 'Sin caja activa'}
+                  </span>
+                )}
               </div>
             </div>
 
@@ -1073,28 +1203,28 @@ const Caja = () => {
               <div className="space-y-1.5 text-xs">
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-medium">Total ventas</span>
-                  <span className="font-extrabold text-emerald-700">RD$ 25,450.00</span>
+                  <span className="font-extrabold text-emerald-700">RD$ {kpis.ventas.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</span>
                 </div>
 
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-medium">Total ingresos</span>
-                  <span className="font-bold text-emerald-700">RD$ 25,850.00</span>
+                  <span className="font-bold text-emerald-700">RD$ {kpis.ingresos.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</span>
                 </div>
 
                 <div className="flex justify-between">
                   <span className="text-slate-500 font-medium">Total egresos</span>
-                  <span className="font-bold text-rose-600">RD$ 400.00</span>
+                  <span className="font-bold text-rose-600">RD$ {kpis.egresos.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</span>
                 </div>
 
                 <div className="pt-2 border-t border-slate-100 space-y-1.5">
                   <div className="flex justify-between">
                     <span className="text-slate-500 font-medium">Balance esperado</span>
-                    <span className="font-bold text-slate-800">RD$ 25,450.00</span>
+                    <span className="font-bold text-slate-800">RD$ {kpis.balance.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</span>
                   </div>
 
                   <div className="flex justify-between">
                     <span className="text-slate-500 font-medium">Balance actual</span>
-                    <span className="font-bold text-slate-900">RD$ 25,450.00</span>
+                    <span className="font-bold text-slate-900">RD$ {kpis.balance.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</span>
                   </div>
                 </div>
 
@@ -1111,45 +1241,25 @@ const Caja = () => {
               <h4 className="font-bold text-slate-800 text-xs">Métodos de pago</h4>
 
               <div className="space-y-2 text-xs">
-                <div className="flex justify-between items-center">
-                  <span className="flex items-center gap-1.5 text-slate-700 font-medium">
-                    <span>💵</span> Efectivo
-                  </span>
-                  <div className="text-right">
-                    <span className="font-bold text-slate-800">RD$ 12,350.00</span>
-                    <span className="text-[10px] text-slate-400 ml-1.5">48.6%</span>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="flex items-center gap-1.5 text-slate-700 font-medium">
-                    <span>💳</span> Tarjeta
-                  </span>
-                  <div className="text-right">
-                    <span className="font-bold text-slate-800">RD$ 8,270.00</span>
-                    <span className="text-[10px] text-slate-400 ml-1.5">32.5%</span>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="flex items-center gap-1.5 text-slate-700 font-medium">
-                    <span>🏦</span> Transferencia
-                  </span>
-                  <div className="text-right">
-                    <span className="font-bold text-slate-800">RD$ 4,480.00</span>
-                    <span className="text-[10px] text-slate-400 ml-1.5">17.6%</span>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center">
-                  <span className="flex items-center gap-1.5 text-slate-700 font-medium">
-                    <span>📝</span> Crédito
-                  </span>
-                  <div className="text-right">
-                    <span className="font-bold text-slate-800">RD$ 350.00</span>
-                    <span className="text-[10px] text-slate-400 ml-1.5">1.3%</span>
-                  </div>
-                </div>
+                {paymentBreakdown.length > 0 ? (
+                  paymentBreakdown.map((pm) => {
+                    const icons = { 'Efectivo': '💵', 'efectivo': '💵', 'Tarjeta': '💳', 'tarjeta': '💳', 'Transferencia': '🏦', 'transferencia': '🏦', 'Crédito': '📝', 'credito': '📝' };
+                    const icon = icons[pm.method] || '💰';
+                    return (
+                      <div key={pm.method} className="flex justify-between items-center">
+                        <span className="flex items-center gap-1.5 text-slate-700 font-medium capitalize">
+                          <span>{icon}</span> {pm.method}
+                        </span>
+                        <div className="text-right">
+                          <span className="font-bold text-slate-800">RD$ {pm.total.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</span>
+                          <span className="text-[10px] text-slate-400 ml-1.5">{pm.pct}%</span>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-slate-400 text-center py-2">Sin ventas registradas hoy</p>
+                )}
               </div>
             </div>
 

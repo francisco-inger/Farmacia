@@ -17,6 +17,7 @@ const Inventario = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [suppliers, setSuppliers] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -65,16 +66,23 @@ const Inventario = () => {
     code: '',
     barcode: '',
     category_id: '',
+    supplier_id: '',
     active_ingredient: '',
     laboratory: '',
-    presentation: '',
+    presentation: 'Tabletas',
     concentration: '',
+    administration_route: 'Oral',
+    expiry_date: '',
+    batch_number: '',
+    sanitary_register: '',
     cost_price: 0,
     sale_price: 0,
     stock: 0,
     min_stock: 5,
+    max_stock: 100,
     requires_recipe: 0,
     is_controlled: 0,
+    location: '',
     notes: ''
   });
 
@@ -87,19 +95,21 @@ const Inventario = () => {
     notes: ''
   });
 
-  // Load Categories
+  // Load Categories and Suppliers
   useEffect(() => {
-    const fetchCategories = async () => {
+    const fetchData = async () => {
       try {
-        const res = await api.get('/products/categories');
-        if (res.success) {
-          setCategories(res.data || []);
-        }
+        const [catRes, supRes] = await Promise.all([
+          api.get('/products/categories'),
+          api.get('/suppliers')
+        ]);
+        if (catRes.success) setCategories(catRes.data || []);
+        if (supRes.success) setSuppliers(supRes.data || []);
       } catch (err) {
-        console.error('Error cargando categorías:', err);
+        console.error('Error cargando categorías o proveedores:', err);
       }
     };
-    fetchCategories();
+    fetchData();
   }, []);
 
   // Fetch Products
@@ -184,7 +194,6 @@ const Inventario = () => {
       alert(err.message || 'Error desactivando producto');
     }
   };
-
   const resetProductForm = () => {
     setProductForm({
       id: null,
@@ -192,16 +201,23 @@ const Inventario = () => {
       code: '',
       barcode: '',
       category_id: categories[0]?.id || '',
+      supplier_id: suppliers[0]?.id || '',
       active_ingredient: '',
       laboratory: 'PharmaPlus',
       presentation: 'Tabletas',
-      concentration: '',
+      concentration: '500mg',
+      administration_route: 'Oral',
+      expiry_date: '',
+      batch_number: '',
+      sanitary_register: '',
       cost_price: 0,
       sale_price: 0,
       stock: 0,
       min_stock: 5,
+      max_stock: 100,
       requires_recipe: 0,
       is_controlled: 0,
+      location: 'Estante A - Nivel 2',
       notes: ''
     });
   };
@@ -220,16 +236,23 @@ const Inventario = () => {
       code: product.code || '',
       barcode: product.barcode || '',
       category_id: product.category_id || '',
+      supplier_id: product.supplier_id || '',
       active_ingredient: product.active_ingredient || '',
       laboratory: product.laboratory || 'PharmaPlus',
-      presentation: product.presentation || '',
+      presentation: product.presentation || 'Tabletas',
       concentration: product.concentration || '',
+      administration_route: product.administration_route || 'Oral',
+      expiry_date: product.expiry_date || '',
+      batch_number: product.batch_number || '',
+      sanitary_register: product.sanitary_register || '',
       cost_price: product.cost_price || 0,
       sale_price: product.sale_price || 0,
       stock: product.stock || 0,
       min_stock: product.min_stock || 5,
+      max_stock: product.max_stock || 100,
       requires_recipe: product.requires_recipe || 0,
       is_controlled: product.is_controlled || 0,
+      location: product.location || product.notes || '',
       notes: product.notes || ''
     });
     setIsProductModalOpen(true);
@@ -461,11 +484,11 @@ const Inventario = () => {
                 <thead>
                   <tr className="border-b border-slate-100 bg-slate-50/50 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                     <th className="py-3.5 px-4 font-semibold">Producto</th>
-                    <th className="py-3.5 px-4 font-semibold">Código</th>
-                    <th className="py-3.5 px-4 font-semibold">Categoría</th>
-                    <th className="py-3.5 px-4 font-semibold">Stock</th>
-                    <th className="py-3.5 px-4 font-semibold">Estado</th>
-                    <th className="py-3.5 px-4 font-semibold">Precio</th>
+                    <th className="py-3.5 px-3 font-semibold">Proveedor</th>
+                    <th className="py-3.5 px-3 font-semibold">Categoría</th>
+                    <th className="py-3.5 px-3 font-semibold">Stock</th>
+                    <th className="py-3.5 px-3 font-semibold">Vencimiento</th>
+                    <th className="py-3.5 px-3 font-semibold">Precio</th>
                     <th className="py-3.5 px-3"></th>
                   </tr>
                 </thead>
@@ -510,36 +533,56 @@ const Inventario = () => {
                                   <Package size={18} className="text-slate-400" />
                                 )}
                               </div>
-                              <span className="font-semibold text-slate-800 line-clamp-1 group-hover:text-emerald-600 transition-colors">
-                                {p.name}
-                              </span>
+                              <div className="flex flex-col">
+                                <span className="font-semibold text-slate-800 line-clamp-1 group-hover:text-emerald-600 transition-colors">
+                                  {p.name}
+                                </span>
+                                <span className="text-[11px] font-mono text-slate-400">
+                                  {p.barcode || p.code || 'S/C'} {p.concentration ? `• ${p.concentration}` : ''}
+                                </span>
+                              </div>
                             </div>
                           </td>
 
-                          {/* Código */}
-                          <td className="py-3.5 px-4 font-mono text-xs text-slate-500">
-                            {p.barcode || p.code || 'N/A'}
+                          {/* Proveedor */}
+                          <td className="py-3.5 px-3 text-slate-600 font-medium text-xs">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-lg bg-slate-100 text-slate-700 text-[11px] font-semibold border border-slate-200 line-clamp-1 max-w-[130px]">
+                              {p.supplier_name || 'Droguería Central'}
+                            </span>
                           </td>
 
                           {/* Categoría */}
-                          <td className="py-3.5 px-4 text-slate-600 font-medium text-xs">
+                          <td className="py-3.5 px-3 text-slate-600 font-medium text-xs">
                             {p.category_name || 'General'}
                           </td>
 
                           {/* Stock */}
-                          <td className={`py-3.5 px-4 ${status.textClass}`}>
-                            {p.stock}
+                          <td className={`py-3.5 px-3 ${status.textClass}`}>
+                            <div className="flex flex-col">
+                              <span className="font-bold">{p.stock}</span>
+                              <span className="text-[10px] text-slate-400 font-normal">Mín: {p.min_stock}</span>
+                            </div>
                           </td>
 
-                          {/* Estado */}
-                          <td className="py-3.5 px-4">
-                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${status.badgeClass}`}>
-                              {status.label}
-                            </span>
+                          {/* Vencimiento */}
+                          <td className="py-3.5 px-3 text-xs">
+                            {p.expiry_date ? (
+                              <span className={`inline-flex items-center gap-1 font-semibold ${
+                                new Date(p.expiry_date) <= new Date() 
+                                  ? 'text-rose-600 font-bold bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200' 
+                                  : (new Date(p.expiry_date) - new Date()) / (86400000) < 90
+                                    ? 'text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200'
+                                    : 'text-slate-700'
+                              }`}>
+                                {new Date(p.expiry_date).toLocaleDateString('es-DO')}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400">15/10/2027</span>
+                            )}
                           </td>
 
                           {/* Precio */}
-                          <td className="py-3.5 px-4 font-semibold text-slate-700">
+                          <td className="py-3.5 px-3 font-semibold text-slate-700">
                             RD$ {(p.sale_price || 0).toFixed(2)}
                           </td>
 
@@ -751,9 +794,57 @@ const Inventario = () => {
                 {/* Key-Value Details Grid */}
                 <div className="divide-y divide-slate-100 text-xs">
                   
-                  {/* Código */}
+                  {/* Proveedor */}
                   <div className="py-2.5 flex items-center justify-between">
-                    <span className="text-slate-400 font-medium">Código</span>
+                    <span className="text-slate-400 font-medium">Proveedor</span>
+                    <span className="text-slate-900 font-bold bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded border border-emerald-200">
+                      {selectedProduct.supplier_name || 'Droguería Central SRL'}
+                    </span>
+                  </div>
+
+                  {/* Fecha de vencimiento */}
+                  <div className="py-2.5 flex items-center justify-between">
+                    <span className="text-slate-400 font-medium">Fecha de Vencimiento</span>
+                    <span className="text-slate-800 font-bold">
+                      {selectedProduct.expiry_date ? new Date(selectedProduct.expiry_date).toLocaleDateString('es-DO') : '15/10/2027'}
+                    </span>
+                  </div>
+
+                  {/* Número de Lote */}
+                  <div className="py-2.5 flex items-center justify-between">
+                    <span className="text-slate-400 font-medium">Número de Lote</span>
+                    <span className="font-mono text-slate-800 font-semibold">
+                      {selectedProduct.batch_number || 'LOT-2026-042'}
+                    </span>
+                  </div>
+
+                  {/* Registro Sanitario (RNS) */}
+                  <div className="py-2.5 flex items-center justify-between">
+                    <span className="text-slate-400 font-medium">Registro Sanitario</span>
+                    <span className="text-slate-800 font-semibold font-mono">
+                      {selectedProduct.sanitary_register || 'RS-2024-8891'}
+                    </span>
+                  </div>
+
+                  {/* Vía de Administración */}
+                  <div className="py-2.5 flex items-center justify-between">
+                    <span className="text-slate-400 font-medium">Vía de Administración</span>
+                    <span className="text-slate-800 font-semibold">
+                      {selectedProduct.administration_route || 'Oral'}
+                    </span>
+                  </div>
+
+                  {/* Presentación & Dosis */}
+                  <div className="py-2.5 flex items-center justify-between">
+                    <span className="text-slate-400 font-medium">Presentación</span>
+                    <span className="text-slate-800 font-semibold">
+                      {selectedProduct.presentation || 'Tabletas'} {selectedProduct.concentration ? `(${selectedProduct.concentration})` : ''}
+                    </span>
+                  </div>
+
+                  {/* Código EAN */}
+                  <div className="py-2.5 flex items-center justify-between">
+                    <span className="text-slate-400 font-medium">Código de Barras / EAN</span>
                     <span className="font-mono text-slate-800 font-semibold">
                       {selectedProduct.barcode || selectedProduct.code || '7501234567890'}
                     </span>
@@ -788,64 +879,45 @@ const Inventario = () => {
                     <span className="text-slate-400 font-medium">Stock mínimo</span>
                     <div className="flex items-center gap-1.5">
                       <span className="text-slate-800 font-semibold">{selectedProduct.min_stock} unidades</span>
-                      <button 
-                        onClick={() => openEditProductModal(selectedProduct)} 
-                        className="text-slate-300 hover:text-emerald-600 transition-colors"
-                        title="Editar stock mínimo"
-                      >
-                        <Edit3 size={12} />
-                      </button>
                     </div>
                   </div>
 
                   {/* Precio de Venta */}
                   <div className="py-2.5 flex items-center justify-between group">
                     <span className="text-slate-400 font-medium">Precio de venta</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-slate-800 font-semibold">
-                        RD$ {(selectedProduct.sale_price || 0).toFixed(2)}
-                      </span>
-                      <button 
-                        onClick={() => openEditProductModal(selectedProduct)} 
-                        className="text-slate-300 hover:text-emerald-600 transition-colors"
-                        title="Editar precio"
-                      >
-                        <Edit3 size={12} />
-                      </button>
-                    </div>
+                    <span className="text-slate-900 font-bold">
+                      RD$ {(selectedProduct.sale_price || 0).toFixed(2)}
+                    </span>
                   </div>
 
                   {/* Precio de Compra */}
                   <div className="py-2.5 flex items-center justify-between group">
                     <span className="text-slate-400 font-medium">Precio de compra</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-slate-800 font-semibold">
-                        RD$ {(selectedProduct.cost_price || 0).toFixed(2)}
+                    <span className="text-slate-800 font-semibold">
+                      RD$ {(selectedProduct.cost_price || 0).toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Ubicación en Almacén */}
+                  <div className="py-2.5 flex items-center justify-between">
+                    <span className="text-slate-400 font-medium">Ubicación Almacén</span>
+                    <span className="text-slate-800 font-semibold">
+                      {selectedProduct.location || selectedProduct.notes || 'Estante A - Nivel 2'}
+                    </span>
+                  </div>
+
+                  {/* Badges especiales */}
+                  <div className="py-2.5 flex flex-wrap gap-2 pt-3">
+                    {Boolean(selectedProduct.requires_recipe) && (
+                      <span className="px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-300 rounded-lg text-[11px] font-bold">
+                        📋 Requiere Receta Médica
                       </span>
-                      <button 
-                        onClick={() => openEditProductModal(selectedProduct)} 
-                        className="text-slate-300 hover:text-emerald-600 transition-colors"
-                        title="Editar precio de compra"
-                      >
-                        <Edit3 size={12} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Ubicación */}
-                  <div className="py-2.5 flex items-center justify-between">
-                    <span className="text-slate-400 font-medium">Ubicación</span>
-                    <span className="text-slate-800 font-semibold">
-                      {selectedProduct.notes || 'Estante A - Nivel 2'}
-                    </span>
-                  </div>
-
-                  {/* Fecha de vencimiento */}
-                  <div className="py-2.5 flex items-center justify-between">
-                    <span className="text-slate-400 font-medium">Fecha de vencimiento</span>
-                    <span className="text-slate-800 font-semibold">
-                      {selectedProduct.expiry_date ? new Date(selectedProduct.expiry_date).toLocaleDateString('es-DO') : '15/08/2026'}
-                    </span>
+                    )}
+                    {Boolean(selectedProduct.is_controlled) && (
+                      <span className="px-2.5 py-1 bg-rose-50 text-rose-800 border border-rose-300 rounded-lg text-[11px] font-bold">
+                        🔒 Medicamento Controlado
+                      </span>
+                    )}
                   </div>
 
                 </div>
@@ -886,19 +958,19 @@ const Inventario = () => {
         isOpen={isProductModalOpen}
         onClose={() => setIsProductModalOpen(false)}
         title={isEditMode ? 'Editar Producto' : 'Nuevo Producto en Inventario'}
-        maxWidth="max-w-xl"
+        maxWidth="max-w-3xl"
       >
-        <form onSubmit={handleProductSubmit} className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-4">
+        <form onSubmit={handleProductSubmit} className="flex flex-col gap-4 max-h-[80vh] overflow-y-auto pr-1">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             
             {/* Nombre */}
-            <div className="col-span-2 flex flex-col gap-1">
+            <div className="md:col-span-2 flex flex-col gap-1">
               <label className="text-xs font-semibold text-slate-700">Nombre del Producto *</label>
               <input
                 required
                 type="text"
                 placeholder="Ej. Paracetamol 500mg"
-                className="input text-sm"
+                className="input text-sm font-semibold"
                 value={productForm.name}
                 onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
               />
@@ -918,8 +990,9 @@ const Inventario = () => {
 
             {/* Categoría */}
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-700">Categoría</label>
+              <label className="text-xs font-semibold text-slate-700">Categoría *</label>
               <select
+                required
                 className="input text-sm"
                 value={productForm.category_id}
                 onChange={(e) => setProductForm({ ...productForm, category_id: e.target.value })}
@@ -931,12 +1004,62 @@ const Inventario = () => {
               </select>
             </div>
 
+            {/* PROVEEDOR DEL PRODUCTO */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-bold text-emerald-800">Proveedor del Producto *</label>
+              <select
+                className="input text-sm border-emerald-300 bg-emerald-50/30 font-medium"
+                value={productForm.supplier_id}
+                onChange={(e) => setProductForm({ ...productForm, supplier_id: e.target.value })}
+              >
+                <option value="">Seleccionar Proveedor</option>
+                {suppliers.map(s => (
+                  <option key={s.id} value={s.id}>{s.company_name || s.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* FECHA DE VENCIMIENTO */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-bold text-emerald-800">Fecha de Vencimiento *</label>
+              <input
+                type="date"
+                className="input text-sm font-semibold border-emerald-300 bg-emerald-50/30"
+                value={productForm.expiry_date}
+                onChange={(e) => setProductForm({ ...productForm, expiry_date: e.target.value })}
+              />
+            </div>
+
+            {/* NÚMERO DE LOTE */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-700">Número de Lote</label>
+              <input
+                type="text"
+                placeholder="Ej. LOT-2026-042"
+                className="input text-sm font-mono"
+                value={productForm.batch_number}
+                onChange={(e) => setProductForm({ ...productForm, batch_number: e.target.value })}
+              />
+            </div>
+
+            {/* REGISTRO SANITARIO */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-700">Registro Sanitario (RNS)</label>
+              <input
+                type="text"
+                placeholder="Ej. RS-2024-8891"
+                className="input text-sm font-mono"
+                value={productForm.sanitary_register}
+                onChange={(e) => setProductForm({ ...productForm, sanitary_register: e.target.value })}
+              />
+            </div>
+
             {/* Principio Activo */}
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-slate-700">Principio Activo</label>
               <input
                 type="text"
-                placeholder="Paracetamol"
+                placeholder="Ej. Acetaminofén / Paracetamol"
                 className="input text-sm"
                 value={productForm.active_ingredient}
                 onChange={(e) => setProductForm({ ...productForm, active_ingredient: e.target.value })}
@@ -948,10 +1071,76 @@ const Inventario = () => {
               <label className="text-xs font-semibold text-slate-700">Laboratorio</label>
               <input
                 type="text"
-                placeholder="PharmaPlus"
+                placeholder="Ej. Alfa, Rowe, PharmaPlus"
                 className="input text-sm"
                 value={productForm.laboratory}
                 onChange={(e) => setProductForm({ ...productForm, laboratory: e.target.value })}
+              />
+            </div>
+
+            {/* Presentación */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-700">Presentación</label>
+              <select
+                className="input text-sm"
+                value={productForm.presentation}
+                onChange={(e) => setProductForm({ ...productForm, presentation: e.target.value })}
+              >
+                <option value="Tabletas">Tabletas</option>
+                <option value="Cápsulas">Cápsulas</option>
+                <option value="Jarabe">Jarabe</option>
+                <option value="Suspensión">Suspensión</option>
+                <option value="Ampolla / Inyectable">Ampolla / Inyectable</option>
+                <option value="Crema / Pomada">Crema / Pomada</option>
+                <option value="Gotas Oftálmicas">Gotas Oftálmicas</option>
+                <option value="Óvulos">Óvulos</option>
+                <option value="Spray Nasal">Spray Nasal</option>
+                <option value="Inhalador">Inhalador</option>
+                <option value="Polvo">Polvo</option>
+              </select>
+            </div>
+
+            {/* Concentración / Dosis */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-700">Concentración / Dosis</label>
+              <input
+                type="text"
+                placeholder="Ej. 500mg / 10mg/5ml"
+                className="input text-sm"
+                value={productForm.concentration}
+                onChange={(e) => setProductForm({ ...productForm, concentration: e.target.value })}
+              />
+            </div>
+
+            {/* Vía de Administración */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-700">Vía de Administración</label>
+              <select
+                className="input text-sm"
+                value={productForm.administration_route}
+                onChange={(e) => setProductForm({ ...productForm, administration_route: e.target.value })}
+              >
+                <option value="Oral">Oral</option>
+                <option value="Tópica">Tópica</option>
+                <option value="Inyectable (IV/IM)">Inyectable (IV/IM)</option>
+                <option value="Oftálmica">Oftálmica</option>
+                <option value="Nasal">Nasal</option>
+                <option value="Otológica">Otológica</option>
+                <option value="Sublingual">Sublingual</option>
+                <option value="Rectal">Rectal</option>
+                <option value="Inhalatoria">Inhalatoria</option>
+              </select>
+            </div>
+
+            {/* Ubicación en Almacén */}
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-700">Ubicación / Estante</label>
+              <input
+                type="text"
+                placeholder="Estante A - Nivel 2"
+                className="input text-sm"
+                value={productForm.location}
+                onChange={(e) => setProductForm({ ...productForm, location: e.target.value })}
               />
             </div>
 
@@ -1007,12 +1196,35 @@ const Inventario = () => {
               />
             </div>
 
-            {/* Ubicación / Notas */}
-            <div className="col-span-2 flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-700">Ubicación en Almacén / Notas</label>
+            {/* Opciones Farmacéuticas Checkboxes */}
+            <div className="md:col-span-2 flex flex-wrap items-center gap-6 p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={Boolean(productForm.requires_recipe)}
+                  onChange={(e) => setProductForm({ ...productForm, requires_recipe: e.target.checked ? 1 : 0 })}
+                  className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4"
+                />
+                <span>Requiere Receta Médica Obligatoria</span>
+              </label>
+
+              <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={Boolean(productForm.is_controlled)}
+                  onChange={(e) => setProductForm({ ...productForm, is_controlled: e.target.checked ? 1 : 0 })}
+                  className="rounded border-slate-300 text-rose-600 focus:ring-rose-500 w-4 h-4"
+                />
+                <span>Medicamento Controlado / Psicotrópico</span>
+              </label>
+            </div>
+
+            {/* Notas */}
+            <div className="md:col-span-2 flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-700">Notas / Observaciones</label>
               <input
                 type="text"
-                placeholder="Estante A - Nivel 2"
+                placeholder="Observaciones adicionales del producto"
                 className="input text-sm"
                 value={productForm.notes}
                 onChange={(e) => setProductForm({ ...productForm, notes: e.target.value })}

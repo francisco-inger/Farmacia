@@ -1,4 +1,5 @@
 import React, { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../context/AuthContext';
 import { Pill, Activity, Eye, EyeOff } from 'lucide-react';
 
@@ -9,6 +10,7 @@ const Login = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useContext(AuthContext);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,7 +18,15 @@ const Login = () => {
     setIsLoading(true);
     try {
       const res = await login(email, password);
-      if (!res.success) {
+      if (res.success) {
+        // Redirigir según el rol normalizado
+        const role = (res.user?.role || '').toLowerCase().trim();
+        if (role === 'cajero') {
+          navigate('/pos', { replace: true });
+        } else {
+          navigate('/dashboard', { replace: true });
+        }
+      } else {
         setError(res.message || 'Error de autenticación');
       }
     } catch (err) {

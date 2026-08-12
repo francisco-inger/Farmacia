@@ -7,7 +7,11 @@ function getAll(req, res) {
   const offset = (page - 1) * limit;
   let where = ['1=1'];
   const params = [];
-  if (search) { where.push(`(p.name LIKE ? OR p.code LIKE ? OR p.barcode LIKE ? OR p.active_ingredient LIKE ?)`); const s = `%${search}%`; params.push(s,s,s,s); }
+  if (search) { 
+    where.push(`(p.name LIKE ? OR p.code LIKE ? OR p.barcode LIKE ? OR p.active_ingredient LIKE ? OR s.company_name LIKE ? OR p.sanitary_register LIKE ? OR p.batch_number LIKE ?)`); 
+    const s = `%${search}%`; 
+    params.push(s,s,s,s,s,s,s); 
+  }
   if (category) { where.push(`p.category_id = ?`); params.push(category); }
   if (low_stock === 'true') { where.push(`p.stock <= p.min_stock`); }
   const whereStr = where.join(' AND ');
@@ -18,7 +22,12 @@ function getAll(req, res) {
     LEFT JOIN suppliers s ON p.supplier_id = s.id
     WHERE ${whereStr} ORDER BY p.name LIMIT ? OFFSET ?
   `).all([...params, parseInt(limit), offset]);
-  const total = db.prepare(`SELECT COUNT(*) as count FROM products p WHERE ${whereStr}`).get(params).count;
+  const total = db.prepare(`
+    SELECT COUNT(*) as count 
+    FROM products p
+    LEFT JOIN suppliers s ON p.supplier_id = s.id
+    WHERE ${whereStr}
+  `).get(params).count;
   return res.json({ success: true, data: products, pagination: { page: parseInt(page), limit: parseInt(limit), total, pages: Math.ceil(total / limit) } });
 }
 
@@ -36,19 +45,47 @@ function getById(req, res) {
 
 function create(req, res) {
   const db = getDb();
-  const { name, code, barcode, category_id, active_ingredient, laboratory, presentation, concentration, cost_price, sale_price, stock, min_stock, max_stock, requires_recipe, is_controlled, suppliers = [], notes } = req.body;
-  if (!name || !sale_price) return res.status(400).json({ success: false, message: 'Nombre y precio de venta son requeridos' });
+  const { 
+    name, code, barcode, category_id, active_ingredient, laboratory, presentation, 
+    concentration, cost_price, sale_price, stock, min_stock, max_stock, requires_recipe, 
+    is_controlled, supplier_id, suppliers = [], expiry_date, batch_number, location, 
+    sanitary_register, administration_route, notes 
+  } = req.body;
+  if (!name || sale_price === undefined) return res.status(400).json({ success: false, message: 'Nombre y precio de venta son requeridos' });
+
   const result = db.prepare(`
-    INSERT INTO products (name, code, barcode, category_id, active_ingredient, laboratory, presentation, concentration, cost_price, sale_price, stock, min_stock, max_stock, requires_recipe, is_controlled, notes)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `).run(name, code||null, barcode||null, category_id||null, active_ingredient||null, laboratory||null, presentation||null, concentration||null, cost_price||0, sale_price, stock||0, min_stock||5, max_stock||100, requires_recipe||0, is_controlled||0, notes||null);
+    INSERT INTO products (
+      name, code, barcode, category_id, active_ingredient, laboratory, presentation, 
+      concentration, cost_price, sale_price, stock, min_stock, max_stock, requires_recipe, 
+      is_controlled, supplier_id, expiry_date, batch_number, location, sanitary_register, 
+      administration_route, notes
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(
+    name, code||null, barcode||null, category_id||null, active_ingredient||null, laboratory||null, presentation||null, 
+    concentration||null, cost_price||0, sale_price, stock||0, min_stock||5, max_stock||100, requires_recipe||0, 
+    is_controlled||0, supplier_id||null, expiry_date||null, batch_number||null, location||null, sanitary_register||null, 
+    administration_route||null, notes||null
+  );
   const productId = result.lastInsertRowid;
-  // Insert many-to-many supplier links
-  const insertLink = db.prepare('INSERT INTO supplier_products (supplier_id, product_id) VALUES (?, ?)');
-  suppliers.forEach(supId => {
-    if (supId) insertLink.run(supId, productId);
-  });
-  const newProduct = db.prepare(`SELECT * FROM products WHERE id = ?`).get(productId);
+
+  // Insert supplier links
+  if (supplier_id) {
+    try { db.prepare('INSERT OR IGNORE INTO supplier_products (supplier_id, product_id) VALUES (?, ?)').run(supplier_id, productId); } catch(e){}
+  }
+  if (Array.isArray(suppliers)) {
+    const insertLink = db.prepare('INSERT OR IGNORE INTO supplier_products (supplier_id, product_id) VALUES (?, ?)');
+    suppliers.forEach(supId => {
+      if (supId) insertLink.run(supId, productId);
+    });
+  }
+
+  const newProduct = db.prepare(`
+    SELECT p.*, c.name as category_name, s.company_name as supplier_name
+    FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN suppliers s ON p.supplier_id = s.id
+    WHERE p.id = ?
+  `).get(productId);
+
   // Audit log
   logAudit({
     userId: req.user.id,
@@ -67,7 +104,7 @@ function update(req, res) {
   const existing = db.prepare(`SELECT * FROM products WHERE id = ?`).get(req.params.id);
   if (!existing) return res.status(404).json({ success: false, message: 'Producto no encontrado' });
   const { suppliers = [] } = req.body;
-  const fields = ['name','code','barcode','category_id','active_ingredient','laboratory','presentation','concentration','cost_price','sale_price','stock','min_stock','max_stock','requires_recipe','is_controlled','notes','is_active'];
+  const fields = ['name','code','barcode','category_id','active_ingredient','laboratory','presentation','concentration','cost_price','sale_price','stock','min_stock','max_stock','requires_recipe','is_controlled','supplier_id','expiry_date','batch_number','location','sanitary_register','administration_route','notes','is_active'];
   const updates = []; const values = [];
   fields.forEach(f => { if (req.body[f] !== undefined) { updates.push(`${f} = ?`); values.push(req.body[f]); } });
   if (updates.length === 0 && suppliers.length === 0) return res.status(400).json({ success: false, message: 'No hay campos para actualizar' });
@@ -77,14 +114,22 @@ function update(req, res) {
     db.prepare(`UPDATE products SET ${updates.join(', ')} WHERE id = ?`).run(values);
   }
   // Update supplier links
-  if (suppliers.length > 0) {
+  if (req.body.supplier_id) {
+    try { db.prepare('INSERT OR IGNORE INTO supplier_products (supplier_id, product_id) VALUES (?, ?)').run(req.body.supplier_id, req.params.id); } catch(e){}
+  }
+  if (Array.isArray(suppliers) && suppliers.length > 0) {
     db.prepare('DELETE FROM supplier_products WHERE product_id = ?').run(req.params.id);
-    const insertLink = db.prepare('INSERT INTO supplier_products (supplier_id, product_id) VALUES (?, ?)');
+    const insertLink = db.prepare('INSERT OR IGNORE INTO supplier_products (supplier_id, product_id) VALUES (?, ?)');
     suppliers.forEach(supId => {
       if (supId) insertLink.run(supId, req.params.id);
     });
   }
-  const updated = db.prepare(`SELECT * FROM products WHERE id = ?`).get(req.params.id);
+  const updated = db.prepare(`
+    SELECT p.*, c.name as category_name, s.company_name as supplier_name
+    FROM products p LEFT JOIN categories c ON p.category_id = c.id LEFT JOIN suppliers s ON p.supplier_id = s.id
+    WHERE p.id = ?
+  `).get(req.params.id);
+
   // Audit log
   logAudit({
     userId: req.user.id,

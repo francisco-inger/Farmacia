@@ -298,7 +298,13 @@ const Facturacion = () => {
         subtotal: subtotal,
         discount: totalDiscount,
         tax: totalTax,
-        total: grandTotal
+        total: grandTotal,
+        items: cartItems.map(item => ({
+          product_id: item.id,
+          quantity: item.quantity,
+          unit_price: item.sale_price || item.price,
+          discount: item.discount || 0
+        }))
       };
 
       const res = await api.post('/invoices', invoicePayload);

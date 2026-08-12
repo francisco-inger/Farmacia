@@ -7,4 +7,5 @@ router.get('/', authMiddleware, ctrl.getAll);
 router.get('/:id', authMiddleware, ctrl.getById);
 router.post('/', authMiddleware, requireAdmin, ctrl.create);
 router.post('/:id/receive', authMiddleware, requireAdmin, ctrl.receivePurchase);
+router.patch('/:id/status', authMiddleware, requireAdmin, ctrl.updateStatus);
 module.exports = router;

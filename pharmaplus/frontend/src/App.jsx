@@ -2,22 +2,16 @@ import React, { useContext } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 
-// Placeholders for modules (to be implemented)
 import Login from './modules/auth/Login';
 import Dashboard from './modules/dashboard/Dashboard';
 import MainLayout from './components/layout/MainLayout';
-// Import other modules as we build them...
-
 import Productos from './modules/productos/Productos';
-
 import Inventario from './modules/inventario/Inventario';
-
 import Clientes from './modules/clientes/Clientes';
-
 import POS from './modules/pos/POS';
 import AsistenteIA from './modules/ia/AsistenteIA';
 import Facturacion from './modules/facturacion/Facturacion';
-import Recetas from './modules/recetas/Recetas';
+import DgiiFiscal from './modules/facturacion/DgiiFiscal';
 import Servicios from './modules/servicios/Servicios';
 import Compras from './modules/compras/Compras';
 import Proveedores from './modules/proveedores/Proveedores';
@@ -29,58 +23,93 @@ import Usuarios from './modules/usuarios/Usuarios';
 import Reportes from './modules/reportes/Reportes';
 import Auditoria from './modules/auditoria/Auditoria';
 
-const ProtectedRoute = ({ children, allowedRoles }) => {
+// ─────────────────────────────────────────────────────────────────────────────
+// ProtectedRoute — verifica autenticación y rol
+// adminOnly = true → solo el Administrador puede entrar; el Cajero va al POS
+// ─────────────────────────────────────────────────────────────────────────────
+const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { user, loading } = useContext(AuthContext);
 
-  if (loading) return <div className="flex h-screen items-center justify-center">Cargando PharmaPlus...</div>;
-  if (!user) return <Navigate to="/login" replace />;
-  if (allowedRoles && !allowedRoles.includes(user.role)) return <Navigate to="/unauthorized" replace />;
+  if (loading) return <div className="flex h-screen items-center justify-center">Cargando...</div>;
+  if (!user)   return <Navigate to="/login" replace />;
+  if (adminOnly && user.role === 'cajero') return <Navigate to="/pos" replace />;
 
   return children;
 };
 
-const AppRoutes = () => {
+// ─────────────────────────────────────────────────────────────────────────────
+// RootRedirect — redirige al inicio correcto según rol
+// ─────────────────────────────────────────────────────────────────────────────
+const RootRedirect = () => {
   const { user, loading } = useContext(AuthContext);
-
   if (loading) return <div className="flex h-screen items-center justify-center">Inicializando...</div>;
-
-  return (
-    <Routes>
-      <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-      <Route path="/pos" element={<ProtectedRoute><POS /></ProtectedRoute>} />
-      
-      {/* Protected Routes inside Layout */}
-      <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="productos" element={<Productos />} />
-        <Route path="inventario" element={<Inventario />} />
-        <Route path="clientes" element={<Clientes />} />
-        
-        {/* Placeholder routes for all modules to prevent 404s while building */}
-        <Route path="recetas" element={<Recetas />} />
-        <Route path="servicios" element={<Servicios />} />
-        <Route path="compras" element={<Compras />} />
-        <Route path="proveedores" element={<Proveedores />} />
-        <Route path="facturacion" element={<Facturacion />} />
-        <Route path="rrhh" element={<ProtectedRoute allowedRoles={['admin']}><RRHH /></ProtectedRoute>} />
-        <Route path="cajas" element={<Caja />} />
-        <Route path="integraciones" element={<Integraciones />} />
-        <Route path="ia" element={<AsistenteIA />} />
-        
-        {/* Admin only routes */}
-        <Route path="usuarios" element={<ProtectedRoute allowedRoles={['admin']}><Usuarios /></ProtectedRoute>} />
-        <Route path="auditoria" element={<ProtectedRoute allowedRoles={['admin']}><Auditoria /></ProtectedRoute>} />
-        <Route path="reportes" element={<ProtectedRoute allowedRoles={['admin']}><Reportes /></ProtectedRoute>} />
-        <Route path="configuracion" element={<ProtectedRoute allowedRoles={['admin']}><Configuracion /></ProtectedRoute>} />
-      </Route>
-
-      <Route path="/unauthorized" element={<div className="flex flex-col h-screen items-center justify-center gap-4"><h1>Acceso Denegado</h1><p>No tienes permiso para ver esta página.</p></div>} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
+  if (!user)   return <Navigate to="/login" replace />;
+  return <Navigate to={user.role === 'cajero' ? '/pos' : '/dashboard'} replace />;
 };
 
+// ─────────────────────────────────────────────────────────────────────────────
+// LoginRoute — si ya está logueado, redirige según rol
+// ─────────────────────────────────────────────────────────────────────────────
+const LoginRoute = () => {
+  const { user, loading } = useContext(AuthContext);
+  if (loading) return <div className="flex h-screen items-center justify-center">Cargando...</div>;
+  if (user)    return <Navigate to={user.role === 'cajero' ? '/pos' : '/dashboard'} replace />;
+  return <Login />;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AppRoutes
+// ─────────────────────────────────────────────────────────────────────────────
+const AppRoutes = () => (
+  <Routes>
+    {/* Login */}
+    <Route path="/login" element={<LoginRoute />} />
+
+    {/* POS — Admin y Cajero (pantalla completa sin layout lateral) */}
+    <Route path="/pos" element={<ProtectedRoute><POS /></ProtectedRoute>} />
+
+    {/* Layout principal */}
+    <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+      {/* Raíz → redirige según rol */}
+      <Route index element={<RootRedirect />} />
+
+      {/* Cajas — Admin y Cajero */}
+      <Route path="cajas" element={<Caja />} />
+
+      {/* ── Solo Administrador ─────────────────────────────────────────── */}
+      <Route path="dashboard"     element={<ProtectedRoute adminOnly><Dashboard /></ProtectedRoute>} />
+      <Route path="productos"     element={<ProtectedRoute adminOnly><Productos /></ProtectedRoute>} />
+      <Route path="inventario"    element={<ProtectedRoute adminOnly><Inventario /></ProtectedRoute>} />
+      <Route path="clientes"      element={<ProtectedRoute adminOnly><Clientes /></ProtectedRoute>} />
+      <Route path="servicios"     element={<ProtectedRoute adminOnly><Servicios /></ProtectedRoute>} />
+      <Route path="compras"       element={<ProtectedRoute adminOnly><Compras /></ProtectedRoute>} />
+      <Route path="proveedores"   element={<ProtectedRoute adminOnly><Proveedores /></ProtectedRoute>} />
+      <Route path="facturacion"   element={<ProtectedRoute adminOnly><DgiiFiscal /></ProtectedRoute>} />
+      <Route path="rrhh"          element={<ProtectedRoute adminOnly><RRHH /></ProtectedRoute>} />
+      <Route path="integraciones" element={<ProtectedRoute adminOnly><Integraciones /></ProtectedRoute>} />
+      <Route path="ia"            element={<ProtectedRoute adminOnly><AsistenteIA /></ProtectedRoute>} />
+      <Route path="reportes"      element={<ProtectedRoute adminOnly><Reportes /></ProtectedRoute>} />
+      <Route path="usuarios"      element={<ProtectedRoute adminOnly><Usuarios /></ProtectedRoute>} />
+      <Route path="auditoria"     element={<ProtectedRoute adminOnly><Auditoria /></ProtectedRoute>} />
+      <Route path="configuracion" element={<ProtectedRoute adminOnly><Configuracion /></ProtectedRoute>} />
+    </Route>
+
+    {/* Página de acceso denegado */}
+    <Route path="/unauthorized" element={
+      <div className="flex flex-col h-screen items-center justify-center gap-4">
+        <h1 className="text-2xl font-bold">Acceso Denegado</h1>
+        <p className="text-gray-500">No tienes permiso para ver esta página.</p>
+      </div>
+    } />
+
+    {/* Cualquier ruta desconocida → inicio */}
+    <Route path="*" element={<RootRedirect />} />
+  </Routes>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
+// App — AuthProvider envuelve todo correctamente
+// ─────────────────────────────────────────────────────────────────────────────
 function App() {
   return (
     <AuthProvider>

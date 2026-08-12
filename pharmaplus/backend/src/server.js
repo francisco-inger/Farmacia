@@ -7,6 +7,8 @@ const { runMigrations } = require('./db/migrations/001_initial');
 const { runIntegracionesMigrations } = require('./db/migrations/002_integraciones');
 const { runSupplierProducts } = require('./db/migrations/003_create_supplier_products');
 const { runAddSupplierFields } = require('./db/migrations/004_add_supplier_fields');
+const { runCleanRoles } = require('./db/migrations/005_clean_roles');
+const { up: runLoyaltyFields } = require('./db/migrations/007_add_loyalty_fields');
 const { runSeed } = require('./db/seed');
 const { errorMiddleware } = require('./middleware/errorMiddleware');
 
@@ -19,7 +21,6 @@ const clientesRoutes = require('./modules/clientes/clientes.routes');
 const posRoutes = require('./modules/pos/pos.routes');
 const comprasRoutes = require('./modules/compras/compras.routes');
 const proveedoresRoutes = require('./modules/proveedores/proveedores.routes');
-const recetasRoutes = require('./modules/recetas/recetas.routes');
 const serviciosRoutes = require('./modules/servicios/servicios.routes');
 const facturacionRoutes = require('./modules/facturacion/facturacion.routes');
 const rrhhRoutes = require('./modules/rrhh/rrhh.routes');
@@ -78,6 +79,8 @@ app.use((req, res, next) => {
 });
 
 
+const { runPharmacyFields } = require('./db/migrations/006_pharmacy_fields');
+
 // Initialize Database
 console.log('📦 Inicializando base de datos...');
 try {
@@ -88,6 +91,9 @@ try {
   try { runIntegracionesMigrations(); } catch (e) { console.error('⚠️ Error running integraciones migration:', e); }
   try { runSupplierProducts(db); } catch (e) { console.error('⚠️ Error running supplier_products migration:', e); }
   try { runAddSupplierFields(db); } catch (e) { console.error('⚠️ Error running add_supplier_fields migration:', e); }
+  try { runCleanRoles(); } catch (e) { console.error('⚠️ Error running clean_roles migration:', e); }
+  try { runPharmacyFields(db); } catch (e) { console.error('⚠️ Error running pharmacy_fields migration:', e); }
+  try { runLoyaltyFields(db); } catch (e) { console.error('⚠️ Error running loyalty_fields migration:', e); }
   // Check if users exist, if not, run seed
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
   if (userCount === 0) {
@@ -113,8 +119,6 @@ app.use('/api/purchases', comprasRoutes);
 app.use('/api/compras', comprasRoutes);
 app.use('/api/suppliers', proveedoresRoutes);
 app.use('/api/proveedores', proveedoresRoutes);
-app.use('/api/recipes', recetasRoutes);
-app.use('/api/recetas', recetasRoutes);
 app.use('/api/services', serviciosRoutes);
 app.use('/api/servicios', serviciosRoutes);
 app.use('/api/invoices', facturacionRoutes);

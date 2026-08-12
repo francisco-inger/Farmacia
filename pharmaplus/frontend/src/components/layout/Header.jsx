@@ -181,15 +181,17 @@ const Header = ({ toggleSidebar }) => {
             )}
           </button>
 
-          {/* AI Quick Button */}
-          <button 
-            onClick={() => navigate('/ia')}
-            className="p-2 text-primary hover:bg-primary-light rounded-full transition-colors relative"
-            title="Asistente IA"
-          >
-            <BotMessageSquare size={20} />
-            <span className="absolute top-1 right-1 w-2 h-2 bg-success rounded-full"></span>
-          </button>
+          {/* AI Quick Button — solo Admin */}
+          {user?.role !== 'cajero' && (
+            <button 
+              onClick={() => navigate('/ia')}
+              className="p-2 text-primary hover:bg-primary-light rounded-full transition-colors relative"
+              title="Asistente IA"
+            >
+              <BotMessageSquare size={20} />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-success rounded-full"></span>
+            </button>
+          )}
 
           {/* Fullscreen */}
           <button 
@@ -228,18 +230,23 @@ const Header = ({ toggleSidebar }) => {
                   <p className="text-xs font-bold text-main">{user?.name}</p>
                   <p className="text-[10px] text-muted truncate">{user?.email}</p>
                 </div>
-                <button 
-                  onClick={() => navigate('/configuracion')}
-                  className="w-full px-4 py-2 text-xs text-main hover:bg-background flex items-center gap-2 transition-colors"
-                >
-                  <Settings size={14} /> Configuración
-                </button>
-                <button 
-                  onClick={() => navigate('/usuarios')}
-                  className="w-full px-4 py-2 text-xs text-main hover:bg-background flex items-center gap-2 transition-colors"
-                >
-                  <User size={14} /> Mi Cuenta
-                </button>
+                {/* Opciones solo para Admin */}
+                {user?.role !== 'cajero' && (
+                  <>
+                    <button 
+                      onClick={() => navigate('/configuracion')}
+                      className="w-full px-4 py-2 text-xs text-main hover:bg-background flex items-center gap-2 transition-colors"
+                    >
+                      <Settings size={14} /> Configuración
+                    </button>
+                    <button 
+                      onClick={() => navigate('/usuarios')}
+                      className="w-full px-4 py-2 text-xs text-main hover:bg-background flex items-center gap-2 transition-colors"
+                    >
+                      <User size={14} /> Mi Cuenta
+                    </button>
+                  </>
+                )}
                 <div className="border-t border-border my-1"></div>
                 <button 
                   onClick={() => { logout(); navigate('/login'); }}

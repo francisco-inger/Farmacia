@@ -5,10 +5,13 @@ export const AuthContext = createContext();
 
 const normalizeRole = (role) => {
   if (!role) return '';
-  const r = role.toLowerCase();
+  const r = role.toLowerCase().trim();
+  // Cualquier variante de administrador → 'admin'
   if (r === 'administrador' || r === 'admin') return 'admin';
+  // Cualquier variante de cajero → 'cajero'
   if (r === 'cajero') return 'cajero';
-  return r;
+  // Por defecto tratar como admin (no limitar acceso inesperadamente)
+  return 'admin';
 };
 
 export const AuthProvider = ({ children }) => {

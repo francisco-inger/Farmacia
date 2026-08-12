@@ -5,5 +5,7 @@ const router = express.Router();
 router.get('/', authMiddleware, ctrl.getServices);
 router.get('/records', authMiddleware, ctrl.getRecords);
 router.post('/', authMiddleware, ctrl.createService);
+router.put('/:id', authMiddleware, ctrl.updateService);
+router.delete('/:id', authMiddleware, ctrl.deleteService);
 router.post('/records', authMiddleware, ctrl.createRecord);
 module.exports = router;
