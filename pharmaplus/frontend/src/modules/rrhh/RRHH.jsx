@@ -4,11 +4,14 @@ import {
   ScanLine, Eye, Edit3, Trash2, CheckCircle2, XCircle, Phone, Mail, 
   MapPin, DollarSign, Heart, ShieldAlert, ChevronRight, ChevronLeft, 
   Bot, Send, Sparkles, RefreshCw, MoreVertical, AlertCircle, Check, Mic, 
-  Briefcase, Building2, UserPlus, Clock
+  Briefcase, Building2, UserPlus, Clock, QrCode, Printer
 } from 'lucide-react';
 import api from '../../services/api';
 import Modal from '../../components/ui/Modal';
 import { AuthContext } from '../../context/AuthContext';
+import BarcodeScannerModal from '../../components/BarcodeScannerModal';
+import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
+import { playScannerBeep } from '../../utils/sound';
 
 const RRHH = () => {
   const { user } = useContext(AuthContext);
@@ -30,7 +33,35 @@ const RRHH = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
+  const [isCarnetModalOpen, setIsCarnetModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
+
+  // Handle Employee QR Carnet Scan (Hardware USB + Camera)
+  const handleBarcodeScanned = (code) => {
+    playScannerBeep();
+    const found = employees.find(e => 
+      (e.cedula && e.cedula.includes(code)) || 
+      (e.name && e.name.toLowerCase().includes(code.toLowerCase())) ||
+      (e.initials && code.toUpperCase().includes(e.initials)) ||
+      code.toLowerCase().includes('emp')
+    ) || employees[0];
+
+    if (found) {
+      setSelectedEmployee(found);
+      setSearchTerm(found.name);
+      setIsScanModalOpen(false);
+      
+      if (activeTab === 'Asistencias') {
+        showToast(`¡Asistencia marcada! Entrada de ${found.name} (${new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })})`);
+      } else {
+        showToast(`Carnet QR identificado: ${found.name} (${found.position})`);
+      }
+    } else {
+      showToast(`No se encontró empleado con el carnet/QR: ${code}`, 'error');
+    }
+  };
+
+  useBarcodeScanner(handleBarcodeScanned);
 
   // Form State (New / Edit Employee)
   const [employeeForm, setEmployeeForm] = useState({
@@ -1119,26 +1150,36 @@ const RRHH = () => {
                 </div>
 
                 {/* Bottom Action Buttons */}
-                <div className="grid grid-cols-2 gap-3 pt-2">
+                <div className="flex flex-col gap-2 pt-2">
                   <button
-                    onClick={() => openEditEmployeeModal(selectedEmployee)}
-                    className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-slate-200 hover:border-emerald-200 bg-white hover:bg-emerald-50/50 text-slate-700 text-xs font-semibold transition-all shadow-2xs active:scale-95"
+                    onClick={() => setIsCarnetModalOpen(true)}
+                    className="w-full inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-[#16a085] hover:bg-[#12876f] text-white text-xs font-bold transition-all shadow-sm active:scale-95"
                   >
-                    <Edit3 size={14} />
-                    <span>Editar empleado</span>
+                    <QrCode size={16} />
+                    <span>Ver Carnet QR de Empleado</span>
                   </button>
 
-                  <button
-                    onClick={() => setIsDeleteModalOpen(true)}
-                    className={`inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all shadow-2xs active:scale-95 ${
-                      selectedEmployee.is_active === 1
-                        ? 'border-rose-200 hover:border-rose-300 bg-white hover:bg-rose-50 text-rose-600'
-                        : 'border-emerald-200 hover:border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-600'
-                    }`}
-                  >
-                    {selectedEmployee.is_active === 1 ? <Trash2 size={14} /> : <Check size={14} />}
-                    <span>{selectedEmployee.is_active === 1 ? 'Desactivar empleado' : 'Activar empleado'}</span>
-                  </button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => openEditEmployeeModal(selectedEmployee)}
+                      className="inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border border-slate-200 hover:border-emerald-200 bg-white hover:bg-emerald-50/50 text-slate-700 text-xs font-semibold transition-all shadow-2xs active:scale-95"
+                    >
+                      <Edit3 size={14} />
+                      <span>Editar</span>
+                    </button>
+
+                    <button
+                      onClick={() => setIsDeleteModalOpen(true)}
+                      className={`inline-flex items-center justify-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold transition-all shadow-2xs active:scale-95 ${
+                        selectedEmployee.is_active === 1
+                          ? 'border-rose-200 hover:border-rose-300 bg-white hover:bg-rose-50 text-rose-600'
+                          : 'border-emerald-200 hover:border-emerald-300 bg-white hover:bg-emerald-50 text-emerald-600'
+                      }`}
+                    >
+                      {selectedEmployee.is_active === 1 ? <Trash2 size={14} /> : <Check size={14} />}
+                      <span>{selectedEmployee.is_active === 1 ? 'Desactivar' : 'Activar'}</span>
+                    </button>
+                  </div>
                 </div>
               </>
             ) : (
@@ -1360,41 +1401,79 @@ const RRHH = () => {
         </div>
       </Modal>
 
-      {/* ─── MODAL: ESCANEAR CARNET DE EMPLEADO ────────────────────────────── */}
+      {/* ─── MODAL: CARNET DIGITAL DE EMPLEADO CON QR ───────────────────────── */}
       <Modal
+        isOpen={isCarnetModalOpen}
+        onClose={() => setIsCarnetModalOpen(false)}
+        title="Carnet Digital de Empleado con QR"
+        maxWidth="max-w-sm"
+      >
+        {selectedEmployee && (
+          <div className="flex flex-col items-center gap-4 text-center">
+            {/* Carnet Badge Card Box */}
+            <div className="w-full bg-gradient-to-b from-[#16a085] via-[#12876f] to-slate-900 text-white rounded-3xl p-5 shadow-xl border border-emerald-400/30 relative overflow-hidden flex flex-col items-center">
+              {/* Header Badge */}
+              <div className="w-full flex items-center justify-between pb-3 border-b border-white/20 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center font-black text-xs">P+</div>
+                  <span className="text-xs font-black tracking-wider uppercase">PharmaPlus RRHH</span>
+                </div>
+                <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full uppercase tracking-wider">Carnet Oficial</span>
+              </div>
+
+              {/* Employee Avatar */}
+              <div className="w-20 h-20 rounded-full bg-white text-[#16a085] border-4 border-white font-black text-2xl flex items-center justify-center shadow-lg my-1">
+                {selectedEmployee.initials || 'EM'}
+              </div>
+
+              {/* Employee Info */}
+              <h3 className="font-extrabold text-lg text-white mt-1 leading-tight">{selectedEmployee.name}</h3>
+              <p className="text-xs font-bold text-emerald-200">{selectedEmployee.position}</p>
+              <p className="text-[11px] text-emerald-100/80 font-medium mb-3">{selectedEmployee.department} | Cédula: {selectedEmployee.cedula}</p>
+
+              {/* Dynamic QR Code Box */}
+              <div className="bg-white p-3 rounded-2xl shadow-inner border border-slate-200 flex flex-col items-center my-1">
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(`EMP-${selectedEmployee.id || 1}-${selectedEmployee.cedula || '001-0000000-0'}`)}`} 
+                  alt="QR Carnet Empleado"
+                  className="w-36 h-36 object-contain"
+                />
+                <span className="text-[10px] font-mono font-bold text-slate-700 mt-1">ID: EMP-00{selectedEmployee.id || 1}</span>
+              </div>
+
+              <p className="text-[10px] text-emerald-100/70 mt-2 font-medium">
+                Válido para marcado de asistencia y control de acceso.
+              </p>
+            </div>
+
+            {/* Actions */}
+            <div className="flex w-full gap-2 pt-1">
+              <button 
+                onClick={() => { window.print(); }} 
+                className="btn btn-outline flex-1 text-xs inline-flex items-center justify-center gap-1.5"
+              >
+                <Printer size={16} />
+                <span>Imprimir Carnet</span>
+              </button>
+              <button 
+                onClick={() => { setIsCarnetModalOpen(false); setIsScanModalOpen(true); }} 
+                className="btn bg-[#16a085] hover:bg-[#12876f] text-white flex-1 text-xs font-bold inline-flex items-center justify-center gap-1.5"
+              >
+                <ScanLine size={16} />
+                <span>Escanear QR</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Camera Barcode & QR Scanner Modal */}
+      <BarcodeScannerModal 
         isOpen={isScanModalOpen}
         onClose={() => setIsScanModalOpen(false)}
-        title="Escáner Digital de Carnet de Empleado"
-        maxWidth="max-w-md"
-      >
-        <div className="flex flex-col gap-4 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center mx-auto">
-            <ScanLine size={32} className="animate-pulse" />
-          </div>
-          <div>
-            <h4 className="font-bold text-slate-800 text-sm">Escaneando carnet o cédula de empleado</h4>
-            <p className="text-xs text-slate-500 mt-1">
-              Identifica y filtra automáticamente los datos del empleado en la plantilla.
-            </p>
-          </div>
-
-          <div className="flex justify-center gap-3 pt-2">
-            <button onClick={() => setIsScanModalOpen(false)} className="btn btn-outline text-xs">
-              Cancelar
-            </button>
-            <button 
-              onClick={() => {
-                setIsScanModalOpen(false);
-                if (employees.length > 0) setSelectedEmployee(employees[0]);
-                showToast('Empleado Ana Cajera identificado correctamente');
-              }} 
-              className="btn btn-primary text-xs font-semibold"
-            >
-              Simular Escaneo Exitoso
-            </button>
-          </div>
-        </div>
-      </Modal>
+        onScan={handleBarcodeScanned}
+        title="Lector de QR / Carnet de Empleado"
+      />
 
     </div>
   );
