@@ -16,6 +16,7 @@ import Clientes from './modules/clientes/Clientes';
 
 import POS from './modules/pos/POS';
 import AsistenteIA from './modules/ia/AsistenteIA';
+import Integraciones from './modules/integraciones/Integraciones';
 import Facturacion from './modules/facturacion/Facturacion';
 import Recetas from './modules/recetas/Recetas';
 import Servicios from './modules/servicios/Servicios';
@@ -24,8 +25,6 @@ import Proveedores from './modules/proveedores/Proveedores';
 import Configuracion from './modules/configuracion/Configuracion';
 import RRHH from './modules/rrhh/RRHH';
 import Caja from './modules/cajas/Caja';
-import Integraciones from './modules/integraciones/Integraciones';
-import Usuarios from './modules/usuarios/Usuarios';
 import Reportes from './modules/reportes/Reportes';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
@@ -56,6 +55,7 @@ const AppRoutes = () => {
         <Route path="clientes" element={<Clientes />} />
         <Route path="pos" element={<POS />} />
         <Route path="ia" element={<AsistenteIA />} />
+        <Route path="integraciones" element={<Integraciones />} />
         
         {/* Placeholder routes for all modules to prevent 404s while building */}
         <Route path="recetas" element={<Recetas />} />
@@ -65,13 +65,12 @@ const AppRoutes = () => {
         <Route path="facturacion" element={<Facturacion />} />
         <Route path="rrhh" element={<ProtectedRoute allowedRoles={['admin']}><RRHH /></ProtectedRoute>} />
         <Route path="cajas" element={<Caja />} />
-        <Route path="integraciones" element={<Integraciones />} />
         
         {/* Admin only routes */}
-        <Route path="usuarios" element={<ProtectedRoute allowedRoles={['admin']}><Usuarios /></ProtectedRoute>} />
+        <Route path="usuarios" element={<ProtectedRoute allowedRoles={['admin']}><div className="p-6"><h1>Usuarios (En desarrollo)</h1></div></ProtectedRoute>} />
         <Route path="auditoria" element={<ProtectedRoute allowedRoles={['admin']}><div className="p-6"><h1>Auditoría (En desarrollo)</h1></div></ProtectedRoute>} />
         <Route path="reportes" element={<ProtectedRoute allowedRoles={['admin']}><Reportes /></ProtectedRoute>} />
-        <Route path="configuracion" element={<ProtectedRoute allowedRoles={['admin']}><Configuracion /></ProtectedRoute>} />
+        <Route path="configuracion" element={<ProtectedRoute allowedRoles={['admin']}><div className="p-6"><h1>Configuración (En desarrollo)</h1></div></ProtectedRoute>} />
       </Route>
 
       <Route path="/unauthorized" element={<div className="flex flex-col h-screen items-center justify-center gap-4"><h1>Acceso Denegado</h1><p>No tienes permiso para ver esta página.</p></div>} />

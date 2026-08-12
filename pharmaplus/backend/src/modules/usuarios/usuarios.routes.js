@@ -5,7 +5,6 @@ const { requireAdmin } = require('../../middleware/roleMiddleware');
 const router = express.Router();
 router.get('/', authMiddleware, requireAdmin, ctrl.getAll);
 router.get('/roles', authMiddleware, ctrl.getRoles);
-router.post('/roles', authMiddleware, requireAdmin, ctrl.createRole);
 router.post('/', authMiddleware, requireAdmin, ctrl.create);
 router.put('/:id', authMiddleware, requireAdmin, ctrl.update);
 router.post('/:id/reset-password', authMiddleware, requireAdmin, ctrl.resetPassword);

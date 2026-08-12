@@ -150,26 +150,9 @@ const POS = () => {
       
       {/* Left Area: Products Search */}
       <div className="flex-1 flex flex-col gap-4 bg-surface rounded-lg shadow-sm border border-border overflow-hidden p-4">
-        <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
-          <div className="flex items-center gap-3">
-            <img 
-              src="/modules/pos.png" 
-              alt="POS" 
-              className="w-10 h-10 rounded-xl object-cover border border-emerald-100 shadow-2xs shrink-0"
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
-            <div>
-              <h2 className="font-bold text-main text-sm flex items-center gap-2">
-                Punto de Venta (POS)
-              </h2>
-              <p className="text-[11px] text-muted font-medium">Facturación rápida y cobro asistido</p>
-            </div>
-          </div>
-
-          <span className="bg-emerald-50 text-[#16a085] text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-200 shrink-0">
-            🟢 Caja Abierta
-          </span>
-        </div>
+        <h2 className="font-bold text-main flex items-center gap-2 mb-2">
+          <ShoppingCart size={18} className="text-primary"/> Búsqueda de Productos
+        </h2>
         
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={18} />
