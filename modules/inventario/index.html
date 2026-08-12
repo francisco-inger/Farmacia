@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Módulo Inventario y Vencimientos — SaaS Farmacia</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-icon">💊</div>
+        <div class="brand-title">
+          <h1>Gestión de Inventario y Vencimientos</h1>
+          <p>SaaS Farmacia · Módulo de Ana María Tiburcio</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline" id="btn-test-fefo" title="Simular cobro y descuento de stock según fecha de vencimiento">
+          🧪 Simular Descuento POS (FEFO)
+        </button>
+        <button class="btn btn-primary" id="btn-new-medication">
+          ➕ Registrar Medicamento
+        </button>
+      </div>
+    </header>
+
+    <!-- KPI Summary Grid Cards -->
+    <section id="kpi-container" class="kpi-grid">
+      <!-- Rendered dynamically by kpiCards.js -->
+    </section>
+
+    <!-- Navigation Tabs -->
+    <nav class="tab-navigation">
+      <button class="tab-button active" data-tab="batches">
+        📦 Existencias por Lote
+      </button>
+      <button class="tab-button" data-tab="alerts">
+        🚨 Alertas de Vencimiento
+        <span class="tab-badge badge-alert" id="badge-alert-count">0</span>
+      </button>
+      <button class="tab-button" data-tab="demand-ai">
+        🤖 Predicción de Demanda IA
+      </button>
+      <button class="tab-button" data-tab="anomalies">
+        ⚡ Rotación Anómala
+      </button>
+      <button class="tab-button" data-tab="reorder">
+        🛒 Sugerencia de Reorden
+      </button>
+    </nav>
+
+    <!-- Tab 1: Batches & Stock -->
+    <main id="tab-batches" class="tab-panel active">
+      <div id="batch-table-container" class="content-card">
+        <!-- Rendered dynamically by batchTable.js -->
+      </div>
+    </main>
+
+    <!-- Tab 2: Expiration & Low Stock Alerts -->
+    <main id="tab-alerts" class="tab-panel">
+      <div id="alert-panel-container" class="content-card">
+        <!-- Rendered dynamically by alertPanel.js -->
+      </div>
+    </main>
+
+    <!-- Tab 3: AI Demand Prediction -->
+    <main id="tab-demand-ai" class="tab-panel">
+      <div id="demand-chart-container" class="content-card">
+        <!-- Rendered dynamically by demandForecastChart.js -->
+      </div>
+    </main>
+
+    <!-- Tab 4: Anomaly Detector -->
+    <main id="tab-anomalies" class="tab-panel">
+      <div id="anomaly-container">
+        <!-- Rendered dynamically by anomalyDetector.js -->
+      </div>
+    </main>
+
+    <!-- Tab 5: Reorder Suggestions -->
+    <main id="tab-reorder" class="tab-panel">
+      <div id="reorder-container" class="content-card">
+        <!-- Rendered dynamically by reorderPanel.js -->
+      </div>
+    </main>
+
+  </div>
+
+  <!-- Modal 1: Register New Batch -->
+  <div class="modal-backdrop" id="modal-add-batch">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>➕ Registrar Nuevo Lote de Compra — <span id="modal-batch-med-name" style="color:var(--color-primary);"></span></h3>
+        <button class="modal-close" id="btn-close-modal-batch">&times;</button>
+      </div>
+      <form id="form-add-batch">
+        <div class="form-group">
+          <label for="input-lot-number">Número o Código de Lote de Fabricación</label>
+          <input type="text" id="input-lot-number" class="form-control" placeholder="Ejemplo: LOT-2026-X99" required>
+        </div>
+        <div class="form-group">
+          <label for="input-quantity">Cantidad de Unidades Recibidas</label>
+          <input type="number" id="input-quantity" class="form-control" min="1" placeholder="Ejemplo: 100" required>
+        </div>
+        <div class="form-group">
+          <label for="input-exp-date">Fecha Límite de Vencimiento (Caducidad)</label>
+          <input type="date" id="input-exp-date" class="form-control" required>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+          <button type="button" class="btn btn-outline" onclick="document.getElementById('modal-add-batch').classList.remove('active')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">💾 Guardar Lote</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Register New Medication -->
+  <div class="modal-backdrop" id="modal-add-medication">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>➕ Registrar Nuevo Medicamento en el Catálogo</h3>
+        <button class="modal-close" id="btn-close-modal-med">&times;</button>
+      </div>
+      <form id="form-add-medication">
+        <div class="form-group">
+          <label for="input-trade-name">Nombre Comercial del Medicamento</label>
+          <input type="text" id="input-trade-name" class="form-control" placeholder="Ej. Cetirizina 10mg" required>
+        </div>
+        <div class="form-group">
+          <label for="input-active-ingredient">Principio Activo o Sustancia</label>
+          <input type="text" id="input-active-ingredient" class="form-control" placeholder="Ej. Cetirizina Clorhidrato" required>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label for="input-price">Precio Unitario (RD$)</label>
+            <input type="number" step="0.01" id="input-price" class="form-control" placeholder="10.50" required>
+          </div>
+          <div class="form-group">
+            <label for="input-min-stock">Punto de Reorden Mínimo</label>
+            <input type="number" id="input-min-stock" class="form-control" placeholder="30" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="input-category">Categoría Terapéutica</label>
+          <select id="input-category" class="form-control">
+            <option value="Analgesics / Seasonal Flu">Analgésicos y Antigripales</option>
+            <option value="Antihistamines / Spring Allergy">Antihistamínicos y Alergias</option>
+            <option value="Antibiotics">Antibióticos</option>
+            <option value="Respiratory / Asthma">Respiratorio y Asma</option>
+            <option value="General">General / Gastrointestinal</option>
+          </select>
+        </div>
+        <div class="form-group" style="display:flex; gap:20px; background:var(--color-bg); padding:10px 14px; border-radius:var(--radius-sm);">
+          <label style="cursor:pointer; display:flex; align-items:center; gap:8px; font-weight:600;">
+            <input type="checkbox" id="check-prescription"> 📋 Requiere Receta Médica
+          </label>
+          <label style="cursor:pointer; display:flex; align-items:center; gap:8px; font-weight:600;">
+            <input type="checkbox" id="check-controlled"> 🔒 Producto Controlado
+          </label>
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:20px;">
+          <button type="button" class="btn btn-outline" onclick="document.getElementById('modal-add-medication').classList.remove('active')">Cancelar</button>
+          <button type="submit" class="btn btn-primary">💾 Crear Medicamento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- Toast Notifications Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
