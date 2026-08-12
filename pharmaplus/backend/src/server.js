@@ -4,6 +4,9 @@ const cors = require('cors');
 const morgan = require('morgan');
 const { getDb } = require('./db/database');
 const { runMigrations } = require('./db/migrations/001_initial');
+const { runIntegracionesMigrations } = require('./db/migrations/002_integraciones');
+const { runSupplierProducts } = require('./db/migrations/003_create_supplier_products');
+const { runAddSupplierFields } = require('./db/migrations/004_add_supplier_fields');
 const { runSeed } = require('./db/seed');
 const { errorMiddleware } = require('./middleware/errorMiddleware');
 
@@ -37,11 +40,54 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
+// Global Audit Log Middleware for Mutating Requests
+app.use((req, res, next) => {
+  const originalJson = res.json.bind(res);
+  res.json = (body) => {
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method) && res.statusCode < 400 && req.user) {
+      try {
+        const db = getDb();
+        const pathParts = req.originalUrl.split('?')[0].split('/');
+        const resource = pathParts[2] || 'general';
+        let action = '';
+        if (req.method === 'POST') action = `CREAR_${resource.toUpperCase()}`;
+        else if (req.method === 'PUT' || req.method === 'PATCH') action = `ACTUALIZAR_${resource.toUpperCase()}`;
+        else if (req.method === 'DELETE') action = `ELIMINAR_${resource.toUpperCase()}`;
+
+        // Avoid double logging POS sales
+        if (!(resource === 'pos' && action === 'CREAR_POS')) {
+          db.prepare(`
+            INSERT INTO audit_log (user_id, user_name, action, module, description, ip_address)
+            VALUES (?, ?, ?, ?, ?, ?)
+          `).run(
+            req.user.id,
+            req.user.name,
+            action,
+            resource,
+            `Acción exitosa: ${req.method} ${req.originalUrl.split('?')[0]}`,
+            req.ip || req.connection.remoteAddress
+          );
+        }
+      } catch (e) {
+        console.error('Error logging global audit action:', e);
+      }
+    }
+    return originalJson(body);
+  };
+  next();
+});
+
+
 // Initialize Database
 console.log('📦 Inicializando base de datos...');
 try {
   const db = getDb();
   runMigrations();
+  
+  // Run additional migrations sequentially
+  try { runIntegracionesMigrations(); } catch (e) { console.error('⚠️ Error running integraciones migration:', e); }
+  try { runSupplierProducts(db); } catch (e) { console.error('⚠️ Error running supplier_products migration:', e); }
+  try { runAddSupplierFields(db); } catch (e) { console.error('⚠️ Error running add_supplier_fields migration:', e); }
   // Check if users exist, if not, run seed
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
   if (userCount === 0) {

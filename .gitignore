@@ -30,3 +30,11 @@ yarn-error.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Python virtual environment
+venv/
+**/venv/
+venv
+.venv/
+**/.venv/
+

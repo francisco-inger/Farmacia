@@ -197,7 +197,7 @@ const Reportes = () => {
           </div>
           <div>
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Ingresos Totales</p>
-            <h3 className="text-xl font-extrabold text-slate-900">{formatCurrency(salesSummary.total_revenue || 284500)}</h3>
+            <h3 className="text-xl font-extrabold text-slate-900">{formatCurrency(salesSummary.total_revenue ?? 0)}</h3>
           </div>
         </div>
 
@@ -207,7 +207,7 @@ const Reportes = () => {
           </div>
           <div>
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Transacciones</p>
-            <h3 className="text-xl font-extrabold text-slate-900">{salesSummary.total_sales || 342} ventas</h3>
+            <h3 className="text-xl font-extrabold text-slate-900">{salesSummary.total_sales ?? 0} ventas</h3>
           </div>
         </div>
 
@@ -217,7 +217,7 @@ const Reportes = () => {
           </div>
           <div>
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Ticket Promedio</p>
-            <h3 className="text-xl font-extrabold text-slate-900">{formatCurrency(salesSummary.avg_ticket || 831.87)}</h3>
+            <h3 className="text-xl font-extrabold text-slate-900">{formatCurrency(salesSummary.avg_ticket ?? 0)}</h3>
           </div>
         </div>
 
@@ -227,7 +227,7 @@ const Reportes = () => {
           </div>
           <div>
             <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Valor del Inventario</p>
-            <h3 className="text-xl font-extrabold text-slate-900">{formatCurrency(inventorySummary.total_value || 1450800)}</h3>
+            <h3 className="text-xl font-extrabold text-slate-900">{formatCurrency(inventorySummary.total_value ?? 0)}</h3>
           </div>
         </div>
       </div>
@@ -278,14 +278,7 @@ const Reportes = () => {
             <div className="h-72 w-full pt-2">
               <h4 className="text-xs font-bold text-slate-700 mb-2">Evolución de Ingresos por Ventas</h4>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={salesData.length > 0 ? salesData : [
-                  { period: '2026-08-05', revenue: 38400, transactions: 45 },
-                  { period: '2026-08-06', revenue: 42100, transactions: 52 },
-                  { period: '2026-08-07', revenue: 49500, transactions: 61 },
-                  { period: '2026-08-08', revenue: 51200, transactions: 58 },
-                  { period: '2026-08-09', revenue: 39800, transactions: 48 },
-                  { period: '2026-08-10', revenue: 63500, transactions: 78 }
-                ]}>
+                <BarChart data={salesData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis dataKey="period" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} tickFormatter={v => `RD$ ${v}`} />
@@ -307,11 +300,7 @@ const Reportes = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {(salesData.length > 0 ? salesData : [
-                    { period: '2026-08-10', transactions: 78, revenue: 63500, discounts: 1200, avg_ticket: 814.10 },
-                    { period: '2026-08-09', transactions: 48, revenue: 39800, discounts: 850, avg_ticket: 829.16 },
-                    { period: '2026-08-08', transactions: 58, revenue: 51200, discounts: 920, avg_ticket: 882.75 }
-                  ]).map((r, i) => (
+                  {salesData.map((r, i) => (
                     <tr key={i} className="hover:bg-slate-50">
                       <td className="p-3 font-bold text-slate-900">{r.period}</td>
                       <td className="p-3 text-slate-600 font-semibold">{r.transactions} facturas</td>
@@ -349,11 +338,7 @@ const Reportes = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {(inventoryData.length > 0 ? inventoryData : [
-                    { code: 'PROD-001', name: 'Paracetamol 500mg', category: 'Analgésicos', stock: 120, cost_price: 15.00, sale_price: 25.00, stock_value: 1800.00, status: 'normal' },
-                    { code: 'PROD-002', name: 'Amoxicilina 500mg', category: 'Antibióticos', stock: 45, cost_price: 35.00, sale_price: 60.00, stock_value: 1575.00, status: 'normal' },
-                    { code: 'PROD-003', name: 'Ibuprofeno 400mg', category: 'Antiinflamatorios', stock: 8, cost_price: 18.00, sale_price: 30.00, stock_value: 144.00, status: 'bajo' }
-                  ]).map((p, i) => (
+                  {inventoryData.map((p, i) => (
                     <tr key={i} className="hover:bg-slate-50">
                       <td className="p-3 font-mono font-bold text-slate-700">{p.code}</td>
                       <td className="p-3 font-bold text-slate-900">{p.name}</td>
@@ -394,11 +379,7 @@ const Reportes = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {(topProductsData.length > 0 ? topProductsData : [
-                    { code: 'PROD-001', name: 'Paracetamol 500mg', total_sold: 450, total_revenue: 11250, total_cost: 6750, profit: 4500 },
-                    { code: 'PROD-002', name: 'Amoxicilina 500mg', total_sold: 280, total_revenue: 16800, total_cost: 9800, profit: 7000 },
-                    { code: 'PROD-005', name: 'Omeprazol 20mg', total_sold: 210, total_revenue: 9450, total_cost: 4200, profit: 5250 }
-                  ]).map((p, i) => (
+                  {topProductsData.map((p, i) => (
                     <tr key={i} className="hover:bg-slate-50">
                       <td className="p-3 font-bold text-[#16a085]">#{i + 1}</td>
                       <td className="p-3 font-bold text-slate-900">{p.name}</td>
@@ -432,10 +413,7 @@ const Reportes = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {(cashData.length > 0 ? cashData : [
-                    { id: 101, user_name: 'Ana Cajera', opened_at: '2026-08-10 08:00', initial_amount: 5000, cash_sales: 38400, closed_amount: 43400, status: 'closed' },
-                    { id: 102, user_name: 'Juan Martínez', opened_at: '2026-08-10 14:00', initial_amount: 5000, cash_sales: 25100, closed_amount: 30100, status: 'closed' }
-                  ]).map((c, i) => (
+                  {cashData.map((c, i) => (
                     <tr key={i} className="hover:bg-slate-50">
                       <td className="p-3 font-bold text-slate-900">#C-00{c.id}</td>
                       <td className="p-3 font-semibold text-slate-800">{c.user_name}</td>

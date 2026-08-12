@@ -56,7 +56,8 @@ const AsistenteIA = () => {
     setActiveConvId(convId);
     try {
       const res = await api.get(`/ia/conversations/${convId}/messages`);
-      const msgs = res.data || res;
+      const resData = res.data || res;
+      const msgs = Array.isArray(resData) ? resData : (resData?.data || []);
       if (Array.isArray(msgs)) {
         setMessages(msgs);
       }
@@ -95,19 +96,24 @@ const AsistenteIA = () => {
       });
 
       const responseData = res.data || res;
-      if (responseData && responseData.message) {
-        if (!activeConvId && responseData.conversation_id) {
-          setActiveConvId(responseData.conversation_id);
+      // The backend returns { success: true, data: { conversation_id, message, executed_actions } }
+      const resMsg = responseData?.data?.message || responseData?.message;
+      const resConvId = responseData?.data?.conversation_id || responseData?.conversation_id;
+
+      if (resMsg) {
+        if (!activeConvId && resConvId) {
+          setActiveConvId(resConvId);
           fetchConversations();
         }
-        setMessages(prev => [...prev, responseData.message]);
+        setMessages(prev => [...prev, resMsg]);
       }
     } catch (err) {
+
       console.error('Error en chat de IA:', err);
       setMessages(prev => [...prev, {
         id: Date.now() + 1,
         role: 'assistant',
-        content: '⚠️ Hubo un error de conexión con la IA de Groq: ' + (err.message || 'Error desconocido')
+        content: '⚠️ Hubo un error al procesar tu solicitud: ' + (err.message || 'Error desconocido')
       }]);
     } finally {
       setLoading(false);
@@ -172,7 +178,7 @@ const AsistenteIA = () => {
     let formatted = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     // Format simple lists
     formatted = formatted.replace(/^- (.*$)/gim, '<li className="ml-4 list-disc">$1</li>');
-    return <div className="space-y-1" dangerouslySetInnerHTML={{ __html: formatted }} />;
+    return <div className="space-y-1" style={{ whiteSpace: 'pre-wrap' }} dangerouslySetInnerHTML={{ __html: formatted }} />;
   };
 
   return (
@@ -218,7 +224,7 @@ const AsistenteIA = () => {
         {/* Status Box */}
         <div className="p-3 border-t border-border bg-background/50 text-[11px] text-muted flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-success"></span>
-          <span>Groq Llama 3.3 • Conexión SQL Directa</span>
+          <span>Asistente de Gestión Activo</span>
         </div>
       </div>
 
@@ -236,13 +242,10 @@ const AsistenteIA = () => {
             />
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="font-bold text-main text-base leading-tight">Asistente IA Pharma</h2>
-                <span className="bg-emerald-50 text-[#16a085] text-[10px] font-bold px-2 py-0.5 rounded-full border border-emerald-200">
-                  Groq Llama 3.3
-                </span>
+                <h2 className="font-bold text-main text-base leading-tight">Asistente PharmaPlus</h2>
               </div>
               <p className="text-xs text-success font-semibold flex items-center gap-1">
-                <Database size={12} /> Capacidad de Lectura, Creación, Edición y Eliminación en BD
+                <Database size={12} /> Gestión integrada de inventario, ventas y clientes
               </p>
             </div>
           </div>
@@ -290,9 +293,9 @@ const AsistenteIA = () => {
               <div className="w-16 h-16 rounded-2xl bg-primary-light text-primary flex items-center justify-center mb-4 shadow-sm">
                 <Sparkles size={32} />
               </div>
-              <h3 className="text-lg font-bold text-main mb-2">¡Hola! Soy tu Asistente IA de PharmaPlus</h3>
+              <h3 className="text-lg font-bold text-main mb-2">¡Hola! Soy tu Asistente de PharmaPlus</h3>
               <p className="text-xs text-muted leading-relaxed mb-6">
-                Estoy conectado directamente con tu base de datos SQLite. Puedes pedirme en lenguaje natural que <strong className="text-main">añada productos</strong>, <strong className="text-main">cambie precios</strong>, <strong className="text-main">registre clientes</strong>, <strong className="text-main">elimine registros</strong> o te muestre reportes.
+                Puedo ayudarte a gestionar la farmacia: consultar inventario, ver resúmenes de ventas, registrar clientes o realizar ajustes rápidos de productos. Escribe tu instrucción abajo.
               </p>
               <div className="grid grid-cols-1 gap-2 w-full text-left">
                 <button 
