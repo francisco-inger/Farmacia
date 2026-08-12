@@ -179,11 +179,11 @@ const Reportes = () => {
           </button>
         </div>
         
-        <div className="shrink-0 h-14 overflow-hidden rounded-xl border border-white/30 shadow-sm z-10">
+        <div className="shrink-0 h-16 md:h-20 flex items-center justify-center z-10">
           <img 
             src="/modules/reportes.png" 
             alt="Reportes" 
-            className="h-full w-44 object-cover rounded-xl"
+            className="h-full w-auto max-w-[240px] object-contain rounded-xl drop-shadow-md"
             onError={(e) => { e.target.style.display = 'none'; }}
           />
         </div>

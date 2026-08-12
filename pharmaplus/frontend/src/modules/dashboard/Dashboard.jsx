@@ -110,35 +110,35 @@ const Dashboard = () => {
       <div className="flex-1 flex flex-col gap-6">
         
         {/* Sleek Professional Dashboard Header Banner */}
-        <div className="bg-[#16a085] rounded-2xl p-4 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-4 overflow-hidden relative">
+        <div className="bg-[#16a085] rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
           <div className="flex items-center gap-3 z-10">
             <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Resumen Operativo de Farmacia</h2>
           </div>
           
-          <div className="shrink-0 h-14 overflow-hidden rounded-xl border border-white/30 shadow-sm z-10">
+          <div className="shrink-0 h-16 md:h-20 flex items-center justify-center z-10">
             <img 
               src="/modules/dashboard.png" 
               alt="Resumen Operativo" 
-              className="h-full w-48 md:w-60 object-cover rounded-xl"
+              className="h-full w-auto max-w-[260px] object-contain rounded-xl drop-shadow-md"
               onError={(e) => { e.target.style.display = 'none'; }}
             />
           </div>
         </div>
 
         {/* Top Cards Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
           
           <div 
             onClick={() => navigate('/pos')}
-            className="card p-4 flex flex-col justify-between hover:border-primary/50 transition-all cursor-pointer group"
+            className="card p-3.5 flex flex-col justify-between hover:border-primary/50 transition-all cursor-pointer group"
           >
-            <div className="flex items-center gap-3">
-              <div className="bg-primary w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform shrink-0">
-                <ShoppingCart size={20} />
+            <div className="flex items-center gap-2.5">
+              <div className="bg-primary w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform shrink-0">
+                <ShoppingCart size={18} />
               </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-semibold text-muted truncate">Ventas del día</p>
-                <h3 className="text-base font-bold text-main leading-tight truncate">{formatCurrency(s.today_sales)}</h3>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold text-slate-500 leading-tight">Ventas del día</p>
+                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight truncate">{formatCurrency(s.today_sales)}</h3>
               </div>
             </div>
             <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] gap-1">
@@ -149,15 +149,15 @@ const Dashboard = () => {
 
           <div 
             onClick={() => navigate('/pos')}
-            className="card p-4 flex flex-col justify-between hover:border-primary/50 transition-all cursor-pointer group"
+            className="card p-3.5 flex flex-col justify-between hover:border-primary/50 transition-all cursor-pointer group"
           >
-            <div className="flex items-center gap-3">
-              <div className="bg-primary w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform shrink-0">
-                <ShoppingBag size={20} />
+            <div className="flex items-center gap-2.5">
+              <div className="bg-primary w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform shrink-0">
+                <ShoppingBag size={18} />
               </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-semibold text-muted truncate">Transacciones</p>
-                <h3 className="text-base font-bold text-main leading-tight">{s.today_transactions}</h3>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold text-slate-500 leading-tight">Transacciones</p>
+                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">{s.today_transactions}</h3>
               </div>
             </div>
             <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] gap-1">
@@ -168,15 +168,15 @@ const Dashboard = () => {
 
           <div 
             onClick={() => navigate('/reportes')}
-            className="card p-4 flex flex-col justify-between hover:border-primary/50 transition-all cursor-pointer group"
+            className="card p-3.5 flex flex-col justify-between hover:border-primary/50 transition-all cursor-pointer group"
           >
-            <div className="flex items-center gap-3">
-              <div className="bg-primary w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform shrink-0">
-                <Banknote size={20} />
+            <div className="flex items-center gap-2.5">
+              <div className="bg-primary w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform shrink-0">
+                <Banknote size={18} />
               </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-semibold text-muted truncate">Ticket promedio</p>
-                <h3 className="text-base font-bold text-main leading-tight truncate">{formatCurrency(s.avg_ticket)}</h3>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold text-slate-500 leading-tight">Ticket promedio</p>
+                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight truncate">{formatCurrency(s.avg_ticket)}</h3>
               </div>
             </div>
             <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] gap-1">
@@ -187,35 +187,35 @@ const Dashboard = () => {
 
           <div 
             onClick={() => navigate('/inventario')}
-            className="card p-4 flex flex-col justify-between hover:border-primary/50 transition-all cursor-pointer group"
+            className="card p-3.5 flex flex-col justify-between hover:border-primary/50 transition-all cursor-pointer group"
             title="Ver control de inventario"
           >
-            <div className="flex items-center gap-3">
-              <div className="bg-[#e8f6f3] text-[#16a085] w-10 h-10 rounded-xl flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform shrink-0">
-                <Package size={20} />
+            <div className="flex items-center gap-2.5">
+              <div className="bg-[#e8f6f3] text-[#16a085] w-9 h-9 rounded-xl flex items-center justify-center shadow-2xs group-hover:scale-105 transition-transform shrink-0">
+                <Package size={18} />
               </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-semibold text-muted truncate">Stock supervisado</p>
-                <h3 className="text-base font-bold text-main leading-tight">{s.low_stock}</h3>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold text-slate-500 leading-tight">Stock supervisado</p>
+                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">{s.low_stock}</h3>
               </div>
             </div>
             <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] gap-1">
-              <span className="text-emerald-700 font-bold whitespace-nowrap">✓ Control de stock</span>
-              <span className="text-[#16a085] group-hover:underline font-semibold whitespace-nowrap">Ver inventario →</span>
+              <span className="text-emerald-700 font-bold whitespace-nowrap">✓ Control stock</span>
+              <span className="text-[#16a085] group-hover:underline font-semibold whitespace-nowrap">Inventario →</span>
             </div>
           </div>
 
           <div 
             onClick={() => navigate('/cajas')}
-            className="card p-4 flex flex-col justify-between hover:border-primary/50 transition-all cursor-pointer group"
+            className="card p-3.5 flex flex-col justify-between hover:border-primary/50 transition-all cursor-pointer group"
           >
-            <div className="flex items-center gap-3">
-              <div className="bg-primary w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform shrink-0">
-                <MonitorSpeaker size={20} />
+            <div className="flex items-center gap-2.5">
+              <div className="bg-primary w-9 h-9 rounded-xl flex items-center justify-center text-white shadow-xs group-hover:scale-105 transition-transform shrink-0">
+                <MonitorSpeaker size={18} />
               </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-semibold text-muted truncate">Cajas activas</p>
-                <h3 className="text-base font-bold text-main leading-tight">{s.active_cashes} / {s.total_cashes}</h3>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-bold text-slate-500 leading-tight">Cajas activas</p>
+                <h3 className="text-sm sm:text-base font-extrabold text-slate-900 leading-tight">{s.active_cashes} / {s.total_cashes}</h3>
               </div>
             </div>
             <div className="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] gap-1">

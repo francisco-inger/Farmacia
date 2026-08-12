@@ -313,16 +313,16 @@ const Inventario = () => {
   return (
     <div className="h-full flex flex-col gap-5 overflow-y-auto pr-1">
       {/* ─── SLEEK GREEN HEADER BANNER ────────────────────────────────────────── */}
-      <div className="bg-[#16a085] rounded-2xl p-4 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-4 overflow-hidden relative">
+      <div className="bg-[#16a085] rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
         <div className="flex items-center gap-3 z-10">
           <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Control y Gestión de Inventario</h2>
         </div>
         
-        <div className="shrink-0 h-14 overflow-hidden rounded-xl border border-white/30 shadow-sm z-10">
+        <div className="shrink-0 h-16 md:h-20 flex items-center justify-center z-10">
           <img 
             src="/modules/inventario.png" 
             alt="Inventario" 
-            className="h-full w-48 md:w-60 object-cover rounded-xl"
+            className="h-full w-auto max-w-[260px] object-contain rounded-xl drop-shadow-md"
             onError={(e) => { e.target.style.display = 'none'; }}
           />
         </div>

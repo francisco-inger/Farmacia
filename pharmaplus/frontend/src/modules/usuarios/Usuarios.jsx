@@ -262,7 +262,7 @@ const Usuarios = () => {
       )}
 
       {/* Sleek Green Header Banner */}
-      <div className="bg-[#16a085] rounded-2xl p-4 text-white shadow-md flex flex-col md:flex-row items-center justify-between gap-4 overflow-hidden relative">
+      <div className="bg-[#16a085] rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
         <div className="flex items-center gap-3 z-10">
           <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Gestión de Usuarios y Roles</h2>
         </div>
@@ -283,11 +283,11 @@ const Usuarios = () => {
             <span>Nuevo usuario</span>
           </button>
 
-          <div className="shrink-0 h-14 overflow-hidden rounded-xl border border-white/30 shadow-sm">
+          <div className="shrink-0 h-16 md:h-20 flex items-center justify-center">
             <img 
               src="/modules/clientes.png" 
               alt="Usuarios" 
-              className="h-full w-44 object-cover rounded-xl"
+              className="h-full w-auto max-w-[240px] object-contain rounded-xl drop-shadow-md"
               onError={(e) => { e.target.style.display = 'none'; }}
             />
           </div>
