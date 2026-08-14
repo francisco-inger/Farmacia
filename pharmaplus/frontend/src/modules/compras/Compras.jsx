@@ -3,10 +3,13 @@ import {
   FileText, Plus, Search, Filter, ScanLine, Eye, Printer, Trash2, 
   Edit3, CheckCircle2, XCircle, Clock, Building2, Phone, Mail, CreditCard, 
   Package, ChevronRight, ChevronLeft, Bot, Send, Sparkles, RefreshCw, 
-  MoreVertical, Check, AlertCircle, X, ShoppingBag, ArrowRightLeft, Mic
+  MoreVertical, Check, AlertCircle, X, ShoppingBag, ArrowRightLeft, Mic, Camera
 } from 'lucide-react';
 import api from '../../services/api';
 import Modal from '../../components/ui/Modal';
+import BarcodeScannerModal from '../../components/BarcodeScannerModal';
+import { useBarcodeScanner } from '../../hooks/useBarcodeScanner';
+import { playScannerBeep } from '../../utils/sound';
 import { AuthContext } from '../../context/AuthContext';
 
 const Compras = () => {
@@ -34,6 +37,16 @@ const Compras = () => {
 
   // Scanner Search Input State
   const [scanCodeInput, setScanCodeInput] = useState('');
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
+
+  const handleBarcodeScanned = (code) => {
+    playScannerBeep();
+    setSearchTerm(code);
+    setPage(1);
+    showToast(`Código/Factura "${code}" escaneado con éxito`, 'success');
+  };
+
+  useBarcodeScanner(handleBarcodeScanned);
 
   // Item Addition Form State (Inside New Purchase Modal)
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -1455,36 +1468,93 @@ const Compras = () => {
         )}
       </Modal>
 
-      {/* â”€â”€ SCAN MODAL â”€â”€ */}
-      <Modal isOpen={isScanModalOpen} onClose={() => setIsScanModalOpen(false)} title="Escanear Código de Barras / Factura" size="sm">
-        <div className="flex flex-col gap-4">
-          <div className="bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-8 flex flex-col items-center gap-3">
-            <ScanLine size={40} className="text-emerald-600 animate-pulse" />
-            <p className="text-sm font-semibold text-slate-600">Apunta el escÃ¡ner al cÃ³digo</p>
-            <p className="text-xs text-slate-400 text-center">El cÃ³digo se detectarÃ¡ automÃ¡ticamente o escrÃ­belo manualmente</p>
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-slate-600">Código de barras / N° Factura</label>
-            <input
-              type="text"
-              value={scanCodeInput}
-              onChange={e => setScanCodeInput(e.target.value)}
-              placeholder="Ej: C-000128 o cÃ³digo de barras"
-              className="input text-xs"
-              autoFocus
-            />
-          </div>
-          <div className="flex justify-end gap-3">
-            <button onClick={() => setIsScanModalOpen(false)} className="btn btn-outline text-xs">Cancelar</button>
+      {/* ─── SCAN MODAL (MANUAL + CÁMARA REAL) ─── */}
+      <Modal isOpen={isScanModalOpen} onClose={() => setIsScanModalOpen(false)} title="Escanear Código de Barras / Factura" size="md">
+        <div className="flex flex-col gap-5">
+          <div className="bg-[#e8f6f3]/60 border border-[#16a085]/30 rounded-2xl p-6 flex flex-col items-center gap-3 text-center">
+            <div className="w-14 h-14 rounded-2xl bg-[#16a085] text-white flex items-center justify-center shadow-lg shadow-emerald-700/20">
+              <ScanLine size={28} className="animate-pulse" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-slate-800">Escaneo de Códigos y Facturas</p>
+              <p className="text-xs text-slate-500 mt-1">
+                Usa tu lector físico USB/Bluetooth, la cámara web o escribe el número de factura/código.
+              </p>
+            </div>
+
             <button
-              onClick={() => { const code = scanCodeInput.trim() || 'C-000128'; setIsScanModalOpen(false); setSearchTerm(code); showToast(`BÃºsqueda por cÃ³digo "${code}" realizada`); }}
-              className="btn btn-primary text-xs"
+              type="button"
+              onClick={() => {
+                setIsScanModalOpen(false);
+                setIsCameraScannerOpen(true);
+              }}
+              className="mt-1 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold transition-all flex items-center gap-2 shadow-md"
             >
-              Buscar
+              <Camera size={16} />
+              <span>Abrir Cámara para Escanear</span>
             </button>
           </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const code = scanCodeInput.trim();
+              if (code) {
+                setSearchTerm(code);
+                setPage(1);
+                setIsScanModalOpen(false);
+                setScanCodeInput('');
+                showToast(`Búsqueda por código "${code}" realizada`, 'success');
+              }
+            }}
+            className="flex flex-col gap-3"
+          >
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-bold text-slate-700">Código de barras o N° de Factura / Compra</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input
+                  type="text"
+                  value={scanCodeInput}
+                  onChange={e => setScanCodeInput(e.target.value)}
+                  placeholder="Ej: COM-2026-0004 o 7501008493011..."
+                  className="w-full pl-9 pr-4 py-2.5 text-xs rounded-xl border border-slate-200 bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2.5 pt-2">
+              <button 
+                type="button"
+                onClick={() => setIsScanModalOpen(false)} 
+                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md active:scale-95"
+              >
+                Buscar Compra
+              </button>
+            </div>
+          </form>
         </div>
       </Modal>
+
+      {/* ─── REAL CAMERA BARCODE SCANNER MODAL ─── */}
+      <BarcodeScannerModal
+        isOpen={isCameraScannerOpen}
+        onClose={() => setIsCameraScannerOpen(false)}
+        onScan={(code) => {
+          setIsCameraScannerOpen(false);
+          setSearchTerm(code);
+          setPage(1);
+          playScannerBeep();
+          showToast(`Factura/Código detectado: ${code}`, 'success');
+        }}
+      />
 
     </div>
   );
