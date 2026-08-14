@@ -243,61 +243,67 @@ const DgiiFiscal = () => {
       )}
 
       {/* ─── BANNER SUPERIOR CORPORATIVO DGII / FISCAL (PHARMAPLUS ERP) ─── */}
-      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#0d3f34] via-[#12876f] to-[#16a085] text-white p-6 sm:p-7 shadow-xl border border-[#16a085]/30">
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#072a23] via-[#0f6c59] to-[#16a085] text-white p-7 sm:p-10 lg:p-12 shadow-2xl border border-[#16a085]/40 min-h-[290px] flex flex-col justify-between">
         
-        <div className="absolute inset-0 opacity-15 mix-blend-screen bg-cover bg-center pointer-events-none" style={{ backgroundImage: "url('/erp-banner.jpg')" }}></div>
-        <div className="absolute top-0 right-0 p-8 opacity-10 font-mono text-3xl font-black tracking-widest uppercase select-none pointer-events-none">
+        {/* Imagen Farmacéutica Corporativa en Alta Visibilidad */}
+        <div 
+          className="absolute inset-0 opacity-40 mix-blend-luminosity bg-cover bg-right sm:bg-center pointer-events-none transition-all duration-700" 
+          style={{ backgroundImage: "url('/erp-banner.jpg')" }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#072a23]/90 via-[#0f6c59]/65 to-transparent pointer-events-none"></div>
+
+        <div className="absolute top-0 right-0 p-8 opacity-15 font-mono text-4xl font-black tracking-widest uppercase select-none pointer-events-none hidden md:block">
           DGII FISCAL COMPLIANCE & E-CF SYSTEM
         </div>
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
           
-          <div className="space-y-2.5 max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-950/40 backdrop-blur-md border border-emerald-400/30 text-emerald-200 text-[11px] font-bold tracking-wider uppercase">
+          <div className="space-y-4 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-950/60 backdrop-blur-md border border-emerald-400/40 text-emerald-200 text-xs font-bold tracking-wider uppercase shadow-sm">
               <span>✦</span>
               <span>FACTURACIÓN & DGII • PHARMAPLUS</span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight drop-shadow-md">
               Gestión Fiscal & Facturación Electrónica
             </h1>
             
-            <p className="text-xs sm:text-sm text-emerald-100/80 font-medium">
+            <p className="text-sm sm:text-base text-emerald-100/90 font-medium">
               Comprobantes Fiscales (NCF), Facturación Electrónica e-CF, Reportes 606/607/608 y cumplimiento DGII.
             </p>
 
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 text-xs font-bold shadow-sm">
-                <ShieldCheck size={13} className="text-emerald-300" />
+            <div className="flex flex-wrap items-center gap-2.5 pt-2">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/25 border border-emerald-300/40 text-white text-xs font-bold shadow-sm backdrop-blur-md">
+                <ShieldCheck size={14} className="text-emerald-300" />
                 DGII Sincronizado
               </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
                 RNC: 1-31-89472-3
               </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
                 Ambiente: Producción e-CF
               </span>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 z-10">
+          <div className="flex flex-wrap items-center gap-3 z-10">
             <button
               onClick={() => setModalComprobante(true)}
-              className="px-4 py-2.5 rounded-xl bg-white text-[#12876f] hover:bg-emerald-50 active:scale-95 text-xs font-extrabold shadow-md transition-all flex items-center gap-2"
+              className="px-5 py-3 rounded-2xl bg-white text-[#12876f] hover:bg-emerald-50 active:scale-95 text-xs sm:text-sm font-black shadow-xl transition-all flex items-center gap-2"
             >
-              <Plus size={15} /> Nuevo Comprobante
+              <Plus size={17} /> Nuevo Comprobante
             </button>
             <button
               onClick={() => setActiveTab('secuencias')}
-              className="px-4 py-2.5 rounded-xl bg-emerald-950/50 hover:bg-emerald-950/70 active:scale-95 text-white text-xs font-bold border border-emerald-300/30 transition-all flex items-center gap-2"
+              className="px-5 py-3 rounded-2xl bg-black/40 hover:bg-black/60 active:scale-95 text-white text-xs sm:text-sm font-bold border border-emerald-300/40 backdrop-blur-md transition-all flex items-center gap-2 shadow-lg"
             >
-              <Bookmark size={15} /> Secuencias NCF
+              <Bookmark size={17} /> Secuencias NCF
             </button>
             <button
               onClick={() => setActiveTab('configuracion')}
-              className="px-4 py-2.5 rounded-xl bg-emerald-950/50 hover:bg-emerald-950/70 active:scale-95 text-white text-xs font-bold border border-emerald-300/30 transition-all flex items-center gap-2"
+              className="px-5 py-3 rounded-2xl bg-black/40 hover:bg-black/60 active:scale-95 text-white text-xs sm:text-sm font-bold border border-emerald-300/40 backdrop-blur-md transition-all flex items-center gap-2 shadow-lg"
             >
-              <Settings size={15} /> Configuración Fiscal
+              <Settings size={17} /> Configuración Fiscal
             </button>
           </div>
 

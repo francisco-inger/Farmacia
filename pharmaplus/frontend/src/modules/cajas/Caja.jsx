@@ -522,61 +522,67 @@ const Caja = () => {
       )}
 
       {/* ─── BANNER SUPERIOR CORPORATIVO CAJA (PHARMA.ERP) ─── */}
-      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#0d3f34] via-[#12876f] to-[#16a085] text-white p-6 sm:p-7 shadow-xl border border-[#16a085]/30">
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#072a23] via-[#0f6c59] to-[#16a085] text-white p-7 sm:p-10 lg:p-12 shadow-2xl border border-[#16a085]/40 min-h-[290px] flex flex-col justify-between">
         
-        <div className="absolute inset-0 opacity-15 mix-blend-screen bg-cover bg-center pointer-events-none" style={{ backgroundImage: "url('/erp-banner.jpg')" }}></div>
-        <div className="absolute top-0 right-0 p-8 opacity-10 font-mono text-3xl font-black tracking-widest uppercase select-none pointer-events-none">
+        {/* Imagen Farmacéutica Corporativa en Alta Visibilidad */}
+        <div 
+          className="absolute inset-0 opacity-40 mix-blend-luminosity bg-cover bg-right sm:bg-center pointer-events-none transition-all duration-700" 
+          style={{ backgroundImage: "url('/erp-banner.jpg')" }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#072a23]/90 via-[#0f6c59]/65 to-transparent pointer-events-none"></div>
+
+        <div className="absolute top-0 right-0 p-8 opacity-15 font-mono text-4xl font-black tracking-widest uppercase select-none pointer-events-none hidden md:block">
           CASH & REGISTER OPERATIONS SYSTEM
         </div>
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
           
-          <div className="space-y-2.5 max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-950/40 backdrop-blur-md border border-emerald-400/30 text-emerald-200 text-[11px] font-bold tracking-wider uppercase">
+          <div className="space-y-4 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-950/60 backdrop-blur-md border border-emerald-400/40 text-emerald-200 text-xs font-bold tracking-wider uppercase shadow-sm">
               <span>✦</span>
               <span>MÓDULO DE CAJA & ARQUEOS • PHARMAPLUS</span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight drop-shadow-md">
               Control de Cajas y Flujo de Efectivo
             </h1>
             
-            <p className="text-xs sm:text-sm text-emerald-100/80 font-medium">
+            <p className="text-sm sm:text-base text-emerald-100/90 font-medium">
               Supervisión en tiempo real de ingresos, egresos, ventas por turno y balance de caja.
             </p>
 
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 text-xs font-bold shadow-sm">
-                <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+            <div className="flex flex-wrap items-center gap-2.5 pt-2">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/25 border border-emerald-300/40 text-white text-xs font-bold shadow-sm backdrop-blur-md">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse"></span>
                 Caja {currentRegister?.name || 'Principal'} {currentRegister?.status === 'abierta' ? 'Abierta' : 'Cerrada'}
               </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
                 Cajero: {user?.name || 'Admin'}
               </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
-                Ciclo 2026
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                Ciclo Fiscal 2026
               </span>
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2.5 z-10">
+          <div className="flex flex-wrap items-center gap-3 z-10">
             <button
               onClick={() => setIsMovementModalOpen(true)}
-              className="px-4 py-2.5 rounded-xl bg-white text-[#12876f] hover:bg-emerald-50 active:scale-95 text-xs font-extrabold shadow-md transition-all flex items-center gap-2"
+              className="px-5 py-3 rounded-2xl bg-white text-[#12876f] hover:bg-emerald-50 active:scale-95 text-xs sm:text-sm font-black shadow-xl transition-all flex items-center gap-2"
             >
-              <Plus size={15} /> Nuevo Movimiento
+              <Plus size={17} /> Nuevo Movimiento
             </button>
             <button
               onClick={() => setIsAuditModalOpen(true)}
-              className="px-4 py-2.5 rounded-xl bg-emerald-950/50 hover:bg-emerald-950/70 active:scale-95 text-white text-xs font-bold border border-emerald-300/30 transition-all flex items-center gap-2"
+              className="px-5 py-3 rounded-2xl bg-black/40 hover:bg-black/60 active:scale-95 text-white text-xs sm:text-sm font-bold border border-emerald-300/40 backdrop-blur-md transition-all flex items-center gap-2 shadow-lg"
             >
-              <Calculator size={15} /> Arqueo Físico
+              <Calculator size={17} /> Arqueo Físico
             </button>
             <button
               onClick={() => setIsCloseSessionModalOpen(true)}
-              className="px-4 py-2.5 rounded-xl bg-rose-500/30 hover:bg-rose-500/40 active:scale-95 text-rose-200 text-xs font-bold border border-rose-400/30 transition-all flex items-center gap-2"
+              className="px-5 py-3 rounded-2xl bg-rose-500/30 hover:bg-rose-500/50 active:scale-95 text-rose-100 text-xs sm:text-sm font-bold border border-rose-400/40 backdrop-blur-md transition-all flex items-center gap-2 shadow-lg"
             >
-              <Lock size={15} /> Cerrar Turno
+              <Lock size={17} /> Cerrar Turno
             </button>
           </div>
 
