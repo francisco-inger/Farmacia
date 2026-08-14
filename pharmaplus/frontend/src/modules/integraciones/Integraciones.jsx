@@ -173,67 +173,116 @@ const Integraciones = () => {
         </div>
       )}
 
-      {/* ─── SLEEK GREEN HEADER BANNER ────────────────────────────────────────── */}
-      <div className="bg-[#16a085] rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
-        <div className="flex items-center gap-3 z-10">
-          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Integraciones Externas & Servicios Cloud</h2>
-        </div>
+      {/* ─── BANNER SUPERIOR CORPORATIVO INTEGRACIONES (PHARMA.ERP) ─── */}
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#072a23] via-[#0f6c59] to-[#16a085] text-white p-7 sm:p-10 lg:p-12 shadow-2xl border border-[#16a085]/40 min-h-[290px] flex flex-col justify-between shrink-0">
         
-        <div className="shrink-0 h-16 md:h-20 flex items-center justify-center z-10">
-          <img 
-            src="/modules/reportes.png" 
-            alt="Integraciones" 
-            className="h-full w-auto max-w-[260px] object-contain rounded-xl drop-shadow-md"
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
+        {/* Imagen Farmacéutica Corporativa en Alta Visibilidad */}
+        <div 
+          className="absolute inset-0 opacity-40 mix-blend-luminosity bg-cover bg-right sm:bg-center pointer-events-none transition-all duration-700" 
+          style={{ backgroundImage: "url('/erp-banner.jpg')" }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#072a23]/90 via-[#0f6c59]/65 to-transparent pointer-events-none"></div>
+
+        <div className="absolute top-0 right-0 p-8 opacity-15 font-mono text-4xl font-black tracking-widest uppercase select-none pointer-events-none hidden md:block">
+          CLOUD API GATEWAY & HEALTHCARE CONNECTIVITY
         </div>
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          
+          <div className="space-y-4 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-950/60 backdrop-blur-md border border-emerald-400/40 text-emerald-200 text-xs font-bold tracking-wider uppercase shadow-sm">
+              <span>✦</span>
+              <span>INTEGRACIONES EXTERNAS & SERVICIOS CLOUD • PHARMAPLUS</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight drop-shadow-md">
+              Integraciones & Conectividad Externa
+            </h1>
+
+            <p className="text-sm sm:text-base text-emerald-100/90 font-medium leading-relaxed max-w-xl drop-shadow">
+              Conectores directos con aseguradoras ARS, facturación electrónica fiscal DGII e-CF, webhooks en tiempo real y llaves API REST.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                {connectors.length} Conectores Activos
+              </span>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                DGII e-CF Conectado
+              </span>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                TLS 1.3 / Encriptado
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 z-10">
+            <button
+              onClick={() => setShowKeyModal(true)}
+              className="px-5 py-3 rounded-2xl bg-white text-[#12876f] hover:bg-emerald-50 active:scale-95 text-xs sm:text-sm font-black shadow-xl transition-all flex items-center gap-2"
+            >
+              <Key size={17} /> Generar API Key
+            </button>
+            <button
+              onClick={() => setShowWebhookModal(true)}
+              className="px-5 py-3 rounded-2xl bg-black/40 hover:bg-black/60 active:scale-95 text-white text-xs sm:text-sm font-bold border border-emerald-300/40 backdrop-blur-md transition-all flex items-center gap-2 shadow-lg"
+            >
+              <Zap size={17} /> Nuevo Webhook
+            </button>
+          </div>
+
+        </div>
+
       </div>
 
-      {/* Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
-            <Radio size={24} />
+      {/* ─── 4 TARJETAS KPI LIMPIAS Y ESPACIOSAS INTEGRACIONES ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+        
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-600 flex items-center justify-center shrink-0 shadow-2xs">
+            <Radio size={22} />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Conectores ARS</p>
-            <h3 className="text-2xl font-bold text-slate-800">4 Aseguradoras</h3>
-            <p className="text-xs text-emerald-600 font-medium">Validación en tiempo real</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Conectores ARS</p>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">4 Aseguradoras</h3>
+            <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">✓ Validación en tiempo real</p>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-            <Server size={24} />
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs">
+            <Server size={22} />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">DGII e-CF</p>
-            <h3 className="text-2xl font-bold text-slate-800">Facturación E.</h3>
-            <p className="text-xs text-blue-600 font-medium">Firma electrónica OK</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">DGII e-CF</p>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">Facturación E.</h3>
+            <p className="text-[11px] text-blue-600 font-semibold mt-0.5">✓ Firma electrónica OK</p>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
-            <Zap size={24} />
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 shadow-2xs">
+            <Zap size={22} />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Webhooks Activos</p>
-            <h3 className="text-2xl font-bold text-slate-800">{webhooks.length} Endpoints</h3>
-            <p className="text-xs text-amber-600 font-medium">Eventos en streaming</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Webhooks Activos</p>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">{webhooks.length} Endpoints</h3>
+            <p className="text-[11px] text-amber-600 font-semibold mt-0.5">✓ Eventos en streaming</p>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
-            <Key size={24} />
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 shadow-2xs">
+            <Key size={22} />
           </div>
           <div>
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Llaves API</p>
-            <h3 className="text-2xl font-bold text-slate-800">{apiKeys.length} Llaves</h3>
-            <p className="text-xs text-purple-600 font-medium">Acceso externo seguro</p>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Llaves API</p>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">{apiKeys.length} Llaves</h3>
+            <p className="text-[11px] text-purple-600 font-semibold mt-0.5">✓ Acceso seguro activo</p>
           </div>
         </div>
+
       </div>
 
       {/* Tabs Header */}
