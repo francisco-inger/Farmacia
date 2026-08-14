@@ -405,24 +405,77 @@ function generateLocalResponse(message, contextStr, db) {
     return null;
   }
 
-  // ─── GREETING ───
-  if (/^(hola|buenas|buenos|hey|saludos|ayuda|hi|hello)/i.test(lower)) {
-    return `¡Hola! 👋 Soy tu asistente de **PharmaPlus**. Estoy aquí para ayudarte. 😊\n\nPuedes consultarme sobre:\n• Inventario y stock de productos\n• Ventas (hoy, ayer, por cajero)\n• Cajas y movimientos de efectivo\n• Auditoría y registros de actividad\n• Compras y órdenes a proveedores\n• Empleados y RRHH\n• Facturación y NCF\n• Recetas y servicios\n• Notificaciones pendientes\n• Configuración del sistema`;
+  // ─── GREETING / BIENVENIDA CÁLIDA ───
+  if (/^(hola|buenas|buenos d[ií]as|buenas tardes|buenas noches|hey|saludos|ayuda|hi|hello|qu[eé] tal|c[oó]mo est[aá]s)/i.test(lower)) {
+    return `¡Hola! 👋 Bienvenido/a a **PharmaPlus - Sistema Farmacéutico Inteligente**. 💊✨\n\nSoy tu asistente clínico y administrativo de farmacia. Puedo orientarte en cualquier consulta:\n\n💬 **Atención y Diálogo con Clientes:**\n• Consultas de medicamentos, síntomas (dolor de cabeza, fiebre, gripe, acidez, alergias) y posología.\n• Recomendaciones de botiquín, vacunas y servicios clínicos.\n\n📊 **Gestión Operativa de la Farmacia:**\n• **Inventario & Stock:** "¿Qué productos tienen stock bajo?", "Buscar Amoxicilina"\n• **Ventas & Cajas:** "¿Cuánto se vendió hoy?", "Ventas de ayer", "Estado de caja"\n• **Clientes & Pacientes:** "Buscar cliente Juan", "Registrar paciente"\n• **Compras & Facturación:** "Compras pendientes", "Secuencias NCF", "Auditoría"\n\n¿En qué te puedo colaborar en este momento? 😊`;
   }
 
-  // ─── CONVERSATIONAL ───
-  if (/cómo estás|como estas|qué tal|que tal/i.test(lower)) {
-    return `¡Muy bien, gracias! 😊 ¿En qué te puedo ayudar hoy?`;
+  // ─── CONVERSATIONAL / DIÁLOGO GENERAL ───
+  if (/^(gracias|muchas gracias|excelente|perfecto|genial|super|listo|entendido|ok|vale|muy bien)\b/i.test(lower)) {
+    return `¡Siempre a tu orden! 😊 En **PharmaPlus** nos aseguramos de que tengas la mejor atención y control para tu farmacia. Si tienes otra pregunta sobre medicamentos, pacientes o ventas, aquí estoy. 🩺💊`;
   }
-  if (/^(gracias|excelente|perfecto|genial|super|listo)\b/i.test(lower)) {
-    return `¡Con gusto! Estoy aquí si necesitas algo más. 👍`;
+  if (/quién eres|quien eres|tu nombre|qué haces|que haces|qué puedes|que puedes|para qué sirves/i.test(lower)) {
+    return `Soy el **Asistente Inteligente de PharmaPlus** 🏥✨.\n\nEstoy diseñado para:\n1. **Orientar a clientes y pacientes** sobre medicamentos, dosis recomendadas, cuidados de salud y servicios.\n2. **Ejecutar y consultar operaciones en tiempo real:** inventario, ventas, compras, caja chica, facturación DGII y altas de productos o clientes.\n\n¡Puedes preguntarme libremente cualquier duda!`;
   }
-  if (/quién eres|quien eres|tu nombre|qué haces|que haces|qué puedes|que puedes/i.test(lower)) {
-    return `Soy tu **Asistente PharmaPlus** 🏥. Tengo acceso a todos los módulos: inventario, ventas, cajas, auditoría, compras, empleados, facturación, recetas, servicios y configuración. ¡Pregúntame lo que necesites!`;
+
+  // ─── CONSULTAS MÉDICAS / SÍNTOMAS / MEDICAMENTOS COMUNES ───
+  if (/dolor de cabeza|migra[ñn]a|cefalea/i.test(lower)) {
+    const prods = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE (name LIKE '%paracetamol%' OR name LIKE '%ibuprofeno%' OR name LIKE '%aspirina%' OR name LIKE '%acetaminofen%') AND is_active = 1`).all();
+    const list = prods.length > 0 ? prods.map(p => `• **${p.name}** (Stock: ${p.stock}) — RD$ ${p.sale_price.toFixed(2)}`).join('\n') : '• Paracetamol 500mg\n• Ibuprofeno 400mg';
+    return `🩺 **Recomendación para Dolor de Cabeza / Cefalea:**\n\nPara el alivio de cefaleas leves a moderadas, comúnmente se recomiendan analgésicos como el **Paracetamol (Acetaminofén)** o antiinflamatorios como el **Ibuprofeno**.\n\n💊 **Disponibles en Farmacia:**\n${list}\n\n⚠️ *Nota:* Mantener buena hidratación, descansar en un ambiente oscuro y consultar al médico si el dolor persiste o es recurrente.`;
+  }
+
+  if (/gripe|resfriado|tos|congesti[oó]n|catarro|flema|garganta/i.test(lower)) {
+    const prods = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE (name LIKE '%antigripal%' OR name LIKE '%vitamina c%' OR name LIKE '%loratadina%' OR name LIKE '%jarabe%') AND is_active = 1 LIMIT 5`).all();
+    const list = prods.length > 0 ? prods.map(p => `• **${p.name}** (Stock: ${p.stock}) — RD$ ${p.sale_price.toFixed(2)}`).join('\n') : '• Antigripal Compuesto\n• Vitamina C 500mg';
+    return `🩺 **Recomendación para Gripe y Resfriado Común:**\n\nSe recomienda reposo, abundante líquido y tratamientos sintomáticos como descongestionantes, antihistamínicos (Loratadina/Cetirizina) y analgésicos para el malestar general.\n\n💊 **Opciones en Farmacia:**\n${list}\n\n🥤 *Consejo:* Añade Vitamina C y miel con limón tibio. Si hay dificultad para respirar o fiebre alta por más de 3 días, acude al médico.`;
+  }
+
+  if (/fiebre|temperatura alta/i.test(lower)) {
+    const prods = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE (name LIKE '%paracetamol%' OR name LIKE '%ibuprofeno%') AND is_active = 1`).all();
+    const list = prods.length > 0 ? prods.map(p => `• **${p.name}** — RD$ ${p.sale_price.toFixed(2)} (Stock: ${p.stock})`).join('\n') : '• Paracetamol 500mg';
+    return `🌡️ **Control de Fiebre:**\n\nLos antipiréticos de primera línea son el **Paracetamol** o el **Ibuprofeno**. Se aconseja utilizar compresas tibias y monitorear la temperatura cada 4-6 horas.\n\n💊 **Medicamentos en inventario:**\n${list}\n\n🚨 *Importante:* En niños y bebés, dosificar estrictamente según el peso corporal bajo prescripción pediátrica.`;
+  }
+
+  if (/est[oó]mago|acidez|reflujo|gastritis|indigesti[oó]n|ardor|agruras/i.test(lower)) {
+    const prods = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE (name LIKE '%omeprazol%' OR name LIKE '%antiacido%' OR name LIKE '%aluminio%') AND is_active = 1`).all();
+    const list = prods.length > 0 ? prods.map(p => `• **${p.name}** — RD$ ${p.sale_price.toFixed(2)} (Stock: ${p.stock})`).join('\n') : '• Omeprazol 20mg\n• Antiácido Masticable';
+    return `🩺 **Alivio de Acidez y Malestar Estomacal:**\n\nPara el ardor o reflujo se utilizan protectores gástricos (como **Omeprazol**) o antiácidos de acción rápida (Hidróxido de Aluminio y Magnesio).\n\n💊 **Productos en Farmacia:**\n${list}\n\n💡 *Recomendación:* Evitar alimentos irritantes, grasas, café y no acostarse inmediatamente después de comer.`;
+  }
+
+  if (/alergia|picaz[oó]n|ronchas|estornudo|rinitis/i.test(lower)) {
+    const prods = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE (name LIKE '%loratadina%' OR name LIKE '%cetirizina%' OR name LIKE '%desloratadina%') AND is_active = 1`).all();
+    const list = prods.length > 0 ? prods.map(p => `• **${p.name}** — RD$ ${p.sale_price.toFixed(2)} (Stock: ${p.stock})`).join('\n') : '• Loratadina 10mg';
+    return `🌿 **Alivio de Alergias y Rinitis:**\n\nLos antihistamínicos no sedantes como la **Loratadina** o **Cetirizina** ayudan a controlar estornudos, picazón, ojos llorosos y ronchas.\n\n💊 **Disponibles en Farmacia:**\n${list}`;
+  }
+
+  if (/infecci[oó]n|antibi[oó]tico|amoxicilina|azitromicina/i.test(lower)) {
+    const prods = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE (name LIKE '%amoxicilina%' OR name LIKE '%azitromicina%' OR name LIKE '%ciprofloxacina%') AND is_active = 1`).all();
+    const list = prods.length > 0 ? prods.map(p => `• **${p.name}** — RD$ ${p.sale_price.toFixed(2)} (Stock: ${p.stock})`).join('\n') : '• Amoxicilina 500mg';
+    return `💊 **Antibióticos e Infecciones:**\n\nDisponemos de antibióticos para prescripciones médicas autorizadas:\n${list}\n\n⚠️ **Aviso Clínico:** La dispensación de antibióticos requiere receta médica para prevenir resistencia bacteriana. Tome siempre el tratamiento completo prescrito por su médico.`;
+  }
+
+  if (/presi[oó]n|hipertensi[oó]n|tensi[oó]n arterial/i.test(lower)) {
+    const prods = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE (name LIKE '%losartan%' OR name LIKE '%enalapril%' OR name LIKE '%amlodipina%') AND is_active = 1`).all();
+    const list = prods.length > 0 ? prods.map(p => `• **${p.name}** — RD$ ${p.sale_price.toFixed(2)} (Stock: ${p.stock})`).join('\n') : '• Losartán 50mg\n• Enalapril 20mg';
+    return `❤️ **Control de Presión Arterial:**\n\nDisponemos de medicamentos antihipertensivos y también realizamos la **toma de presión arterial** en el área de Servicios Clínicos de la farmacia.\n\n💊 **Opciones en catálogo:**\n${list}`;
+  }
+
+  if (/diabetes|glucosa|az[uú]car|insulina|metformina/i.test(lower)) {
+    const prods = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE (name LIKE '%metformina%' OR name LIKE '%glibenclamida%' OR name LIKE '%insulina%') AND is_active = 1`).all();
+    const list = prods.length > 0 ? prods.map(p => `• **${p.name}** — RD$ ${p.sale_price.toFixed(2)} (Stock: ${p.stock})`).join('\n') : '• Metformina 850mg';
+    return `🩸 **Cuidado de la Diabetes & Glucosa:**\n\nEn **PharmaPlus** contamos con hipoglucemiantes orales, tiras reactivas y servicio de **Prueba Rápida de Glucosa** en sangre.\n\n💊 **Productos en Farmacia:**\n${list}`;
+  }
+
+  if (/horario|abierto|atenci[oó]n|d[oó]nde est[aá]n|ubicaci[oó]n|tel[eé]fono|contacto/i.test(lower)) {
+    return `🏥 **Información de PharmaPlus:**\n• ⏰ **Horario:** Lunes a Domingo de 7:00 a.m. a 10:00 p.m. (Servicio de guardia 24h disponible).\n• 📍 **Ubicación:** Sucursal Principal, Av. 27 de Febrero esq. Winston Churchill.\n• 📞 **Teléfono / WhatsApp:** (809) 555-0199\n• 🚚 **Servicio a Domicilio:** Entregas rápidas en toda la zona metropolitana.`;
+  }
+
+  if (/domicilio|delivery|env[ií]o|entrega/i.test(lower)) {
+    return `🛵 **Servicio de Entrega a Domicilio PharmaPlus:**\n\n¡Llevamos tus medicamentos y productos de cuidado personal directamente a tu puerta!\n• ⏱️ **Tiempo estimado:** 30 a 45 minutos.\n• 💳 **Formas de pago:** Efectivo, Tarjeta al entregar o Transferencia bancaria.\n• 📞 **Solicitudes:** Al teléfono (809) 555-0199 o en el módulo POS.`;
   }
 
   // ─── QUIÉN HIZO LAS VENTAS (desglose por cajero) ───
-  // Debe ir ANTES del branch general de ventas, porque ese también matchea /venta/i.
   if (/qui[eé]n/i.test(lower) && /venta|vendi/i.test(lower)) {
     const dateFilter = getDateFilter(lower) || { clause: `DATE(created_at) = DATE('now')`, label: 'hoy' };
     const byCashier = db.prepare(`
@@ -478,25 +531,30 @@ function generateLocalResponse(message, contextStr, db) {
       const statusEmoji = p.status === 'recibida' ? '✅' : p.status === 'pendiente' ? '⏳' : p.status === 'cancelada' ? '❌' : '📝';
       return `• ${statusEmoji} **${p.purchase_number || 'Sin #'}** — ${p.company_name || 'Proveedor N/A'} — RD$ ${(p.total || 0).toFixed(2)} — ${p.status}`;
     }).join('\n');
-    return `🛒 **Órdenes de Compra Recientes:**\n${list}`;
+    return `📦 **Órdenes de Compra Recientes:**\n${list}`;
   }
 
-  // ─── EMPLEADOS / RRHH ───
-  if (/empleado|rrhh|recurso.*humano|personal|n[oó]mina|salario|asistencia/i.test(lower)) {
-    const employees = db.prepare(`SELECT e.name, e.position, e.department, e.salary, e.is_active FROM employees e ORDER BY e.name ASC`).all();
-    if (employees.length === 0) return `👔 No hay empleados registrados en RRHH.`;
-    const list = employees.map(e => {
-      const status = e.is_active ? '🟢' : '🔴';
-      return `• ${status} **${e.name}** — ${e.position || 'Sin cargo'} — ${e.department || 'Sin depto.'} — RD$ ${(e.salary || 0).toLocaleString()}`;
-    }).join('\n');
-    return `👔 **Empleados (${employees.length}):**\n${list}`;
+  // ─── RRHH / EMPLEADOS ───
+  if (/empleado|personal|trabajador|rrhh|recursos humanos/i.test(lower)) {
+    const employees = db.prepare(`SELECT first_name, last_name, position, department, status, salary FROM employees ORDER BY first_name ASC LIMIT 8`).all();
+    if (employees.length === 0) return `👥 No hay empleados registrados en la nómina.`;
+    const list = employees.map(e => `• **${e.first_name} ${e.last_name}** — ${e.position} (${e.department}) — ${e.status}`).join('\n');
+    return `👥 **Personal de la Farmacia (${employees.length}):**\n${list}`;
   }
 
-  // ─── FACTURACIÓN / INVOICES ───
-  if (/factura|facturaci[oó]n|ncf|comprobante|invoice/i.test(lower)) {
-    const invoices = db.prepare(`SELECT invoice_number, ncf, client_name, total, status, issued_at FROM invoices ORDER BY issued_at DESC LIMIT 5`).all();
+  // ─── RECETAS / PRESCRIPCIONES ───
+  if (/receta|prescripci[oó]n|m[eé]dico/i.test(lower)) {
+    const rx = db.prepare(`SELECT rx_number, doctor_name, client_name, diagnosis, status, created_at FROM prescriptions ORDER BY created_at DESC LIMIT 5`).all();
+    if (rx.length === 0) return `📋 No hay recetas médicas registradas recientemente.`;
+    const list = rx.map(r => `• **${r.rx_number}** — Dr. ${r.doctor_name || 'N/A'} — Paciente: ${r.client_name || 'N/A'} — ${r.diagnosis || 'Consulta'} (${r.status})`).join('\n');
+    return `📋 **Recetas Médicas Registradas:**\n${list}`;
+  }
+
+  // ─── FACTURAS / FISCAL ───
+  if (/factura|comprobante|ncf|fiscal|dgii/i.test(lower)) {
+    const invoices = db.prepare(`SELECT invoice_number, ncf, client_name, total, status, issued_at FROM invoices ORDER BY id DESC LIMIT 5`).all();
     if (invoices.length === 0) {
-      const ncfs = db.prepare(`SELECT ncf_type_name, prefix, current_sequence, max_sequence, expiry_date FROM ncf_sequences WHERE is_active = 1`).all();
+      const ncfs = db.prepare(`SELECT ncf_type_name, prefix, current_sequence, max_sequence, expiry_date FROM ncf_sequences WHERE is_active = 1 LIMIT 5`).all();
       if (ncfs.length > 0) {
         const list = ncfs.map(n => `• **${n.ncf_type_name}** (${n.prefix}) — Secuencia: ${n.current_sequence}/${n.max_sequence} — Vence: ${n.expiry_date || 'N/A'}`).join('\n');
         return `🧾 **Secuencias NCF activas:**\n${list}`;
@@ -518,7 +576,7 @@ function generateLocalResponse(message, contextStr, db) {
       const status = s.is_active ? '🟢' : '🔴';
       return `• ${status} **${s.name}** — RD$ ${(s.price || 0).toFixed(2)} — ${s.duration_minutes} min`;
     }).join('\n');
-    return `🩺 **Servicios Disponibles:**\n${list}`;
+    return `🩺 **Servicios Clínicos Disponibles en Farmacia:**\n${list}`;
   }
 
   // ─── NOTIFICACIONES ───
@@ -560,14 +618,13 @@ function generateLocalResponse(message, contextStr, db) {
       const icon = isExpired ? '🔴' : '🟢';
       return `• ${icon} **${b.product_name}** — Lote: ${b.batch_number} — Vence: ${expiry} — ${b.quantity} unid.`;
     }).join('\n');
-    return `📅 **Lotes de Productos:**\n${list}`;
+    return `📅 **Lotes y Vencimientos de Medicamentos:**\n${list}`;
   }
 
   // ─── SALES: per-user or per-time-period (general) ───
   if (/venta|vendio|vendió|genero|generó|genera|generado|dinero|facturado|facturo|facturó|ingreso|cobro|cobrado|recaud/i.test(lower)) {
     const dateFilter = getDateFilter(lower) || { clause: `DATE(created_at) = DATE('now')`, label: 'hoy' };
 
-    // Check if the user is asking for specific details / list of sales
     if (/\b(cuales|cu[aá]les|detalles|detalle|listar|lista|desglose)\b/i.test(lower)) {
       const detailedSales = db.prepare(`
         SELECT s.sale_number, s.total, s.created_at, u.name as cashier_name 
@@ -603,43 +660,42 @@ function generateLocalResponse(message, contextStr, db) {
 
   // ─── STOCK / INVENTARIO ───
   if (/stock|inventario|agotado|bajo|faltante/i.test(lower)) {
-    // If it's a general request for 'inventario' or 'stock' (not mentioning 'bajo' or 'agotado'), show catalog summary or catalog.
     if (lower.trim() === 'inventario' || lower.trim() === 'stock') {
       const totalCount = db.prepare(`SELECT COUNT(*) as count FROM products WHERE is_active = 1`).get()?.count || 0;
       const lowStockCount = db.prepare(`SELECT COUNT(*) as count FROM products WHERE stock <= min_stock AND is_active = 1`).get()?.count || 0;
-      return `📦 **Resumen del Inventario:**\n• Productos activos: **${totalCount}**\n• Alertas de stock bajo: **${lowStockCount}**\n\n*(Puedes escribir "catálogo" para ver todos los productos o "stock bajo" para ver las alertas).*`;
+      return `📦 **Resumen del Inventario Farmacéutico:**\n• Medicamentos/Productos activos: **${totalCount}**\n• Alertas de stock bajo: **${lowStockCount}**\n\n*(Escribe "catálogo" para ver todos o "stock bajo" para ver las alertas críticas).*`;
     }
 
     const lowStockProds = db.prepare(`SELECT name, code, stock, min_stock FROM products WHERE stock <= min_stock AND is_active = 1 ORDER BY stock ASC`).all();
-    if (lowStockProds.length === 0) return `✅ Todo el inventario está en niveles óptimos.`;
-    const list = lowStockProds.map(p => `• **${p.name}** (${p.code}): **${p.stock}** unid. (mín: ${p.min_stock})`).join('\n');
-    return `⚠️ **Productos con stock bajo (${lowStockProds.length}):**\n${list}`;
+    if (lowStockProds.length === 0) return `✅ Todo el inventario farmacéutico está en niveles óptimos de abastecimiento.`;
+    const list = lowStockProds.map(p => `• **${p.name}** (${p.code}): **${p.stock}** unid. (mínimo: ${p.min_stock})`).join('\n');
+    return `⚠️ **Medicamentos con Stock Bajo (${lowStockProds.length}):**\n${list}`;
   }
 
 
-  // ─── CLIENTES ───
-  if (/cliente|directorio/i.test(lower)) {
+  // ─── CLIENTES / PACIENTES ───
+  if (/cliente|paciente|directorio/i.test(lower)) {
     const clients = db.prepare(`SELECT name, cedula, phone FROM clients WHERE is_active = 1 ORDER BY id DESC LIMIT 5`).all();
     if (clients.length === 0) return `👥 No hay clientes registrados.`;
-    const list = clients.map(c => `• **${c.name}** — Cédula: ${c.cedula || 'N/A'} — Tel: ${c.phone || 'N/A'}`).join('\n');
-    return `👥 **Últimos clientes:**\n${list}`;
+    const list = clients.map(c => `• **${c.name}** — Cédula/RNC: ${c.cedula || 'N/A'} — Tel: ${c.phone || 'N/A'}`).join('\n');
+    return `👥 **Pacientes / Clientes Recientes:**\n${list}`;
   }
 
-  // ─── PROVEEDORES ───
-  if (/proveedor|suplidor/i.test(lower)) {
+  // ─── PROVEEDORES / DISTRIBUIDORAS ───
+  if (/proveedor|suplidor|distribuidora|laboratorio/i.test(lower)) {
     const suppliers = db.prepare(`SELECT company_name, contact_name, phone FROM suppliers LIMIT 5`).all();
     if (suppliers.length > 0) {
       const list = suppliers.map(s => `• **${s.company_name}** — Contacto: ${s.contact_name || 'N/A'} — Tel: ${s.phone || 'N/A'}`).join('\n');
-      return `🏢 **Proveedores:**\n${list}`;
+      return `🏢 **Distribuidores y Proveedores Farmacéuticos:**\n${list}`;
     }
     return `🏢 No hay proveedores registrados.`;
   }
 
   // ─── CATÁLOGO DE PRODUCTOS ───
-  if (/cat[aá]logo|lista de productos|todos los productos/i.test(lower)) {
+  if (/cat[aá]logo|lista de productos|todos los productos|medicamentos/i.test(lower)) {
     const products = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE is_active = 1 ORDER BY name ASC`).all();
     const list = products.map(p => `• **${p.name}** (${p.code}) — Stock: **${p.stock}** — RD$ ${p.sale_price.toFixed(2)}`).join('\n');
-    return `📦 **Catálogo (${products.length} productos):**\n${list}`;
+    return `📦 **Catálogo de Farmacia (${products.length} productos):**\n${list}`;
   }
 
   // ─── USUARIOS / ROLES ───
@@ -650,10 +706,10 @@ function generateLocalResponse(message, contextStr, db) {
       const status = u.is_active ? '🟢' : '🔴';
       return `• ${status} **${u.name}** — ${u.role_name || 'Sin rol'} — ${u.email}`;
     }).join('\n');
-    return `👤 **Usuarios del Sistema (${users.length}):**\n${list}`;
+    return `👤 **Usuarios y Roles del Sistema (${users.length}):**\n${list}`;
   }
 
-  // ─── PRODUCT SEARCH (fuzzy fallback) ───
+  // ─── BÚSQUEDA FUZZY DE PRODUCTO ───
   const cleanMsg = message.trim();
   if (cleanMsg.length > 2) {
     const matchedProducts = db.prepare(`
@@ -664,12 +720,12 @@ function generateLocalResponse(message, contextStr, db) {
     `).all(`%${cleanMsg}%`, `%${cleanMsg}%`);
     if (matchedProducts.length > 0) {
       const list = matchedProducts.map(p => `• **${p.name}** (${p.code}) — Stock: **${p.stock}** — RD$ ${p.sale_price.toFixed(2)}`).join('\n');
-      return `🔍 **Encontré estos productos:**\n${list}`;
+      return `🔍 **Encontré estos medicamentos en PharmaPlus:**\n${list}`;
     }
   }
 
-  // ─── FRIENDLY FALLBACK ───
-  return `Disculpa, no logré identificar exactamente lo que necesitas. 🤔\n\nPuedo ayudarte con cualquier módulo de la farmacia. Intenta con frases como:\n• "Ventas de ayer" o "Ventas de Ana"\n• "Estado de cajas" o "Movimientos de caja"\n• "Auditoría" o "Últimas acciones"\n• "Compras pendientes" o "Empleados"\n• "Facturas recientes" o "Recetas"\n• "Notificaciones" o "Configuración"\n• "Stock bajo" o "Buscar Amoxicilina"`;
+  // ─── RESPUESTA INTELIGENTE / DIÁLOGO DIRECTO CON EL CLIENTE ───
+  return `Comprendo tu inquietud sobre **"${message}"**. 😊\n\nComo tu asistente farmacéutico en **PharmaPlus**, puedo orientarte tanto en salud como en la gestión de la farmacia:\n\n🩺 **Atención a Clientes y Pacientes:**\n• Alivio de síntomas comunes (dolor de cabeza, gripe, fiebre, acidez, alergias).\n• Consulta de dosis recomendadas, medicamentos y servicios clínicos.\n\n📊 **Consultas Rápidas del Sistema:**\n• **Ventas:** *"¿Cuánto se vendió hoy?"* o *"Ventas de ayer"*\n• **Inventario:** *"¿Cuáles productos tienen stock bajo?"* o *"Catálogo"*\n• **Cajas:** *"Estado de cajas"* o *"Movimientos"*\n• **Compras & Facturas:** *"Compras pendientes"* o *"Facturas recientes"*\n\n¿Deseas consultar algún producto o área en particular?`;
 }
 
 // ─── CONVERSATIONS API ───────────────────────────────────────────────────────

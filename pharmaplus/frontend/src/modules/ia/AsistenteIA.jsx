@@ -258,59 +258,79 @@ const AsistenteIA = () => {
         </div>
 
         {/* Preset Action Chips */}
-        <div className="px-4 py-2 bg-background/60 border-b border-border flex items-center gap-2 overflow-x-auto custom-scrollbar text-xs">
-          <span className="font-bold text-muted text-[11px] shrink-0">Acciones Rápidas:</span>
+        <div className="px-4 py-2.5 bg-background/60 border-b border-border flex items-center gap-2 overflow-x-auto custom-scrollbar text-xs">
+          <span className="font-bold text-muted text-[11px] shrink-0">Consultas Rápidas:</span>
           <button 
-            onClick={() => handleSendMessage('Añadir producto Paracetamol Jarabe a 120 pesos con costo 70 y stock 60')}
-            className="px-2.5 py-1 rounded-lg bg-surface border border-border hover:border-primary hover:text-primary transition-all shrink-0 font-medium"
+            onClick={() => handleSendMessage('¿Qué me recomiendas para el dolor de cabeza?')}
+            className="px-3 py-1.5 rounded-xl bg-surface border border-emerald-200 text-emerald-800 hover:bg-emerald-50 transition-all shrink-0 font-semibold shadow-2xs"
           >
-            ➕ Crear Producto
+            🩺 Dolor de Cabeza / Gripe
           </button>
           <button 
-            onClick={() => handleSendMessage('Editar el producto Paracetamol 500mg cambiando su precio de venta a 85 pesos')}
-            className="px-2.5 py-1 rounded-lg bg-surface border border-border hover:border-primary hover:text-primary transition-all shrink-0 font-medium"
+            onClick={() => handleSendMessage('¿Cuáles son los medicamentos con stock bajo?')}
+            className="px-3 py-1.5 rounded-xl bg-surface border border-amber-200 text-amber-800 hover:bg-amber-50 transition-all shrink-0 font-semibold shadow-2xs"
           >
-            ✏️ Cambiar Precio
+            ⚠️ Stock Bajo Farmacia
           </button>
           <button 
-            onClick={() => handleSendMessage('Registrar cliente Juan Alberto con teléfono 809-555-9988 y cédula 001-9988776-5')}
-            className="px-2.5 py-1 rounded-lg bg-surface border border-border hover:border-primary hover:text-primary transition-all shrink-0 font-medium"
+            onClick={() => handleSendMessage('¿Cuánto se ha vendido hoy?')}
+            className="px-3 py-1.5 rounded-xl bg-surface border border-sky-200 text-sky-800 hover:bg-sky-50 transition-all shrink-0 font-semibold shadow-2xs"
           >
-            👤 Registrar Cliente
+            📊 Ventas de Hoy
           </button>
           <button 
-            onClick={() => handleSendMessage('¿Cuáles son los productos con stock bajo?')}
-            className="px-2.5 py-1 rounded-lg bg-surface border border-border hover:border-primary hover:text-primary transition-all shrink-0 font-medium"
+            onClick={() => handleSendMessage('¿Qué servicios clínicos tienen disponibles?')}
+            className="px-3 py-1.5 rounded-xl bg-surface border border-purple-200 text-purple-800 hover:bg-purple-50 transition-all shrink-0 font-semibold shadow-2xs"
           >
-            🔍 Stock Bajo
+            💉 Servicios Clínicos
+          </button>
+          <button 
+            onClick={() => handleSendMessage('Horarios de atención y entregas a domicilio')}
+            className="px-3 py-1.5 rounded-xl bg-surface border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all shrink-0 font-semibold shadow-2xs"
+          >
+            🛵 Horarios & Delivery
           </button>
         </div>
 
         {/* Messages List Area */}
         <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4 custom-scrollbar bg-background/30">
           {messages.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 max-w-lg mx-auto my-auto">
-              <div className="w-16 h-16 rounded-2xl bg-primary-light text-primary flex items-center justify-center mb-4 shadow-sm">
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-8 max-w-xl mx-auto my-auto">
+              <div className="w-16 h-16 rounded-2xl bg-[#e8f6f3] text-[#16a085] flex items-center justify-center mb-4 shadow-sm border border-[#16a085]/30">
                 <Sparkles size={32} />
               </div>
-              <h3 className="text-lg font-bold text-main mb-2">¡Hola! Soy tu Asistente de PharmaPlus</h3>
-              <p className="text-xs text-muted leading-relaxed mb-6">
-                Puedo ayudarte a gestionar la farmacia: consultar inventario, ver resúmenes de ventas, registrar clientes o realizar ajustes rápidos de productos. Escribe tu instrucción abajo.
+              <h3 className="text-lg font-black text-slate-800 mb-2">¡Hola! Soy tu Asistente Clínico y de Gestión PharmaPlus</h3>
+              <p className="text-xs text-slate-500 leading-relaxed mb-6">
+                Puedo responder cualquier pregunta médica o de farmacia, orientar a tus clientes sobre síntomas y medicamentos, o consultar ventas, inventario, precios y compras en tiempo real.
               </p>
-              <div className="grid grid-cols-1 gap-2 w-full text-left">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full text-left">
                 <button 
-                  onClick={() => handleSendMessage('Añadir producto Vitamina D3 Jarabe a 250 pesos con costo 150 y stock 30')}
-                  className="p-3 bg-surface border border-border hover:border-primary rounded-xl text-xs text-muted hover:text-primary transition-all flex items-center gap-2"
+                  onClick={() => handleSendMessage('¿Qué medicamento tienen para el dolor de estómago o acidez?')}
+                  className="p-3 bg-surface border border-border hover:border-emerald-500 rounded-xl text-xs text-slate-600 hover:text-emerald-700 transition-all flex items-center gap-2"
                 >
-                  <Plus size={16} className="text-primary shrink-0" />
-                  "Añadir producto Vitamina D3 Jarabe a 250 pesos con costo 150 y stock 30"
+                  <Sparkles size={16} className="text-emerald-600 shrink-0" />
+                  "¿Qué tienen para el dolor de estómago o acidez?"
                 </button>
                 <button 
-                  onClick={() => handleSendMessage('Modificar el stock de Amoxicilina a 150 unidades por reposición')}
-                  className="p-3 bg-surface border border-border hover:border-primary rounded-xl text-xs text-muted hover:text-primary transition-all flex items-center gap-2"
+                  onClick={() => handleSendMessage('¿Cuáles son los productos con stock bajo en el almacén?')}
+                  className="p-3 bg-surface border border-border hover:border-emerald-500 rounded-xl text-xs text-slate-600 hover:text-emerald-700 transition-all flex items-center gap-2"
                 >
-                  <Package size={16} className="text-primary shrink-0" />
-                  "Modificar el stock de Amoxicilina a 150 unidades"
+                  <Package size={16} className="text-emerald-600 shrink-0" />
+                  "¿Cuáles productos tienen stock bajo?"
+                </button>
+                <button 
+                  onClick={() => handleSendMessage('¿Cuánto dinero se ha recaudado en ventas hoy?')}
+                  className="p-3 bg-surface border border-border hover:border-emerald-500 rounded-xl text-xs text-slate-600 hover:text-emerald-700 transition-all flex items-center gap-2"
+                >
+                  <ShoppingCart size={16} className="text-emerald-600 shrink-0" />
+                  "¿Cuánto dinero se ha vendido hoy?"
+                </button>
+                <button 
+                  onClick={() => handleSendMessage('¿Qué antibióticos están registrados en el catálogo?')}
+                  className="p-3 bg-surface border border-border hover:border-emerald-500 rounded-xl text-xs text-slate-600 hover:text-emerald-700 transition-all flex items-center gap-2"
+                >
+                  <Users size={16} className="text-emerald-600 shrink-0" />
+                  "¿Qué antibióticos tienen disponibles?"
                 </button>
               </div>
             </div>
