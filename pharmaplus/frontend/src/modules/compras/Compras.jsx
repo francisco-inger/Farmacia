@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { 
   FileText, Plus, Search, Filter, ScanLine, Eye, Printer, Trash2, 
   Edit3, CheckCircle2, XCircle, Clock, Building2, Phone, Mail, CreditCard, 
@@ -19,7 +19,7 @@ const Compras = () => {
 
   // Search & Filter State
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState('Todas'); // 'Todas', 'Ã“rdenes de compra', 'Recibidas', 'Parciales', 'Pendientes', 'Canceladas'
+  const [activeTab, setActiveTab] = useState('Todas'); // 'Todas', 'Órdenes de compra', 'Recibidas', 'Parciales', 'Pendientes', 'Canceladas'
   const [statusFilter, setStatusFilter] = useState('Todos'); // 'Todos', 'Recibida', 'Parcial', 'Pendiente', 'Cancelada'
   const [supplierFilter, setSupplierFilter] = useState('');
   const [paymentMethodFilter, setPaymentMethodFilter] = useState('Todos');
@@ -69,7 +69,7 @@ const Compras = () => {
   // Chatbot State
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([
-    { role: 'assistant', text: 'Â¡Hola! Soy el asistente de PharmaPlus. Puedo informarte sobre compras recientes, montos por pagar a proveedores o generar Ã³rdenes de compra.' }
+    { role: 'assistant', text: 'Â¡Hola! Soy el asistente de PharmaPlus. Puedo informarte sobre compras recientes, montos por pagar a proveedores o generar órdenes de compra.' }
   ]);
   const [chatLoading, setChatLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
@@ -168,7 +168,7 @@ const Compras = () => {
       discount: 900.00,
       tax: 3150.00,
       status: 'Parcial',
-      payment_method: 'CrÃ©dito 30 dÃ­as',
+      payment_method: 'Crédito 30 días',
       warehouse: 'AlmacÃ©n Principal',
       notes: 'Entrega parcial por faltante de stock en laboratorio.',
       items: [
@@ -212,7 +212,7 @@ const Compras = () => {
       discount: 600.00,
       tax: 2130.00,
       status: 'Pendiente',
-      payment_method: 'CrÃ©dito 15 dÃ­as',
+      payment_method: 'Crédito 15 días',
       warehouse: 'AlmacÃ©n Secundario',
       notes: 'Pendiente de recepciÃ³n en almacÃ©n.',
       items: [
@@ -276,7 +276,7 @@ const Compras = () => {
       discount: 1000.00,
       tax: 3800.00,
       status: 'Parcial',
-      payment_method: 'CrÃ©dito 30 dÃ­as',
+      payment_method: 'Crédito 30 días',
       warehouse: 'AlmacÃ©n Principal',
       notes: 'Segunda entrega pendiente para el 20/08.',
       items: [
@@ -297,7 +297,7 @@ const Compras = () => {
       discount: 700.00,
       tax: 2700.00,
       status: 'Pendiente',
-      payment_method: 'CrÃ©dito 15 dÃ­as',
+      payment_method: 'Crédito 15 días',
       warehouse: 'AlmacÃ©n Principal',
       notes: 'Orden enviada, confirmando fecha de despacho.',
       items: [
@@ -506,7 +506,7 @@ const Compras = () => {
       }
     });
 
-    showToast(`"${prod.name}" aÃ±adido a la orden`, 'success');
+    showToast(`"${prod.name}" añadido a la orden`, 'success');
   };
 
   // Remove Item from Purchase Form
@@ -628,9 +628,9 @@ const Compras = () => {
   const paginatedPurchases = purchases.slice((page - 1) * limit, page * limit);
 
   return (
-    <div className="flex flex-col gap-0 pb-8 relative" onClick={() => { setActiveActionMenuId(null); setIsPanelMenuOpen(false); }}>
+    <div className="h-full flex flex-col gap-5 overflow-y-auto pr-1" onClick={() => { setActiveActionMenuId(null); setIsPanelMenuOpen(false); }}>
 
-      {/* â”€â”€â”€ TOAST â”€â”€â”€ */}
+      {/* ─── TOAST ─── */}
       {toastMessage && (
         <div className={`fixed bottom-6 right-6 z-50 px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-3 text-xs font-semibold ${
           toastMessage.type === 'warning' ? 'bg-amber-500 text-white border-amber-600'
@@ -642,149 +642,173 @@ const Compras = () => {
         </div>
       )}
 
-      {/* â”€â”€â”€ HEADER BAR â”€â”€â”€ */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-0.5">
-            <ShoppingBag size={20} className="text-emerald-600" />
-            <h1 className="font-bold text-slate-900 text-lg">MÃ³dulo de Compras</h1>
-          </div>
-          <p className="text-xs text-slate-400">Gestiona tus Ã³rdenes de compra, proveedores e inventario entrante</p>
+      {/* ─── BANNER SUPERIOR CORPORATIVO COMPRAS (PHARMA.ERP) ─── */}
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#072a23] via-[#0f6c59] to-[#16a085] text-white p-7 sm:p-10 lg:p-12 shadow-2xl border border-[#16a085]/40 min-h-[290px] flex flex-col justify-between shrink-0">
+        
+        {/* Imagen Farmacéutica Corporativa en Alta Visibilidad */}
+        <div 
+          className="absolute inset-0 opacity-40 mix-blend-luminosity bg-cover bg-right sm:bg-center pointer-events-none transition-all duration-700" 
+          style={{ backgroundImage: "url('/erp-banner.jpg')" }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#072a23]/90 via-[#0f6c59]/65 to-transparent pointer-events-none"></div>
+
+        <div className="absolute top-0 right-0 p-8 opacity-15 font-mono text-4xl font-black tracking-widest uppercase select-none pointer-events-none hidden md:block">
+          PHARMACEUTICAL PROCUREMENT & SUPPLY CHAIN
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          
+          <div className="space-y-4 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-950/60 backdrop-blur-md border border-emerald-400/40 text-emerald-200 text-xs font-bold tracking-wider uppercase shadow-sm">
+              <span>✦</span>
+              <span>ÓRDENES DE COMPRA & ABASTECIMIENTO • PHARMAPLUS</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight drop-shadow-md">
+              Gestión de Compras & Proveedores
+            </h1>
+            
+            <p className="text-sm sm:text-base text-emerald-100/90 font-medium">
+              Órdenes de compra, recepción de lotes de medicamentos, control de facturas por pagar y entrada de stock.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2.5 pt-2">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/25 border border-emerald-300/40 text-white text-xs font-bold shadow-sm backdrop-blur-md">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                {purchases.length} Compras Registradas
+              </span>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                {recibidas} Recibidas en Almacén
+              </span>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                Ciclo de Abastecimiento 2026
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 z-10">
+            <button
+              onClick={openNewPurchaseModal}
+              className="px-5 py-3 rounded-2xl bg-white text-[#12876f] hover:bg-emerald-50 active:scale-95 text-xs sm:text-sm font-black shadow-xl transition-all flex items-center gap-2"
+            >
+              <Plus size={17} /> Nueva Compra
+            </button>
+            <button
+              onClick={() => setIsScanModalOpen(true)}
+              className="px-5 py-3 rounded-2xl bg-black/40 hover:bg-black/60 active:scale-95 text-white text-xs sm:text-sm font-bold border border-emerald-300/40 backdrop-blur-md transition-all flex items-center gap-2 shadow-lg"
+            >
+              <ScanLine size={17} /> Escanear Factura
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ─── 4 TARJETAS KPI LIMPIAS Y ESPACIOSAS COMPRAS ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+        
+        {/* Card 1: Total Gastado */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#e8f6f3] text-[#16a085] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+              <CreditCard size={22} />
+            </div>
+            <div className="truncate">
+              <p className="text-xs font-bold text-slate-500">Inversión en Compras</p>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+                RD$ {totalGastado.toLocaleString('es-DO', { minimumFractionDigits: 2 })}
+              </h3>
+              <p className="text-[11px] font-bold text-[#16a085] mt-0.5 truncate">
+                <span>{purchases.length} órdenes registradas</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Recibidas / Inventario */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#eafaf1] text-[#27ae60] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+              <CheckCircle2 size={22} />
+            </div>
+            <div className="truncate">
+              <p className="text-xs font-bold text-slate-500">Recibidas & Ingresadas</p>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+                {recibidas} Lotes
+              </h3>
+              <p className="text-[11px] font-bold text-[#27ae60] mt-0.5 truncate">
+                <span>✓ Stock sumado al inventario</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Órdenes Pendientes */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#fef5e7] text-[#f39c12] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+              <Clock size={22} />
+            </div>
+            <div className="truncate">
+              <p className="text-xs font-bold text-slate-500">Por Recibir / Tránsito</p>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+                {pendientes} Pendientes
+              </h3>
+              <p className="text-[11px] font-bold text-[#f39c12] mt-0.5 truncate">
+                <span>En camino del distribuidor</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Proveedores Activos */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#ebf5fb] text-[#3498db] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+              <Building2 size={22} />
+            </div>
+            <div className="truncate">
+              <p className="text-xs font-bold text-slate-500">Laboratorios / Droguerías</p>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+                {suppliersList.length || 6} Proveedores
+              </h3>
+              <p className="text-[11px] font-bold text-[#16a085] mt-0.5 truncate">
+                <span>✓ Suministro garantizado</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      {/* ─── TABS BAR ─── */}
+      <div className="flex items-center gap-1 border-b border-slate-200 overflow-x-auto custom-scrollbar shrink-0">
+        {[
+          { label: 'Resumen General', key: 'Todas' },
+          { label: 'Órdenes de Compra', key: 'Órdenes de compra' },
+          { label: 'Recibidas', key: 'Recibidas' },
+          { label: 'Parciales', key: 'Parciales' },
+          { label: 'Pendientes', key: 'Pendientes' },
+          { label: 'Canceladas', key: 'Canceladas' },
+        ].map(tab => (
           <button
-            onClick={() => setIsFilterPanelOpen(!isFilterPanelOpen)}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all ${
-              isFilterPanelOpen || activeFiltersCount > 0
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
-                : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+            key={tab.key}
+            onClick={() => { setActiveTab(tab.key); setPage(1); }}
+            className={`px-4 py-2.5 text-xs font-bold transition-all rounded-t-xl -mb-px border-b-2 ${
+              activeTab === tab.key
+                ? 'border-[#16a085] text-[#12876f] bg-[#e8f6f3]/60'
+                : 'border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50'
             }`}
           >
-            <Filter size={14} />
-            Filtros
-            {activeFiltersCount > 0 && (
-              <span className="bg-emerald-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{activeFiltersCount}</span>
-            )}
+            {tab.label}
           </button>
-          <button
-            onClick={() => setIsScanModalOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 bg-white text-slate-600 hover:border-emerald-300 hover:text-emerald-700 text-xs font-semibold transition-all"
-          >
-            <ScanLine size={14} />
-            EscÃ¡ner
-          </button>
-          <button
-            onClick={openNewPurchaseModal}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm shadow-emerald-200 transition-all"
-          >
-            <Plus size={14} />
-            Nueva Compra
-          </button>
-        </div>
+        ))}
       </div>
 
-      {/* â”€â”€â”€ TABS â”€â”€â”€ */}
-      <div className="bg-white border-b border-slate-200 px-6">
-        <div className="flex items-center gap-1 overflow-x-auto no-scrollbar">
-          {[
-            { label: 'Resumen', key: 'Todas' },
-            { label: 'Ã“rdenes de Compra', key: 'Ã“rdenes de compra' },
-            { label: 'Recibidas', key: 'Recibidas' },
-            { label: 'Parciales', key: 'Parciales' },
-            { label: 'Pendientes', key: 'Pendientes' },
-            { label: 'Canceladas', key: 'Canceladas' },
-          ].map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => { setActiveTab(tab.key); setPage(1); }}
-              className={`relative px-4 py-3.5 text-xs font-semibold whitespace-nowrap transition-colors ${
-                activeTab === tab.key
-                  ? 'text-emerald-600 border-b-2 border-emerald-600'
-                  : 'text-slate-500 hover:text-slate-800 border-b-2 border-transparent'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <div className="flex flex-col gap-5">
 
-      <div className="p-6 flex flex-col gap-5">
-
-        {/* â”€â”€â”€ KPI CARDS â”€â”€â”€ */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          {/* Total Compras */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col gap-2 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-400">Total Gastado</span>
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
-                <CreditCard size={16} className="text-emerald-600" />
-              </div>
-            </div>
-            <div>
-              <p className="text-xl font-extrabold text-slate-900">RD$ {totalGastado.toLocaleString('es-DO', { minimumFractionDigits: 2 })}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">{purchases.length} compras registradas</p>
-            </div>
-          </div>
-
-          {/* Recibidas */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col gap-2 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-400">Recibidas</span>
-              <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
-                <CheckCircle2 size={16} className="text-emerald-600" />
-              </div>
-            </div>
-            <div>
-              <p className="text-2xl font-extrabold text-emerald-700">{recibidas}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">Inventario actualizado</p>
-            </div>
-          </div>
-
-          {/* Pendientes */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col gap-2 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-400">Pendientes</span>
-              <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center">
-                <Clock size={16} className="text-amber-500" />
-              </div>
-            </div>
-            <div>
-              <p className="text-2xl font-extrabold text-amber-600">{pendientes}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">Por recibir</p>
-            </div>
-          </div>
-
-          {/* Parciales */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col gap-2 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-400">Parciales</span>
-              <div className="w-8 h-8 rounded-xl bg-sky-50 flex items-center justify-center">
-                <ArrowRightLeft size={16} className="text-sky-500" />
-              </div>
-            </div>
-            <div>
-              <p className="text-2xl font-extrabold text-sky-600">{parciales}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">Entrega incompleta</p>
-            </div>
-          </div>
-
-          {/* Canceladas */}
-          <div className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col gap-2 shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-400">Canceladas</span>
-              <div className="w-8 h-8 rounded-xl bg-rose-50 flex items-center justify-center">
-                <XCircle size={16} className="text-rose-500" />
-              </div>
-            </div>
-            <div>
-              <p className="text-2xl font-extrabold text-rose-600">{canceladas}</p>
-              <p className="text-[11px] text-slate-400 mt-0.5">No procesadas</p>
-            </div>
-          </div>
-        </div>
-
-        {/* â”€â”€â”€ FILTER PANEL â”€â”€â”€ */}
+        {/* ─── FILTER PANEL ─── */}
         {isFilterPanelOpen && (
           <div className="bg-white rounded-2xl border border-emerald-100 shadow-sm p-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-xs">
             <div className="flex flex-col gap-1">
@@ -795,17 +819,17 @@ const Compras = () => {
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="font-semibold text-slate-600">MÃ©todo de Pago</label>
+              <label className="font-semibold text-slate-600">Método de Pago</label>
               <select className="input text-xs" value={paymentMethodFilter} onChange={e => { setPaymentMethodFilter(e.target.value); setPage(1); }}>
-                {['Todos','Transferencia','Efectivo','CrÃ©dito 15 dÃ­as','CrÃ©dito 30 dÃ­as','Cheque'].map(m => <option key={m}>{m}</option>)}
+                {['Todos','Transferencia','Efectivo','Crédito 15 días','Crédito 30 días','Cheque'].map(m => <option key={m}>{m}</option>)}
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="font-semibold text-slate-600">Monto mÃ­nimo (RD$)</label>
+              <label className="font-semibold text-slate-600">Monto mínimo (RD$)</label>
               <input className="input text-xs" type="number" placeholder="0" value={minAmount} onChange={e => { setMinAmount(e.target.value); setPage(1); }} />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="font-semibold text-slate-600">Monto mÃ¡ximo (RD$)</label>
+              <label className="font-semibold text-slate-600">Monto máximo (RD$)</label>
               <input className="input text-xs" type="number" placeholder="999,999" value={maxAmount} onChange={e => { setMaxAmount(e.target.value); setPage(1); }} />
             </div>
             <div className="flex flex-col gap-1">
@@ -826,7 +850,7 @@ const Compras = () => {
           </div>
         )}
 
-        {/* â”€â”€â”€ MAIN GRID â”€â”€â”€ */}
+        {/* ─── MAIN GRID ─── */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
           {/* â”€â”€ LEFT: TABLE SECTION (8 cols) â”€â”€ */}
@@ -838,7 +862,7 @@ const Compras = () => {
                 <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input
                   type="text"
-                  placeholder="Buscar por NÂ° compra, proveedor, RNC, estado..."
+                  placeholder="Buscar por N° compra, proveedor, RNC, estado..."
                   value={searchTerm}
                   onChange={e => { setSearchTerm(e.target.value); setPage(1); }}
                   className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-200 bg-slate-50/60 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-400 transition-all"
@@ -870,9 +894,9 @@ const Compras = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <select value={limit} onChange={e => { setLimit(Number(e.target.value)); setPage(1); }} className="text-xs border border-slate-200 rounded-lg px-2 py-1 text-slate-600 focus:outline-none">
-                    <option value={8}>8 por pÃ¡g.</option>
-                    <option value={15}>15 por pÃ¡g.</option>
-                    <option value={25}>25 por pÃ¡g.</option>
+                    <option value={8}>8 por pág.</option>
+                    <option value={15}>15 por pág.</option>
+                    <option value={25}>25 por pág.</option>
                   </select>
                 </div>
               </div>
@@ -881,12 +905,12 @@ const Compras = () => {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                      <th className="py-3 px-5">NÂ° Compra</th>
+                      <th className="py-3 px-5">N° Compra</th>
                       <th className="py-3 px-4">Proveedor</th>
                       <th className="py-3 px-4">Fecha</th>
                       <th className="py-3 px-4 text-right">Total</th>
                       <th className="py-3 px-4 text-center">Estado</th>
-                      <th className="py-3 px-4">MÃ©todo Pago</th>
+                      <th className="py-3 px-4">Método Pago</th>
                       <th className="py-3 px-4 text-center">Acciones</th>
                     </tr>
                   </thead>
@@ -916,7 +940,7 @@ const Compras = () => {
                           onClick={() => setSelectedPurchase(p)}
                           className={`cursor-pointer transition-colors hover:bg-slate-50 ${isSelected ? 'bg-emerald-50/60 border-l-[3px] border-l-emerald-500' : ''}`}
                         >
-                          {/* NÂ° Compra */}
+                          {/* N° Compra */}
                           <td className="py-3.5 px-5">
                             <div className="flex items-center gap-3">
                               <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${isSelected ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
@@ -950,7 +974,7 @@ const Compras = () => {
                             {getStatusBadge(p.status)}
                           </td>
 
-                          {/* MÃ©todo Pago */}
+                          {/* Método Pago */}
                           <td className="py-3.5 px-4">
                             <span className="text-slate-600">{p.payment_method}</span>
                           </td>
@@ -1018,7 +1042,7 @@ const Compras = () => {
               )}
             </div>
 
-            {/* â”€â”€â”€ CHATBOT â”€â”€â”€ */}
+            {/* ─── CHATBOT ─── */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4">
               <div className="flex items-center gap-3 mb-3">
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-500 flex items-center justify-center text-white shadow-sm">
@@ -1031,7 +1055,7 @@ const Compras = () => {
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> En lÃ­nea
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400">Consulta sobre compras, proveedores o genera Ã³rdenes</p>
+                  <p className="text-[11px] text-slate-400">Consulta sobre compras, proveedores o genera órdenes</p>
                 </div>
               </div>
 
@@ -1115,7 +1139,7 @@ const Compras = () => {
                       <FileText size={20} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] text-emerald-600 font-semibold">Compra NÂ°</p>
+                      <p className="text-[11px] text-emerald-600 font-semibold">Compra N°</p>
                       <p className="font-extrabold text-slate-900 font-mono text-sm">{selectedPurchase.purchase_number}</p>
                       <div className="mt-1">
                         <select
@@ -1138,8 +1162,8 @@ const Compras = () => {
                       { label: 'Fecha', value: selectedPurchase.date },
                       { label: 'Proveedor', value: selectedPurchase.supplier_name },
                       { label: 'RNC', value: selectedPurchase.supplier_rnc },
-                      { label: 'TelÃ©fono', value: selectedPurchase.supplier_phone },
-                      { label: 'MÃ©todo de pago', value: selectedPurchase.payment_method },
+                      { label: 'Teléfono', value: selectedPurchase.supplier_phone },
+                      { label: 'Método de pago', value: selectedPurchase.payment_method },
                       { label: 'AlmacÃ©n', value: selectedPurchase.warehouse },
                     ].map(row => (
                       <div key={row.label} className="flex justify-between items-start border-b border-slate-100 pb-2 last:border-0">
@@ -1218,7 +1242,7 @@ const Compras = () => {
                 </button>
                 <button onClick={() => setIsScanModalOpen(true)} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-700 hover:bg-slate-100 text-xs font-semibold transition-colors">
                   <div className="w-7 h-7 rounded-lg bg-slate-200 text-slate-600 flex items-center justify-center shrink-0"><ScanLine size={14} /></div>
-                  Escanear CÃ³digo / Factura
+                  Escanear Código / Factura
                 </button>
                 <button onClick={() => { setActiveTab('Pendientes'); setPage(1); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-amber-50 border border-amber-100 text-amber-800 hover:bg-amber-100 text-xs font-semibold transition-colors">
                   <div className="w-7 h-7 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center shrink-0"><Clock size={14} /></div>
@@ -1276,9 +1300,9 @@ const Compras = () => {
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="font-semibold text-slate-600">MÃ©todo de Pago</label>
+              <label className="font-semibold text-slate-600">Método de Pago</label>
               <select className="input text-xs" value={purchaseForm.payment_method} onChange={e => setPurchaseForm(prev => ({ ...prev, payment_method: e.target.value }))}>
-                {['Transferencia','Efectivo','CrÃ©dito 15 dÃ­as','CrÃ©dito 30 dÃ­as','Cheque'].map(m => <option key={m}>{m}</option>)}
+                {['Transferencia','Efectivo','Crédito 15 días','Crédito 30 días','Cheque'].map(m => <option key={m}>{m}</option>)}
               </select>
             </div>
             <div className="flex flex-col gap-1">
@@ -1372,15 +1396,15 @@ const Compras = () => {
           <div className="flex flex-col gap-4 text-xs">
             <div className="grid grid-cols-2 gap-3">
               {[
-                { label: 'NÂ° Compra', value: selectedPurchase.purchase_number },
+                { label: 'N° Compra', value: selectedPurchase.purchase_number },
                 { label: 'Ref. Orden', value: selectedPurchase.order_reference },
                 { label: 'Fecha', value: selectedPurchase.date },
                 { label: 'Estado', value: getStatusBadge(selectedPurchase.status) },
                 { label: 'Proveedor', value: selectedPurchase.supplier_name },
                 { label: 'RNC', value: selectedPurchase.supplier_rnc },
-                { label: 'TelÃ©fono', value: selectedPurchase.supplier_phone },
+                { label: 'Teléfono', value: selectedPurchase.supplier_phone },
                 { label: 'Correo', value: selectedPurchase.supplier_email },
-                { label: 'MÃ©todo de Pago', value: selectedPurchase.payment_method },
+                { label: 'Método de Pago', value: selectedPurchase.payment_method },
                 { label: 'AlmacÃ©n', value: selectedPurchase.warehouse },
               ].map(row => (
                 <div key={row.label} className="flex flex-col gap-1 bg-slate-50 p-2.5 rounded-xl">
@@ -1438,7 +1462,7 @@ const Compras = () => {
                 <div className="flex justify-between"><span className="text-slate-400">Proveedor:</span><span className="font-semibold text-slate-700">{selectedPurchase.supplier_name}</span></div>
                 <div className="flex justify-between"><span className="text-slate-400">Fecha:</span><span>{selectedPurchase.date}</span></div>
                 <div className="flex justify-between"><span className="text-slate-400">Estado:</span><span>{selectedPurchase.status}</span></div>
-                <div className="flex justify-between"><span className="text-slate-400">MÃ©todo:</span><span>{selectedPurchase.payment_method}</span></div>
+                <div className="flex justify-between"><span className="text-slate-400">Método:</span><span>{selectedPurchase.payment_method}</span></div>
               </div>
               <div className="border-t border-dashed border-slate-300 pt-2 space-y-1">
                 {(selectedPurchase.items||[]).map((item, i) => (
@@ -1458,7 +1482,7 @@ const Compras = () => {
       </Modal>
 
       {/* â”€â”€ SCAN MODAL â”€â”€ */}
-      <Modal isOpen={isScanModalOpen} onClose={() => setIsScanModalOpen(false)} title="Escanear CÃ³digo de Barras / Factura" size="sm">
+      <Modal isOpen={isScanModalOpen} onClose={() => setIsScanModalOpen(false)} title="Escanear Código de Barras / Factura" size="sm">
         <div className="flex flex-col gap-4">
           <div className="bg-slate-50 border border-dashed border-slate-300 rounded-2xl p-8 flex flex-col items-center gap-3">
             <ScanLine size={40} className="text-emerald-600 animate-pulse" />
@@ -1466,7 +1490,7 @@ const Compras = () => {
             <p className="text-xs text-slate-400 text-center">El cÃ³digo se detectarÃ¡ automÃ¡ticamente o escrÃ­belo manualmente</p>
           </div>
           <div className="flex flex-col gap-1">
-            <label className="text-xs font-semibold text-slate-600">CÃ³digo de barras / NÂ° Factura</label>
+            <label className="text-xs font-semibold text-slate-600">Código de barras / N° Factura</label>
             <input
               type="text"
               value={scanCodeInput}
