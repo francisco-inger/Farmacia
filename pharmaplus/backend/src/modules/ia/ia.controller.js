@@ -472,13 +472,13 @@ function generateLocalResponse(message, contextStr, db) {
     // Extraer la condición o síntoma preguntado
     const condition = message.replace(/.*?(para|por)\s+/i, '').replace(/[?¿!¡.]/g, '').trim();
     
-    // Buscar en productos algún medicamento que coincida por nombre o descripción
+    // Buscar en productos algún medicamento que coincida por nombre
     const matched = db.prepare(`
       SELECT name, code, stock, sale_price 
       FROM products 
-      WHERE is_active = 1 AND (name LIKE ? OR description LIKE ? OR category_id IN (SELECT id FROM categories WHERE name LIKE ?))
+      WHERE is_active = 1 AND (name LIKE ? OR category_id IN (SELECT id FROM categories WHERE name LIKE ?))
       LIMIT 4
-    `).all(`%${condition}%`, `%${condition}%`, `%${condition}%`);
+    `).all(`%${condition}%`, `%${condition}%`);
 
     const prodList = matched.length > 0 
       ? `\n\n💊 **Medicamentos asociados en nuestro inventario:**\n` + matched.map(p => `• **${p.name}** (Stock: ${p.stock}) — RD$ ${p.sale_price.toFixed(2)}`).join('\n')
@@ -752,7 +752,7 @@ function generateLocalResponse(message, contextStr, db) {
     const topic = message.replace(/^(qu[eé] es|para qu[eé] sirve|c[oó]mo funciona)\s*(el|la|los|las|un|una)?\s*/i, '').replace(/[?¿!¡.]/g, '').trim();
     
     // Buscar si es un producto de la base de datos
-    const matched = db.prepare(`SELECT name, code, stock, sale_price, description FROM products WHERE is_active = 1 AND (name LIKE ? OR code LIKE ?) LIMIT 1`).get(`%${topic}%`, `%${topic}%`);
+    const matched = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE is_active = 1 AND (name LIKE ? OR code LIKE ?) LIMIT 1`).get(`%${topic}%`, `%${topic}%`);
     if (matched) {
       return `💊 **${matched.name}** (Código: ${matched.code})\n\n• **Descripción/Uso:** Medicamento o producto farmacéutico formulado para el tratamiento y alivio terapéutico.\n• **Stock Actual en Farmacia:** ${matched.stock} unidades\n• **Precio de Venta:** RD$ ${matched.sale_price.toFixed(2)}\n\n💡 *Recomendación:* Siga la posología recomendada por su médico o la indicada en el prospecto del empaque.`;
     }
