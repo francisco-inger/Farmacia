@@ -11,95 +11,9 @@ const Header = ({ toggleSidebar }) => {
   const navigate = useNavigate();
 
   const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(3);
+  const [unreadCount, setUnreadCount] = useState(2);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [isListening, setIsListening] = useState(false);
-
-  const handleVoiceSearch = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    
-    if (!SpeechRecognition) {
-      setIsListening(true);
-      setTimeout(() => {
-        setSearchTerm('Paracetamol 500mg');
-        setIsListening(false);
-      }, 1500);
-      return;
-    }
-
-    if (isListening) {
-      setIsListening(false);
-      return;
-    }
-
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = 'es-ES';
-      recognition.continuous = false;
-      recognition.interimResults = true;
-
-      recognition.onstart = () => {
-        setIsListening(true);
-      };
-
-      recognition.onresult = (event) => {
-        const transcript = Array.from(event.results)
-          .map(result => result[0].transcript)
-          .join('');
-        setSearchTerm(transcript);
-      };
-
-      recognition.onerror = () => {
-        setIsListening(false);
-      };
-
-      recognition.onend = () => {
-        setIsListening(false);
-      };
-
-      recognition.start();
-    } catch (err) {
-      console.error('Micrófono:', err);
-      setIsListening(false);
-    }
-  };
-
-  useEffect(() => {
-    // Initial fetch of unread count
-    api.get('/notificaciones')
-      .then(res => {
-        const count = res.unread_count ?? (res.data && res.data.unread_count) ?? 3;
-        setUnreadCount(count);
-      })
-      .catch(() => {});
-  }, []);
-
-  const getPageTitle = () => {
-    const path = location.pathname.split('/')[1] || 'dashboard';
-    const titles = {
-      'dashboard': { title: 'Dashboard', subtitle: 'Resumen general de la farmacia' },
-      'pos': { title: 'Sistema POS', subtitle: 'Punto de venta y facturación' },
-      'inventario': { title: 'Inventario', subtitle: 'Control de existencias y movimientos' },
-      'productos': { title: 'Productos', subtitle: 'Catálogo de medicamentos y artículos' },
-      'clientes': { title: 'Clientes', subtitle: 'Directorio y perfil de pacientes' },
-      'recetas': { title: 'Recetas Médicas', subtitle: 'Registro y dispensación' },
-      'servicios': { title: 'Servicios', subtitle: 'Toma de presión, inyecciones, etc.' },
-      'compras': { title: 'Compras', subtitle: 'Órdenes a proveedores' },
-      'proveedores': { title: 'Proveedores', subtitle: 'Directorio de laboratorios y distribuidores' },
-      'facturacion': { title: 'Facturación DGII', subtitle: 'Gestión de comprobantes fiscales (NCF)' },
-      'rrhh': { title: 'Recursos Humanos', subtitle: 'Personal y asistencia' },
-      'ia': { title: 'Asistente IA', subtitle: 'Inteligencia Artificial PharmaPlus' },
-      'reportes': { title: 'Reportes', subtitle: 'Estadísticas e inteligencia de negocios' },
-      'cajas': { title: 'Cajas y Cierres', subtitle: 'Control de efectivo por turno' },
-      'usuarios': { title: 'Usuarios y Roles', subtitle: 'Accesos al sistema' },
-      'auditoria': { title: 'Auditoría', subtitle: 'Registro de actividades' },
-      'configuracion': { title: 'Configuración', subtitle: 'Parámetros generales del sistema' }
-    };
-    return titles[path] || { title: 'PharmaPlus', subtitle: 'Sistema de Gestión' };
-  };
-
-  const { title, subtitle } = getPageTitle();
 
   const handleSearch = (e) => {
     if (e.key === 'Enter' || e.type === 'click') {
@@ -109,29 +23,21 @@ const Header = ({ toggleSidebar }) => {
     }
   };
 
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().catch(() => {});
-    } else {
-      if (document.exitFullscreen) document.exitFullscreen();
-    }
-  };
-
   return (
     <>
       <div className="h-16 bg-white border-b border-slate-100/90 flex items-center justify-between px-6 sticky top-0 z-20 shadow-2xs">
         
-        {/* Left side: Search input with shortcut icon (Just like image) */}
+        {/* Left side: Search input with shortcut icon */}
         <div className="flex-1 max-w-md">
           <div className="relative flex items-center">
-            <Search size={15} className="absolute left-3.5 text-slate-400" />
+            <Search size={15} className="text-slate-400 absolute left-3.5" />
             <input 
               type="text" 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={handleSearch}
-              placeholder="Buscar en appes.erp..." 
-              className="w-full bg-slate-100/70 hover:bg-slate-100 focus:bg-white border border-slate-200/60 rounded-xl py-2 pl-9 pr-14 text-xs font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              placeholder="Buscar en pharmaplus.erp..." 
+              className="w-full bg-slate-100/70 hover:bg-slate-100 focus:bg-white border border-slate-200/60 rounded-xl py-2 pl-9 pr-14 text-xs font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#16a085]/20 focus:border-[#16a085] transition-all"
             />
             <div className="absolute right-3 flex items-center gap-1">
               <span className="text-[10px] text-slate-400 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-2xs">⌘K</span>
@@ -139,7 +45,7 @@ const Header = ({ toggleSidebar }) => {
           </div>
         </div>
 
-        {/* Right side: Escanear button, notifications badge, help, settings, user pill */}
+        {/* Right side: Escanear, Notification, Help, Settings, User pill */}
         <div className="flex items-center gap-3.5">
           
           {/* Escanear button */}
@@ -151,7 +57,7 @@ const Header = ({ toggleSidebar }) => {
             <span>Escanear</span>
           </button>
 
-          {/* Notifications Button with Red Badge 2 */}
+          {/* Notifications Button */}
           <button 
             onClick={() => setIsNotifOpen(true)}
             className="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-xl transition-colors"
@@ -163,7 +69,7 @@ const Header = ({ toggleSidebar }) => {
             </span>
           </button>
 
-          {/* Help Question Mark */}
+          {/* Help button */}
           <button 
             onClick={() => navigate('/ia')}
             className="w-8 h-8 flex items-center justify-center text-rose-500 hover:bg-rose-50 rounded-xl font-extrabold text-sm transition-colors"
@@ -172,7 +78,7 @@ const Header = ({ toggleSidebar }) => {
             ?
           </button>
 
-          {/* Settings Icon */}
+          {/* Settings button */}
           <button 
             onClick={() => navigate('/configuracion')}
             className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition-colors"
@@ -181,18 +87,18 @@ const Header = ({ toggleSidebar }) => {
             <Settings size={18} />
           </button>
 
-          {/* User Profile Pill matching screenshot: Circle AD | Admin General admin@appes.com */}
+          {/* User Profile Pill */}
           <div className="relative">
             <button 
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
               className="flex items-center gap-2.5 p-1 pl-1.5 pr-2.5 rounded-full border border-slate-200/80 hover:bg-slate-50/80 transition-all text-left"
             >
-              <div className="w-8 h-8 rounded-full bg-[#2563eb] flex items-center justify-center text-white font-black text-xs shadow-2xs">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-[#12876f] to-[#16a085] flex items-center justify-center text-white font-black text-xs shadow-2xs">
                 AD
               </div>
               <div className="hidden md:block">
                 <p className="text-xs font-black text-slate-800 leading-tight">Admin General</p>
-                <p className="text-[10px] text-slate-400 font-medium leading-none">admin@appes.com</p>
+                <p className="text-[10px] text-slate-400 font-medium leading-none">admin@pharmaplus.do</p>
               </div>
               <ChevronDown size={13} className="text-slate-400 ml-0.5" />
             </button>
@@ -205,7 +111,7 @@ const Header = ({ toggleSidebar }) => {
               >
                 <div className="px-4 py-2.5 border-b border-slate-100">
                   <p className="text-xs font-bold text-slate-800">{user?.name || 'Admin General'}</p>
-                  <p className="text-[11px] text-slate-400 truncate">{user?.email || 'admin@appes.com'}</p>
+                  <p className="text-[11px] text-slate-400 truncate">{user?.email || 'admin@pharmaplus.do'}</p>
                 </div>
                 
                 <button 
@@ -231,6 +137,7 @@ const Header = ({ toggleSidebar }) => {
               </div>
             )}
           </div>
+
         </div>
       </div>
 

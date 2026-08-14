@@ -80,13 +80,13 @@ const Sidebar = ({ isOpen }) => {
       {/* Logo Area */}
       <div className="h-16 flex items-center px-4 border-b border-slate-100 bg-white overflow-hidden">
         <div className="flex items-center gap-3 w-full">
-          <div className="w-9 h-9 rounded-xl bg-[#2563eb] text-white flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#12876f] to-[#16a085] text-white flex items-center justify-center shadow-md shadow-[#16a085]/20 shrink-0">
             <Pill size={20} className="rotate-45" />
           </div>
           {isOpen && (
             <div className="whitespace-nowrap overflow-hidden transition-all duration-300">
               <div className="flex items-center gap-1 leading-none">
-                <span className="font-extrabold text-slate-900 tracking-tight text-base">PHARMA<span className="text-[#2563eb]">.ERP</span></span>
+                <span className="font-extrabold text-slate-900 tracking-tight text-base">PHARMA<span className="text-[#16a085]">PLUS</span></span>
               </div>
               <p className="text-[10px] font-semibold text-slate-400 leading-tight mt-0.5 tracking-wider uppercase">
                 Enterprise Suite 2026
@@ -121,7 +121,7 @@ const Sidebar = ({ isOpen }) => {
                         className={({ isActive }) =>
                           `flex-1 flex items-center ${isOpen ? 'justify-between px-3.5' : 'justify-center px-0'} py-2.5 rounded-xl text-xs font-bold transition-all duration-150 ${
                             isActive
-                              ? 'bg-[#2563eb] text-white shadow-md shadow-blue-500/25'
+                              ? 'bg-[#16a085] text-white shadow-md shadow-[#16a085]/25'
                               : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                           }`
                         }
@@ -137,7 +137,7 @@ const Sidebar = ({ isOpen }) => {
                           </span>
                         )}
                         {isOpen && item.badge && !hasSubItems && (
-                          <span className="bg-blue-50 text-[#2563eb] text-[9px] px-1.5 py-0.5 rounded-md font-extrabold uppercase border border-blue-200/60 shrink-0">
+                          <span className="bg-[#e8f6f3] text-[#12876f] text-[9px] px-1.5 py-0.5 rounded-md font-extrabold uppercase border border-[#16a085]/20 shrink-0">
                             {item.badge}
                           </span>
                         )}
@@ -146,7 +146,7 @@ const Sidebar = ({ isOpen }) => {
 
                     {/* Sub-items */}
                     {isOpen && hasSubItems && isExpanded && (
-                      <ul className="mt-1 ml-4 border-l-2 border-slate-200 space-y-0.5 pl-3 py-1 overflow-hidden">
+                      <ul className="mt-1 ml-4 border-l-2 border-[#16a085]/20 space-y-0.5 pl-3 py-1 overflow-hidden">
                         {item.subItems.map((sub, sIdx) => (
                           <li key={sIdx}>
                             <NavLink
@@ -154,7 +154,7 @@ const Sidebar = ({ isOpen }) => {
                               className={({ isActive }) =>
                                 `block text-[11px] py-1.5 px-2 rounded-lg font-medium transition-colors ${
                                   isActive
-                                    ? 'bg-blue-50 text-[#2563eb] font-bold'
+                                    ? 'bg-[#e8f6f3] text-[#12876f] font-bold'
                                     : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                                 }`
                               }
@@ -180,7 +180,7 @@ const Sidebar = ({ isOpen }) => {
             <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
               👑 Plan Empresarial
             </span>
-            <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#2563eb]/10 text-[#2563eb]">
+            <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#e8f6f3] text-[#12876f]">
               Avanzado
             </span>
           </div>
@@ -189,7 +189,7 @@ const Sidebar = ({ isOpen }) => {
             <span className="font-bold text-slate-700">68%</span>
           </div>
           <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-            <div className="h-full bg-[#2563eb] rounded-full w-[68%]" />
+            <div className="h-full bg-[#16a085] rounded-full w-[68%]" />
           </div>
         </div>
       )}
@@ -198,7 +198,7 @@ const Sidebar = ({ isOpen }) => {
       <div className={`p-3.5 border-t border-slate-100 bg-white ${!isOpen && 'flex flex-col items-center gap-2'}`}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#2563eb] text-white flex items-center justify-center font-bold text-xs shadow-sm">
+            <div className="w-8 h-8 rounded-lg bg-[#16a085] text-white flex items-center justify-center font-bold text-xs shadow-sm">
               {user?.name?.charAt(0) || 'A'}
             </div>
             {isOpen && (
