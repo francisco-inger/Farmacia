@@ -628,7 +628,7 @@ const Compras = () => {
   const paginatedPurchases = purchases.slice((page - 1) * limit, page * limit);
 
   return (
-    <div className="h-full flex flex-col gap-5 overflow-y-auto pr-1" onClick={() => { setActiveActionMenuId(null); setIsPanelMenuOpen(false); }}>
+    <div className="flex flex-col gap-5" onClick={() => { setActiveActionMenuId(null); setIsPanelMenuOpen(false); }}>
 
       {/* ─── TOAST ─── */}
       {toastMessage && (
