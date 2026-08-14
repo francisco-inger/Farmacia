@@ -230,8 +230,8 @@ const Reportes = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Ingresos Totales</p>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">{formatCurrency(salesSummary.total_revenue || 26434)}</h3>
-            <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">✓ {salesSummary.total_sales || 18} transacciones</p>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">{formatCurrency(salesSummary.total_revenue || 0)}</h3>
+            <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">✓ {salesSummary.total_sales || 0} transacciones</p>
           </div>
         </div>
 
@@ -241,7 +241,7 @@ const Reportes = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Ventas Facturadas</p>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">{salesSummary.total_sales || 18} facturas</h3>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">{salesSummary.total_sales || 0} facturas</h3>
             <p className="text-[11px] text-sky-600 font-semibold mt-0.5">✓ 100% completadas</p>
           </div>
         </div>
@@ -252,7 +252,7 @@ const Reportes = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Ticket Promedio</p>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">{formatCurrency(salesSummary.avg_ticket || 1468.55)}</h3>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">{formatCurrency(salesSummary.avg_ticket || 0)}</h3>
             <p className="text-[11px] text-purple-600 font-semibold mt-0.5">✓ Promedio por cliente</p>
           </div>
         </div>
@@ -263,7 +263,7 @@ const Reportes = () => {
           </div>
           <div>
             <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Valor del Inventario</p>
-            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">{formatCurrency(inventorySummary.total_value || 84520)}</h3>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">{formatCurrency(inventorySummary.total_value || 0)}</h3>
             <p className="text-[11px] text-amber-600 font-semibold mt-0.5">✓ Stock valorizado en costo</p>
           </div>
         </div>
@@ -358,7 +358,7 @@ const Reportes = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h4 className="text-xs font-bold text-slate-700">Estado y Valorización del Almacén</h4>
-              <span className="text-xs text-slate-500 font-semibold">Total Productos: {inventorySummary.total_products || 245}</span>
+              <span className="text-xs text-slate-500 font-semibold">Total Productos: {inventorySummary.total_products || 0}</span>
             </div>
 
             <div className="overflow-x-auto">
@@ -402,9 +402,21 @@ const Reportes = () => {
 
         {/* TAB 3: TOP PRODUCTOS Y RENTABILIDAD */}
         {activeTab === 'top_productos' && (
-          <div className="space-y-4">
-            <h4 className="text-xs font-bold text-slate-700">Productos con Mayor Margen y Volumen de Ventas</h4>
-            <div className="overflow-x-auto">
+          <div className="space-y-6">
+            <div className="h-72 w-full pt-2">
+              <h4 className="text-xs font-bold text-slate-700 mb-2">Ranking de Medicamentos Más Vendidos (Unidades)</h4>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topProductsData} layout="vertical" margin={{ left: 40, right: 20 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis type="number" tick={{ fontSize: 10 }} />
+                  <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={120} />
+                  <RechartsTooltip formatter={(val) => [`${val} unidades`, 'Vendidas']} />
+                  <Bar dataKey="total_sold" fill="#3498db" radius={[0, 6, 6, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            <div className="overflow-x-auto pt-4 border-t border-slate-100">
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-50 text-slate-500 font-bold uppercase border-b border-slate-200">
                   <tr>

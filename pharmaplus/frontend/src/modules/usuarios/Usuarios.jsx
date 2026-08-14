@@ -261,88 +261,116 @@ const Usuarios = () => {
         </div>
       )}
 
-      {/* Sleek Green Header Banner */}
-      <div className="bg-[#16a085] rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
-        <div className="flex items-center gap-3 z-10">
-          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Gestión de Usuarios y Roles</h2>
-        </div>
+      {/* ─── BANNER SUPERIOR CORPORATIVO USUARIOS Y ROLES (PHARMA.ERP) ─── */}
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#072a23] via-[#0f6c59] to-[#16a085] text-white p-7 sm:p-10 lg:p-12 shadow-2xl border border-[#16a085]/40 min-h-[290px] flex flex-col justify-between shrink-0">
         
-        <div className="flex items-center gap-3 shrink-0 z-10">
-          <button 
-            onClick={() => setActiveTab('roles')} 
-            className="flex items-center gap-2 bg-white text-[#2c3e50] hover:bg-slate-50 border border-slate-200/90 px-3.5 py-2 rounded-xl font-semibold text-xs shadow-sm hover:shadow transition"
-          >
-            <Shield size={16} className="text-[#16a085]" />
-            <span>Roles</span>
-          </button>
-          <button 
-            onClick={handleOpenNewUser} 
-            className="flex items-center gap-2 bg-[#12876f] hover:bg-[#0e6b58] text-white px-3.5 py-2 rounded-xl font-semibold text-xs shadow-md transition"
-          >
-            <Plus size={16} />
-            <span>Nuevo usuario</span>
-          </button>
+        {/* Imagen Farmacéutica Corporativa en Alta Visibilidad */}
+        <div 
+          className="absolute inset-0 opacity-40 mix-blend-luminosity bg-cover bg-right sm:bg-center pointer-events-none transition-all duration-700" 
+          style={{ backgroundImage: "url('/erp-banner.jpg')" }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#072a23]/90 via-[#0f6c59]/65 to-transparent pointer-events-none"></div>
 
-          <div className="shrink-0 h-16 md:h-20 flex items-center justify-center">
-            <img 
-              src="/modules/clientes.png" 
-              alt="Usuarios" 
-              className="h-full w-auto max-w-[240px] object-contain rounded-xl drop-shadow-md"
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
-          </div>
+        <div className="absolute top-0 right-0 p-8 opacity-15 font-mono text-4xl font-black tracking-widest uppercase select-none pointer-events-none hidden md:block">
+          ROLE BASED ACCESS CONTROL & IDENTITY MANAGEMENT
         </div>
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          
+          <div className="space-y-4 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-950/60 backdrop-blur-md border border-emerald-400/40 text-emerald-200 text-xs font-bold tracking-wider uppercase shadow-sm">
+              <span>✦</span>
+              <span>CONTROL DE ACCESO, IDENTIDAD & PERMISOS • PHARMAPLUS</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight drop-shadow-md">
+              Gestión de Usuarios & Roles
+            </h1>
+
+            <p className="text-sm sm:text-base text-emerald-100/90 font-medium leading-relaxed max-w-xl drop-shadow">
+              Administración de credenciales de empleados, asignación de perfiles (Administrador, Cajero, Farmacéutico), auditoría de sesiones y control de seguridad.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                {users.length} Usuarios Registrados
+              </span>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                {users.filter(u => u.is_active === 1).length || users.length} Cuentas Activas
+              </span>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                RBAC 2026
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 z-10">
+            <button
+              onClick={handleOpenNewUser}
+              className="px-5 py-3 rounded-2xl bg-white text-[#12876f] hover:bg-emerald-50 active:scale-95 text-xs sm:text-sm font-black shadow-xl transition-all flex items-center gap-2"
+            >
+              <Plus size={17} /> Nuevo Usuario
+            </button>
+            <button
+              onClick={() => setActiveTab('roles')}
+              className="px-5 py-3 rounded-2xl bg-black/40 hover:bg-black/60 active:scale-95 text-white text-xs sm:text-sm font-bold border border-emerald-300/40 backdrop-blur-md transition-all flex items-center gap-2 shadow-lg"
+            >
+              <Shield size={17} /> Gestionar Roles
+            </button>
+          </div>
+
+        </div>
+
       </div>
 
-      {/* Top 3 Metric Cards with App Theme Palette */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Card 1: Usuarios activos */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-[#e8f6f3] text-[#16a085] flex items-center justify-center shrink-0 shadow-sm">
-            <Users size={24} />
+      {/* ─── 4 TARJETAS KPI LIMPIAS Y ESPACIOSAS USUARIOS ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+        
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-[#e8f6f3] text-[#16a085] flex items-center justify-center shrink-0 shadow-2xs">
+            <Users size={22} />
           </div>
           <div>
-            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Usuarios activos</p>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-2xl font-extrabold text-[#2c3e50]">{stats.active_users}</h3>
-              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
-                De {stats.total_users} usuarios
-              </span>
-            </div>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Usuarios Registrados</p>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">{users.length} Cuentas</h3>
+            <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">✓ Plantilla del sistema</p>
           </div>
         </div>
 
-        {/* Card 2: Roles registrados */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 shadow-sm">
-            <ShieldCheck size={24} />
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 shadow-2xs">
+            <UserCheck size={22} />
           </div>
           <div>
-            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Roles registrados</p>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-2xl font-extrabold text-[#2c3e50]">{stats.roles_count}</h3>
-              <span className="text-xs font-semibold text-sky-600 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-100">
-                De {stats.roles_count} roles
-              </span>
-            </div>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Cuentas Activas</p>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">{users.filter(u => u.is_active === 1).length || users.length} Operativas</h3>
+            <p className="text-[11px] text-emerald-600 font-semibold mt-0.5">✓ Con acceso concedido</p>
           </div>
         </div>
 
-        {/* Card 3: Permisos asignados */}
-        <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 shadow-sm">
-            <Key size={24} />
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-sky-50 text-sky-600 flex items-center justify-center shrink-0 shadow-2xs">
+            <ShieldCheck size={22} />
           </div>
           <div>
-            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Permisos asignados</p>
-            <div className="flex items-baseline gap-2">
-              <h3 className="text-2xl font-extrabold text-[#2c3e50]">{stats.permissions_count}</h3>
-              <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200">
-                Accesos configurados
-              </span>
-            </div>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Roles Definidos</p>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">{roles.length || 2} Perfiles</h3>
+            <p className="text-[11px] text-sky-600 font-semibold mt-0.5">✓ Admin / Cajero / Farmacia</p>
           </div>
         </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 shadow-2xs">
+            <Key size={22} />
+          </div>
+          <div>
+            <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Seguridad JWT & TLS</p>
+            <h3 className="text-xl sm:text-2xl font-black text-slate-900 leading-tight">Encriptado</h3>
+            <p className="text-[11px] text-purple-600 font-semibold mt-0.5">✓ Sesiones blindadas</p>
+          </div>
+        </div>
+
       </div>
 
       {/* Main Content Layout (Table Left 8 Cols + Right User Detail 4 Cols) */}

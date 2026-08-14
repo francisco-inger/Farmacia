@@ -12,7 +12,7 @@ function getSalesReport(req, res) {
   if (date_to) { where.push(`DATE(s.created_at) <= ?`); params.push(date_to); }
   const data = db.prepare(`
     SELECT ${groupBy} as period, COUNT(*) as transactions, SUM(s.total) as revenue, SUM(s.discount) as discounts, AVG(s.total) as avg_ticket
-    FROM sales s WHERE ${where.join(' AND ')} GROUP BY ${groupBy} ORDER BY period DESC
+    FROM sales s WHERE ${where.join(' AND ')} GROUP BY ${groupBy} ORDER BY period ASC
   `).all(params) || [];
   const summary = db.prepare(`SELECT COUNT(*) as total_sales, SUM(total) as total_revenue, AVG(total) as avg_ticket, SUM(discount) as total_discounts FROM sales s WHERE ${where.join(' AND ')}`).get(params) || { total_sales: 0, total_revenue: 0, avg_ticket: 0, total_discounts: 0 };
   return res.json({ success: true, data, summary });
