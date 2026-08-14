@@ -1,3 +1,4 @@
+const { encrypt, decrypt } = require('../../utils/encryption');
 const { getDb } = require('../../db/database');
 
 function getEmployees(req, res) {
@@ -25,7 +26,7 @@ function getEmployees(req, res) {
 
   const whereClause = where.join(' AND ');
 
-  const employees = db.prepare(`
+  let employees = db.prepare(`
     SELECT e.*, u.email as user_email, u.is_active as user_active
     FROM employees e
     LEFT JOIN users u ON e.user_id = u.id
@@ -38,6 +39,7 @@ function getEmployees(req, res) {
     SELECT COUNT(*) as count FROM employees e WHERE ${whereClause}
   `).get(params).count;
 
+  employees = employees.map(emp => ({ ...emp, cedula: decrypt(emp.cedula), phone: decrypt(emp.phone), address: decrypt(emp.address), emergency_phone: decrypt(emp.emergency_phone) }));
   return res.json({ success: true, data: employees, pagination: { page: parseInt(page), limit: parseInt(limit), total } });
 }
 

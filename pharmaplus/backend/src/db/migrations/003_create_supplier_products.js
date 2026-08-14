@@ -2,7 +2,8 @@
 // Located in the unified db/migrations folder
 
 function runSupplierProducts(db) {
-  db.exec(`
+  const database = db || require('../database').getDb();
+  database.exec(`
     CREATE TABLE IF NOT EXISTS supplier_products (
       supplier_id INTEGER NOT NULL,
       product_id INTEGER NOT NULL,

@@ -12,6 +12,7 @@ const { up: runLoyaltyFields } = require('./db/migrations/007_add_loyalty_fields
 const { up: runEmployeeFields } = require('./db/migrations/008_employee_fields');
 const { runSeed } = require('./db/seed');
 const { errorMiddleware } = require('./middleware/errorMiddleware');
+const { securityHeaders, rateLimiter } = require('./middleware/securityMiddleware');
 
 // Import routes
 const authRoutes = require('./modules/auth/auth.routes');
@@ -41,6 +42,8 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
+app.use(securityHeaders);
+app.use('/api/auth/login', rateLimiter(15, 60000));
 
 // Global Audit Log Middleware for Mutating Requests
 app.use((req, res, next) => {

@@ -1,3 +1,4 @@
+const { encrypt, decrypt, maskSensitive } = require('../../utils/encryption');
 const { getDb } = require('../../db/database');
 
 // Tiers: Bronce (0-499 gastados), Plata (500-1499), Oro (1500+)
@@ -18,12 +19,13 @@ function getAll(req, res) {
     const s = `%${search}%`;
     params.push(s, s, s, s);
   }
-  const clients = db.prepare(
+  let clients = db.prepare(
     `SELECT * FROM clients WHERE ${where.join(' AND ')} ORDER BY name LIMIT ? OFFSET ?`
   ).all([...params, parseInt(limit), offset]);
   const total = db.prepare(
     `SELECT COUNT(*) as count FROM clients WHERE ${where.join(' AND ')}`
   ).get(params).count;
+  clients = clients.map(cl => ({ ...cl, cedula: decrypt(cl.cedula), phone: decrypt(cl.phone), address: decrypt(cl.address) }));
   return res.json({ success: true, data: clients, pagination: { page: parseInt(page), limit: parseInt(limit), total } });
 }
 
@@ -38,20 +40,24 @@ function getStats(req, res) {
 
 function getById(req, res) {
   const db = getDb();
-  const client = db.prepare(`SELECT * FROM clients WHERE id = ?`).get(req.params.id);
+  let client = db.prepare(`SELECT * FROM clients WHERE id = ?`).get(req.params.id);
   if (!client) return res.status(404).json({ success: false, message: 'Cliente no encontrado' });
   const sales = db.prepare(`SELECT id, sale_number, total, status, created_at FROM sales WHERE client_id = ? ORDER BY created_at DESC LIMIT 10`).all(req.params.id);
+  client = { ...client, cedula: decrypt(client.cedula), phone: decrypt(client.phone), address: decrypt(client.address) };
   return res.json({ success: true, data: { ...client, recent_sales: sales } });
 }
 
 function create(req, res) {
   const db = getDb();
   const { name, cedula, phone, email, address, birth_date, notes } = req.body;
+  const encCedula = cedula ? encrypt(cedula) : null;
+  const encPhone = phone ? encrypt(phone) : null;
+  const encAddress = address ? encrypt(address) : null;
   if (!name) return res.status(400).json({ success: false, message: 'Nombre requerido' });
   const result = db.prepare(
     `INSERT INTO clients (name, cedula, phone, email, address, birth_date, notes, points, tier, total_spent, total_purchases)
      VALUES (?, ?, ?, ?, ?, ?, ?, 0, 'Bronce', 0, 0)`
-  ).run(name, cedula || null, phone || null, email || null, address || null, birth_date || null, notes || null);
+  ).run(name, encCedula, encPhone, email || null, encAddress, birth_date || null, notes || null);
   const client = db.prepare(`SELECT * FROM clients WHERE id = ?`).get(result.lastInsertRowid);
   return res.status(201).json({ success: true, data: client });
 }
