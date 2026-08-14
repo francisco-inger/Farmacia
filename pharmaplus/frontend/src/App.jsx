@@ -27,11 +27,22 @@ import Auditoria from './modules/auditoria/Auditoria';
 // ProtectedRoute — verifica autenticación y rol
 // adminOnly = true → solo el Administrador puede entrar; el Cajero va al POS
 // ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// ProtectedRoute — verifica autenticación y rol
+// adminOnly = true → solo el Administrador puede entrar; el Cajero va al POS
+// ─────────────────────────────────────────────────────────────────────────────
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { user, loading } = useContext(AuthContext);
 
-  if (loading) return <div className="flex h-screen items-center justify-center">Cargando...</div>;
-  if (!user)   return <Navigate to="/login" replace />;
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-slate-50 flex-col gap-3">
+        <div className="w-9 h-9 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-xs font-semibold text-slate-500">Cargando PharmaPlus...</p>
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/login" replace />;
   if (adminOnly && user.role === 'cajero') return <Navigate to="/pos" replace />;
 
   return children;
@@ -42,8 +53,15 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const RootRedirect = () => {
   const { user, loading } = useContext(AuthContext);
-  if (loading) return <div className="flex h-screen items-center justify-center">Inicializando...</div>;
-  if (!user)   return <Navigate to="/login" replace />;
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-slate-50 flex-col gap-3">
+        <div className="w-9 h-9 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-xs font-semibold text-slate-500">Iniciando sistema...</p>
+      </div>
+    );
+  }
+  if (!user) return <Navigate to="/login" replace />;
   return <Navigate to={user.role === 'cajero' ? '/pos' : '/dashboard'} replace />;
 };
 
@@ -52,8 +70,14 @@ const RootRedirect = () => {
 // ─────────────────────────────────────────────────────────────────────────────
 const LoginRoute = () => {
   const { user, loading } = useContext(AuthContext);
-  if (loading) return <div className="flex h-screen items-center justify-center">Cargando...</div>;
-  if (user)    return <Navigate to={user.role === 'cajero' ? '/pos' : '/dashboard'} replace />;
+  if (loading) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center bg-slate-50 flex-col gap-3">
+        <div className="w-9 h-9 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+  if (user) return <Navigate to={user.role === 'cajero' ? '/pos' : '/dashboard'} replace />;
   return <Login />;
 };
 
