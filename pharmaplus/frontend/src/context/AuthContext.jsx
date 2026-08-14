@@ -1,7 +1,13 @@
 import React, { createContext, useState, useEffect } from 'react';
 import api from '../services/api';
 
-export const AuthContext = createContext();
+export const AuthContext = createContext({
+  user: null,
+  login: async () => {},
+  logout: () => {},
+  loading: false,
+  hasRole: () => false
+});
 
 const normalizeRole = (role) => {
   if (!role) return '';
