@@ -390,49 +390,112 @@ const RRHH = () => {
         </div>
       )}
 
-      {/* ── KPI Cards ─────────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      {/* ─── BANNER SUPERIOR CORPORATIVO RRHH (PHARMA.ERP) ─── */}
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#072a23] via-[#0f6c59] to-[#16a085] text-white p-7 sm:p-10 lg:p-12 shadow-2xl border border-[#16a085]/40 min-h-[290px] flex flex-col justify-between shrink-0">
+        
+        {/* Imagen Farmacéutica Corporativa en Alta Visibilidad */}
+        <div 
+          className="absolute inset-0 opacity-40 mix-blend-luminosity bg-cover bg-right sm:bg-center pointer-events-none transition-all duration-700" 
+          style={{ backgroundImage: "url('/erp-banner.jpg')" }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#072a23]/90 via-[#0f6c59]/65 to-transparent pointer-events-none"></div>
+
+        <div className="absolute top-0 right-0 p-8 opacity-15 font-mono text-4xl font-black tracking-widest uppercase select-none pointer-events-none hidden md:block">
+          HUMAN CAPITAL & CLINICAL STAFF MANAGEMENT
+        </div>
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          
+          <div className="space-y-4 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-950/60 backdrop-blur-md border border-emerald-400/40 text-emerald-200 text-xs font-bold tracking-wider uppercase shadow-sm">
+              <span>✦</span>
+              <span>RECURSOS HUMANOS & PERSONAL FARMACÉUTICO • PHARMAPLUS</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight drop-shadow-md">
+              Gestión de Personal & Recursos Humanos
+            </h1>
+
+            <p className="text-sm sm:text-base text-emerald-100/90 font-medium leading-relaxed max-w-xl drop-shadow">
+              Control de plantilla médica y farmacéutica, turnos de guardia, control biométrico de asistencias, nómina y expedientes laborales.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                {calcTotal} Colaboradores
+              </span>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                {calcPresentes} Presentes en Turno
+              </span>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                {calcActivos} Activos
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 z-10">
+            <button
+              onClick={openNewModal}
+              className="px-5 py-3 rounded-2xl bg-white text-[#12876f] hover:bg-emerald-50 active:scale-95 text-xs sm:text-sm font-black shadow-xl transition-all flex items-center gap-2"
+            >
+              <UserPlus size={17} /> Nuevo Empleado
+            </button>
+            <button
+              onClick={() => setIsScanModalOpen(true)}
+              className="px-5 py-3 rounded-2xl bg-black/40 hover:bg-black/60 active:scale-95 text-white text-xs sm:text-sm font-bold border border-emerald-300/40 backdrop-blur-md transition-all flex items-center gap-2 shadow-lg"
+            >
+              <ScanLine size={17} /> Escanear Carnet / QR
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ─── 5 TARJETAS KPI LIMPIAS Y ESPACIOSAS RRHH ─── */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 shrink-0">
         {[
           {
-            icon: Users, cls: 'bg-indigo-50 border-indigo-100 text-indigo-600',
+            icon: Users, cls: 'bg-emerald-50 border-emerald-100 text-emerald-600',
             label: 'Total Empleados',
             value: calcTotal,
             sub: `Activos: ${calcActivos} | Inactivos: ${calcInactivos}`
           },
           {
-            icon: UserCheck, cls: 'bg-emerald-50 border-emerald-100 text-emerald-600',
+            icon: UserCheck, cls: 'bg-teal-50 border-teal-100 text-teal-600',
             label: 'Presentes hoy',
             value: calcPresentes,
             sub: calcActivos ? `${Math.round((calcPresentes / calcActivos) * 100)}% del activo` : '100% activo',
-            subCls: 'text-emerald-600'
+            subCls: 'text-emerald-600 font-semibold'
           },
           {
             icon: Calendar, cls: 'bg-amber-50 border-amber-100 text-amber-600',
             label: 'De vacaciones',
             value: calcVacaciones,
-            sub: 'Este período', subCls: 'text-amber-600'
+            sub: 'Este período', subCls: 'text-amber-600 font-semibold'
           },
           {
             icon: FileText, cls: 'bg-sky-50 border-sky-100 text-sky-600',
-            label: 'Con contrato activo',
+            label: 'Contratos Activos',
             value: calcContratos,
-            sub: 'Documentos', subCls: 'text-sky-600'
+            sub: 'Documentación al día', subCls: 'text-sky-600 font-semibold'
           },
           {
             icon: Gift, cls: 'bg-purple-50 border-purple-100 text-purple-600',
             label: 'Cumpleaños',
             value: calcCumple,
-            sub: 'Esta semana', subCls: 'text-purple-600'
+            sub: 'Esta semana', subCls: 'text-purple-600 font-semibold'
           },
         ].map((k, i) => (
-          <div key={i} className="bg-white rounded-2xl border border-slate-200/80 p-3.5 flex items-center gap-3 shadow-2xs">
-            <div className={`w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0 ${k.cls}`}>
-              <k.icon size={18} />
+          <div key={i} className="bg-white rounded-2xl border border-slate-100 p-4 flex items-center gap-3.5 shadow-xs hover:shadow-md transition-all">
+            <div className={`w-11 h-11 rounded-2xl border flex items-center justify-center shrink-0 shadow-2xs ${k.cls}`}>
+              <k.icon size={20} />
             </div>
-            <div>
-              <p className="text-[11px] font-semibold text-slate-400">{k.label}</p>
-              <p className="text-lg font-extrabold text-slate-900 leading-tight">{k.value}</p>
-              <p className={`text-[10px] font-medium ${k.subCls || 'text-slate-400'}`}>{k.sub}</p>
+            <div className="truncate">
+              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{k.label}</p>
+              <p className="text-xl font-black text-slate-900 leading-tight">{k.value}</p>
+              <p className={`text-[10px] mt-0.5 ${k.subCls || 'text-slate-400'}`}>{k.sub}</p>
             </div>
           </div>
         ))}
