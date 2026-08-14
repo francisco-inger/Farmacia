@@ -625,10 +625,8 @@ const Compras = () => {
   const parciales = purchases.filter(p => p.status === 'Parcial').length;
   const canceladas = purchases.filter(p => p.status === 'Cancelada').length;
 
-  const paginatedPurchases = purchases.slice((page - 1) * limit, page * limit);
-
   return (
-    <div className="h-full flex flex-col gap-5 overflow-y-auto pr-1" onClick={() => { setActiveActionMenuId(null); setIsPanelMenuOpen(false); }}>
+    <div className="flex flex-col gap-6 p-1 sm:p-2 pb-12" onClick={() => { setActiveActionMenuId(null); setIsPanelMenuOpen(false); }}>
 
       {/* ─── TOAST ─── */}
       {toastMessage && (
@@ -1147,10 +1145,10 @@ const Compras = () => {
                           onChange={e => handleUpdatePurchaseStatus(selectedPurchase.id, e.target.value)}
                           className="text-xs font-semibold rounded-lg border border-emerald-200 bg-white px-2 py-1 focus:ring-2 focus:ring-emerald-500 focus:outline-none cursor-pointer text-slate-800 w-full"
                         >
-                          <option value="Pendiente">â³ Pendiente</option>
-                          <option value="Recibida">âœ… Recibida</option>
-                          <option value="Parcial">ðŸ”„ Parcial</option>
-                          <option value="Cancelada">âŒ Cancelada</option>
+                          <option value="Pendiente">⏳ Pendiente</option>
+                          <option value="Recibida">✅ Recibida</option>
+                          <option value="Parcial">🔄 Parcial</option>
+                          <option value="Cancelada">❌ Cancelada</option>
                         </select>
                       </div>
                     </div>
@@ -1164,7 +1162,7 @@ const Compras = () => {
                       { label: 'RNC', value: selectedPurchase.supplier_rnc },
                       { label: 'Teléfono', value: selectedPurchase.supplier_phone },
                       { label: 'Método de pago', value: selectedPurchase.payment_method },
-                      { label: 'AlmacÃ©n', value: selectedPurchase.warehouse },
+                      { label: 'Almacén', value: selectedPurchase.warehouse || 'Almacén Central Piantini' },
                     ].map(row => (
                       <div key={row.label} className="flex justify-between items-start border-b border-slate-100 pb-2 last:border-0">
                         <span className="text-slate-400 font-medium shrink-0">{row.label}</span>
