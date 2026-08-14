@@ -1275,7 +1275,7 @@ const Compras = () => {
            MODALS
       â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */}
 
-      {/* â”€â”€ NEW PURCHASE MODAL â”€â”€ */}
+      {/* ─── NEW PURCHASE MODAL ─── */}
       <Modal isOpen={isNewPurchaseModalOpen} onClose={() => setIsNewPurchaseModalOpen(false)} title="Nueva Orden de Compra" size="xl">
         <form onSubmit={handleCreatePurchaseSubmit} className="flex flex-col gap-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
@@ -1293,11 +1293,11 @@ const Compras = () => {
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="font-semibold text-slate-600">AlmacÃ©n</label>
+              <label className="font-semibold text-slate-600">Almacén</label>
               <select className="input text-xs" value={purchaseForm.warehouse} onChange={e => setPurchaseForm(prev => ({ ...prev, warehouse: e.target.value }))}>
-                <option>AlmacÃ©n Principal</option>
-                <option>AlmacÃ©n Secundario</option>
-                <option>AlmacÃ©n FrÃ­o</option>
+                <option>Almacén Principal</option>
+                <option>Almacén Secundario</option>
+                <option>Almacén Frío (Cadena de Frío)</option>
               </select>
             </div>
             <div className="flex flex-col gap-1">
@@ -1327,7 +1327,7 @@ const Compras = () => {
               </div>
             </div>
             <button type="button" onClick={handleAddItemToPurchase} className="btn btn-outline text-xs self-start flex items-center gap-1.5">
-              <Plus size={13} /> AÃ±adir Producto
+              <Plus size={13} /> Añadir Producto
             </button>
           </div>
 
@@ -1377,7 +1377,7 @@ const Compras = () => {
         </form>
       </Modal>
 
-      {/* â”€â”€ DETAIL MODAL â”€â”€ */}
+      {/* ─── DETAIL MODAL ─── */}
       <Modal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} title={`Compra ${selectedPurchase?.purchase_number || ''}`} size="lg">
         {selectedPurchase && (
           <div className="flex flex-col gap-4 text-xs">
@@ -1392,7 +1392,7 @@ const Compras = () => {
                 { label: 'Teléfono', value: selectedPurchase.supplier_phone },
                 { label: 'Correo', value: selectedPurchase.supplier_email },
                 { label: 'Método de Pago', value: selectedPurchase.payment_method },
-                { label: 'AlmacÃ©n', value: selectedPurchase.warehouse },
+                { label: 'Almacén', value: selectedPurchase.warehouse || 'Almacén Principal' },
               ].map(row => (
                 <div key={row.label} className="flex flex-col gap-1 bg-slate-50 p-2.5 rounded-xl">
                   <span className="text-slate-400 font-medium text-[11px]">{row.label}</span>
