@@ -437,16 +437,54 @@ function generateLocalResponse(message, contextStr, db) {
     return `🌡️ **Control de Fiebre:**\n\nLos antipiréticos de primera línea son el **Paracetamol** o el **Ibuprofeno**. Se aconseja utilizar compresas tibias y monitorear la temperatura cada 4-6 horas.\n\n💊 **Medicamentos en inventario:**\n${list}\n\n🚨 *Importante:* En niños y bebés, dosificar estrictamente según el peso corporal bajo prescripción pediátrica.`;
   }
 
-  if (/est[oó]mago|acidez|reflujo|gastritis|indigesti[oó]n|ardor|agruras/i.test(lower)) {
-    const prods = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE (name LIKE '%omeprazol%' OR name LIKE '%antiacido%' OR name LIKE '%aluminio%') AND is_active = 1`).all();
-    const list = prods.length > 0 ? prods.map(p => `• **${p.name}** — RD$ ${p.sale_price.toFixed(2)} (Stock: ${p.stock})`).join('\n') : '• Omeprazol 20mg\n• Antiácido Masticable';
-    return `🩺 **Alivio de Acidez y Malestar Estomacal:**\n\nPara el ardor o reflujo se utilizan protectores gástricos (como **Omeprazol**) o antiácidos de acción rápida (Hidróxido de Aluminio y Magnesio).\n\n💊 **Productos en Farmacia:**\n${list}\n\n💡 *Recomendación:* Evitar alimentos irritantes, grasas, café y no acostarse inmediatamente después de comer.`;
+  if (/est[oó]mago|acidez|reflujo|gastritis|indigesti[oó]n|ardor|agruras|diarrea|n[aá]usea|v[oó]mito/i.test(lower)) {
+    const prods = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE (name LIKE '%omeprazol%' OR name LIKE '%antiacido%' OR name LIKE '%suero%' OR name LIKE '%loperamida%' OR name LIKE '%aluminio%') AND is_active = 1`).all();
+    const list = prods.length > 0 ? prods.map(p => `• **${p.name}** — RD$ ${p.sale_price.toFixed(2)} (Stock: ${p.stock})`).join('\n') : '• Omeprazol 20mg\n• Suero de Rehidratación Oral';
+    return `🩺 **Alivio Gastrointestinal (Estómago / Acidez / Diarrea):**\n\n• **Acidez y Gastritis:** Protectores como el **Omeprazol** o antiácidos masticables.\n• **Diarrea y Deshidratación:** Fundamental la rehidratación oral con sueros electrolíticos.\n• **Cólicos:** Antiespasmódicos (como Hioscina/Butilescopolamina).\n\n💊 **Opciones en Farmacia:**\n${list}\n\n💡 *Consejo:* Dieta blanda, evitar lácteos, grasas y condimentos fuertes.`;
+  }
+
+  if (/dolor muscular|dolor de cuerpo|espalda|articulaci[oó]n|golpe|inflamaci[oó]n|lumbalgia/i.test(lower)) {
+    const prods = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE (name LIKE '%ibuprofeno%' OR name LIKE '%diclofenac%' OR name LIKE '%naproxeno%' OR name LIKE '%gel%' OR name LIKE '%crema%') AND is_active = 1`).all();
+    const list = prods.length > 0 ? prods.map(p => `• **${p.name}** — RD$ ${p.sale_price.toFixed(2)} (Stock: ${p.stock})`).join('\n') : '• Ibuprofeno 400mg\n• Diclofenac Gel Tópico';
+    return `💪 **Alivio para Dolores Musculares y Articulares:**\n\nSe recomiendan antiinflamatorios no esteroideos (AINEs) orales (Ibuprofeno, Diclofenac, Naproxeno) y geles analgésicos tópicos para masaje local.\n\n💊 **Disponibles en Farmacia:**\n${list}\n\n🧊 *Recomendación:* Aplicar frío local en las primeras 24-48 horas si hay traumatismo o golpe.`;
   }
 
   if (/alergia|picaz[oó]n|ronchas|estornudo|rinitis/i.test(lower)) {
     const prods = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE (name LIKE '%loratadina%' OR name LIKE '%cetirizina%' OR name LIKE '%desloratadina%') AND is_active = 1`).all();
     const list = prods.length > 0 ? prods.map(p => `• **${p.name}** — RD$ ${p.sale_price.toFixed(2)} (Stock: ${p.stock})`).join('\n') : '• Loratadina 10mg';
     return `🌿 **Alivio de Alergias y Rinitis:**\n\nLos antihistamínicos no sedantes como la **Loratadina** o **Cetirizina** ayudan a controlar estornudos, picazón, ojos llorosos y ronchas.\n\n💊 **Disponibles en Farmacia:**\n${list}`;
+  }
+
+  if (/insomnio|dormir|ansiedad|estr[eé]s|nervios/i.test(lower)) {
+    const prods = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE (name LIKE '%valeriana%' OR name LIKE '%pasiflora%' OR name LIKE '%melatonina%' OR name LIKE '%t[eé]%') AND is_active = 1`).all();
+    const list = prods.length > 0 ? prods.map(p => `• **${p.name}** — RD$ ${p.sale_price.toFixed(2)} (Stock: ${p.stock})`).join('\n') : '• Melatonina 3mg / 5mg\n• Extracto de Valeriana Natural';
+    return `🌙 **Orientación para el Sueño y Relajación:**\n\nPara dificultades leves para conciliar el sueño o estrés ocasional, se suelen emplear suplementos naturales como **Melatonina**, **Valeriana** o infusiones relajantes.\n\n💊 **Opciones en Farmacia:**\n${list}\n\n📱 *Higiene del Sueño:* Evitar pantallas y cafeína 2 horas antes de acostarse. Si el insomnio es severo o crónico, consulta a tu médico.`;
+  }
+
+  if (/herida|cortada|quemadura|desinfectar|antis[eé]ptico|cicatriz/i.test(lower)) {
+    const prods = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE (name LIKE '%alcohol%' OR name LIKE '%gasas%' OR name LIKE '%vendas%' OR name LIKE '%yodo%' OR name LIKE '%curitas%') AND is_active = 1`).all();
+    const list = prods.length > 0 ? prods.map(p => `• **${p.name}** — RD$ ${p.sale_price.toFixed(2)} (Stock: ${p.stock})`).join('\n') : '• Alcohol Isopropílico 70%\n• Gasas y Vendajes estériles';
+    return `🩹 **Primeros Auxilios y Curación de Heridas:**\n\n1. Lavar la zona con abundante agua y jabón neutro.\n2. Desinfectar con solución antiséptica (evitar alcohol directo en la herida abierta).\n3. Cubrir con gasa estéril.\n\n💊 **Insumos de Botiquín en Farmacia:**\n${list}`;
+  }
+
+  // ─── PATRÓN GENERAL "QUÉ PUEDO TOMAR PARA [X]" / "QUÉ ES BUENO PARA [X]" ───
+  if (/qu[eé] (puedo tomar|tomar|sirve|es bueno|recomiendas|me das) para/i.test(lower) || /medicamento para/i.test(lower)) {
+    // Extraer la condición o síntoma preguntado
+    const condition = message.replace(/.*?(para|por)\s+/i, '').replace(/[?¿!¡.]/g, '').trim();
+    
+    // Buscar en productos algún medicamento que coincida por nombre o descripción
+    const matched = db.prepare(`
+      SELECT name, code, stock, sale_price 
+      FROM products 
+      WHERE is_active = 1 AND (name LIKE ? OR description LIKE ? OR category_id IN (SELECT id FROM categories WHERE name LIKE ?))
+      LIMIT 4
+    `).all(`%${condition}%`, `%${condition}%`, `%${condition}%`);
+
+    const prodList = matched.length > 0 
+      ? `\n\n💊 **Medicamentos asociados en nuestro inventario:**\n` + matched.map(p => `• **${p.name}** (Stock: ${p.stock}) — RD$ ${p.sale_price.toFixed(2)}`).join('\n')
+      : '';
+
+    return `🩺 **Orientación Farmacéutica para: "${condition}"**\n\nPara tratar **${condition}**, el abordaje depende de la causa específica:\n\n• **Si es dolor o inflamación:** Analgésicos/AINEs como Paracetamol, Ibuprofeno o Naproxeno.\n• **Si es malestar estomacal:** Protectores gástricos, antiácidos o sales de rehidratación.\n• **Si es congestión/alergia:** Antihistamínicos y descongestionantes.\n• **Si es infección:** Requiere evaluación y prescripción de antibióticos por un médico.${prodList}\n\n⚠️ **Recomendación Profesional:** Si los síntomas son intensos, duran más de 48 horas o tienes condiciones preexistentes (hipertensión, embarazo, diabetes), consulta siempre con un médico o farmacéutico antes de automedicarte.`;
   }
 
   if (/infecci[oó]n|antibi[oó]tico|amoxicilina|azitromicina/i.test(lower)) {
