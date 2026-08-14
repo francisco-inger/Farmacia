@@ -625,8 +625,10 @@ const Compras = () => {
   const parciales = purchases.filter(p => p.status === 'Parcial').length;
   const canceladas = purchases.filter(p => p.status === 'Cancelada').length;
 
+  const paginatedPurchases = purchases.slice((page - 1) * limit, page * limit);
+
   return (
-    <div className="flex flex-col gap-6 p-1 sm:p-2 pb-12" onClick={() => { setActiveActionMenuId(null); setIsPanelMenuOpen(false); }}>
+    <div className="h-full flex flex-col gap-5 overflow-y-auto pr-1" onClick={() => { setActiveActionMenuId(null); setIsPanelMenuOpen(false); }}>
 
       {/* ─── TOAST ─── */}
       {toastMessage && (
