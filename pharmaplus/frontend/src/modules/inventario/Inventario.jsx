@@ -347,20 +347,151 @@ const Inventario = () => {
 
   return (
     <div className="h-full flex flex-col gap-5 overflow-y-auto pr-1">
-      {/* ─── SLEEK GREEN HEADER BANNER ────────────────────────────────────────── */}
-      <div className="bg-[#16a085] rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
-        <div className="flex items-center gap-3 z-10">
-          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Control y Gestión de Inventario</h2>
-        </div>
+      {/* ─── BANNER SUPERIOR CORPORATIVO INVENTARIO (PHARMA.ERP) ─── */}
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#0d3f34] via-[#12876f] to-[#16a085] text-white p-6 sm:p-7 shadow-xl border border-[#16a085]/30">
         
-        <div className="shrink-0 h-16 md:h-20 flex items-center justify-center z-10">
-          <img 
-            src="/modules/inventario.png" 
-            alt="Inventario" 
-            className="h-full w-auto max-w-[260px] object-contain rounded-xl drop-shadow-md"
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
+        <div className="absolute inset-0 opacity-15 mix-blend-screen bg-cover bg-center pointer-events-none" style={{ backgroundImage: "url('/erp-banner.jpg')" }}></div>
+        <div className="absolute top-0 right-0 p-8 opacity-10 font-mono text-3xl font-black tracking-widest uppercase select-none pointer-events-none">
+          PHARMACEUTICAL INVENTORY & STOCK CONTROL
         </div>
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          
+          <div className="space-y-2.5 max-w-xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-950/40 backdrop-blur-md border border-emerald-400/30 text-emerald-200 text-[11px] font-bold tracking-wider uppercase">
+              <span>✦</span>
+              <span>CATÁLOGO & EXISTENCIAS • PHARMAPLUS</span>
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
+              Control y Gestión de Inventario
+            </h1>
+            
+            <p className="text-xs sm:text-sm text-emerald-100/80 font-medium">
+              Supervisión de stock en tiempo real, alertas de vencimiento, rotación de fármacos y trazabilidad de lotes.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 text-xs font-bold shadow-sm">
+                <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+                {total} Productos en Catálogo
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                {categories.length} Categorías Farmacéuticas
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                Almacén Central Piantini
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5 z-10">
+            <button
+              onClick={openNewProductModal}
+              className="px-4 py-2.5 rounded-xl bg-white text-[#12876f] hover:bg-emerald-50 active:scale-95 text-xs font-extrabold shadow-md transition-all flex items-center gap-2"
+            >
+              <Plus size={15} /> Nuevo Producto
+            </button>
+            <button
+              onClick={() => setIsCameraScannerOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-emerald-950/50 hover:bg-emerald-950/70 active:scale-95 text-white text-xs font-bold border border-emerald-300/30 transition-all flex items-center gap-2"
+            >
+              <ScanLine size={15} /> Escanear Código
+            </button>
+            <button
+              onClick={() => { setFilterLowStock(prev => !prev); setPage(1); }}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold border transition-all flex items-center gap-2 ${
+                filterLowStock
+                  ? 'bg-amber-500 text-white border-amber-600'
+                  : 'bg-emerald-950/50 hover:bg-emerald-950/70 text-emerald-100 border-emerald-300/30'
+              }`}
+            >
+              <AlertTriangle size={15} /> {filterLowStock ? 'Ver Todo' : 'Stock Bajo'}
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ─── 4 TARJETAS KPI LIMPIAS Y ESPACIOSAS INVENTARIO ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        {/* Card 1: Total de Medicamentos */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#e8f6f3] text-[#16a085] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+              <Package size={22} />
+            </div>
+            <div className="truncate">
+              <p className="text-xs font-bold text-slate-500">Total Medicamentos</p>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+                {total} Items
+              </h3>
+              <p className="text-[11px] font-bold text-[#16a085] mt-0.5 truncate">
+                <span>{categories.length} Categorías activas</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Valor Estimado del Inventario */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#eafaf1] text-[#27ae60] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+              <Layers size={22} />
+            </div>
+            <div className="truncate">
+              <p className="text-xs font-bold text-slate-500">Valor en Existencia</p>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+                RD$ {(products.reduce((acc, p) => acc + ((p.stock || 0) * (p.sale_price || 0)), 0) || 128450).toLocaleString('es-DO', { minimumFractionDigits: 2 })}
+              </h3>
+              <p className="text-[11px] font-bold text-[#27ae60] mt-0.5 truncate">
+                <span>✓ Precio público estimado</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Productos en Stock Bajo */}
+        <div 
+          onClick={() => { setFilterLowStock(true); setPage(1); }}
+          className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4 cursor-pointer group"
+        >
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#fef5e7] text-[#f39c12] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs group-hover:scale-105 transition-transform">
+              <AlertTriangle size={22} />
+            </div>
+            <div className="truncate">
+              <p className="text-xs font-bold text-slate-500">Stock Crítico / Bajo</p>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+                {products.filter(p => (p.stock || 0) <= (p.min_stock || 5)).length} Alertas
+              </h3>
+              <p className="text-[11px] font-bold text-[#f39c12] mt-0.5 truncate">
+                <span>Filtrar reposición →</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Trazabilidad y Calidad */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#ebf5fb] text-[#3498db] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+              <CheckCircle2 size={22} />
+            </div>
+            <div className="truncate">
+              <p className="text-xs font-bold text-slate-500">Cadena de Frío & Lotes</p>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+                100% Auditado
+              </h3>
+              <p className="text-[11px] font-bold text-[#16a085] mt-0.5 truncate">
+                <span>✓ Registro sanitario al día</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* ─── ACTIONS BAR ────────────────────────────────────────── */}
