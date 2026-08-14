@@ -182,7 +182,7 @@ const AsistenteIA = () => {
   };
 
   return (
-    <div className="flex flex-col gap-5 relative h-[calc(100vh-100px)] animate-fade-in">
+    <div className="flex flex-col gap-5 relative animate-fade-in">
       
       {/* ─── BANNER SUPERIOR CORPORATIVO ASISTENTE IA (PHARMA.ERP) ─── */}
       <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#072a23] via-[#0f6c59] to-[#16a085] text-white p-6 sm:p-8 lg:p-10 shadow-2xl border border-[#16a085]/40 min-h-[220px] flex flex-col justify-between shrink-0">
@@ -248,7 +248,7 @@ const AsistenteIA = () => {
       </div>
 
       {/* ─── CHAT MAIN INTERFACE ─── */}
-      <div className="flex flex-1 gap-5 min-h-0 overflow-hidden">
+      <div className="flex flex-col lg:flex-row gap-5 h-[580px] min-h-[500px]">
         
         {/* Sidebar - Conversation History */}
         <div className="w-64 bg-surface rounded-2xl border border-border flex flex-col shrink-0 overflow-hidden shadow-xs">
