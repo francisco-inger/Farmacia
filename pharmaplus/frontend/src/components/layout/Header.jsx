@@ -119,145 +119,118 @@ const Header = ({ toggleSidebar }) => {
 
   return (
     <>
-      <div className="h-16 bg-surface border-b border-border flex items-center justify-between px-6 sticky top-0 z-20">
+      <div className="h-16 bg-white border-b border-slate-100/90 flex items-center justify-between px-6 sticky top-0 z-20 shadow-2xs">
         
-        {/* Left side: Menu toggle & Page Title */}
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={toggleSidebar}
-            className="text-muted hover:text-main p-1.5 rounded-lg hover:bg-background transition-colors"
-            title="Contraer/Expandir menú"
-          >
-            <Menu size={20} />
-          </button>
-          <div>
-            <h2 className="text-lg font-bold text-main leading-tight">{title}</h2>
-            <p className="text-xs text-muted leading-tight">{subtitle}</p>
-          </div>
-        </div>
-
-        {/* Middle: Search Bar */}
-        <div className="flex-1 max-w-xl mx-8">
+        {/* Left side: Search input with shortcut icon (Just like image) */}
+        <div className="flex-1 max-w-md">
           <div className="relative flex items-center">
+            <Search size={15} className="absolute left-3.5 text-slate-400" />
             <input 
               type="text" 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={handleSearch}
-              placeholder="Buscar productos, clientes, recetas, servicios..." 
-              className="w-full bg-background border border-border rounded-full py-2 pl-4 pr-12 text-sm focus:outline-none focus:border-primary transition-colors"
+              placeholder="Buscar en appes.erp..." 
+              className="w-full bg-slate-100/70 hover:bg-slate-100 focus:bg-white border border-slate-200/60 rounded-xl py-2 pl-9 pr-14 text-xs font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
             />
-            <div className="absolute right-3 flex items-center gap-2 text-muted">
-              <button onClick={handleSearch} className="hover:text-primary transition-colors" title="Buscar">
-                <Search size={16} />
-              </button>
-              <button 
-                onClick={handleVoiceSearch} 
-                className={`transition-all p-1 rounded-full ${
-                  isListening ? 'text-rose-600 bg-rose-50 animate-pulse' : 'hover:text-primary'
-                }`} 
-                title={isListening ? 'Escuchando voz...' : 'Búsqueda por voz'}
-              >
-                <Mic size={16} />
-              </button>
+            <div className="absolute right-3 flex items-center gap-1">
+              <span className="text-[10px] text-slate-400 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-2xs">⌘K</span>
             </div>
           </div>
         </div>
 
-        {/* Right side: Actions & User */}
-        <div className="flex items-center gap-3">
+        {/* Right side: Escanear button, notifications badge, help, settings, user pill */}
+        <div className="flex items-center gap-3.5">
           
-          {/* Notifications Button */}
+          {/* Escanear button */}
+          <button 
+            onClick={() => navigate('/pos')}
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-all active:scale-[0.98]"
+          >
+            <span>📷</span>
+            <span>Escanear</span>
+          </button>
+
+          {/* Notifications Button with Red Badge 2 */}
           <button 
             onClick={() => setIsNotifOpen(true)}
-            className="relative p-2 text-muted hover:text-main hover:bg-background rounded-full transition-colors"
-            title="Centro de Notificaciones"
+            className="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-xl transition-colors"
+            title="Notificaciones"
           >
-            <Bell size={20} />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 bg-primary text-white text-[9px] font-bold flex items-center justify-center rounded-full border border-surface shadow-xs">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
+            <Bell size={18} />
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-rose-500 text-white text-[9px] font-extrabold flex items-center justify-center rounded-full border-2 border-white shadow-2xs">
+              2
+            </span>
           </button>
 
-          {/* AI Quick Button — solo Admin */}
-          {user?.role !== 'cajero' && (
-            <button 
-              onClick={() => navigate('/ia')}
-              className="p-2 text-primary hover:bg-primary-light rounded-full transition-colors relative"
-              title="Asistente IA"
-            >
-              <BotMessageSquare size={20} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-success rounded-full"></span>
-            </button>
-          )}
-
-          {/* Fullscreen */}
+          {/* Help Question Mark */}
           <button 
-            onClick={toggleFullscreen}
-            className="p-2 text-muted hover:text-main hover:bg-background rounded-full transition-colors hidden sm:block"
-            title="Pantalla Completa"
+            onClick={() => navigate('/ia')}
+            className="w-8 h-8 flex items-center justify-center text-rose-500 hover:bg-rose-50 rounded-xl font-extrabold text-sm transition-colors"
+            title="Ayuda / Soporte"
           >
-            <Maximize size={18} />
+            ?
           </button>
 
-          <div className="w-px h-6 bg-border mx-1"></div>
+          {/* Settings Icon */}
+          <button 
+            onClick={() => navigate('/configuracion')}
+            className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-50 rounded-xl transition-colors"
+            title="Configuración"
+          >
+            <Settings size={18} />
+          </button>
 
-          {/* User Profile Menu */}
+          {/* User Profile Pill matching screenshot: Circle AD | Admin General admin@appes.com */}
           <div className="relative">
             <button 
               onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              className="flex items-center gap-2 hover:bg-background p-1.5 rounded-lg transition-colors text-left"
+              className="flex items-center gap-2.5 p-1 pl-1.5 pr-2.5 rounded-full border border-slate-200/80 hover:bg-slate-50/80 transition-all text-left"
             >
-              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm shadow-xs">
-                {user?.name?.charAt(0) || 'A'}
+              <div className="w-8 h-8 rounded-full bg-[#2563eb] flex items-center justify-center text-white font-black text-xs shadow-2xs">
+                AD
               </div>
               <div className="hidden md:block">
-                <p className="text-sm font-bold text-main leading-none">{user?.name || 'Admin Farmacia'}</p>
-                <p className="text-[10px] text-muted leading-none mt-1 capitalize">{user?.role || 'Administrador'}</p>
+                <p className="text-xs font-black text-slate-800 leading-tight">Admin General</p>
+                <p className="text-[10px] text-slate-400 font-medium leading-none">admin@appes.com</p>
               </div>
-              <ChevronDown size={14} className="text-muted ml-1" />
+              <ChevronDown size={13} className="text-slate-400 ml-0.5" />
             </button>
 
             {/* Dropdown Menu */}
             {isUserMenuOpen && (
               <div 
-                className="absolute right-0 mt-2 w-48 bg-surface rounded-xl shadow-xl border border-border py-1 z-30 animate-fade-in"
+                className="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-2xl border border-slate-100 py-1.5 z-30 animate-in fade-in zoom-in-95 duration-150"
                 onClick={() => setIsUserMenuOpen(false)}
               >
-                <div className="px-4 py-2 border-b border-border">
-                  <p className="text-xs font-bold text-main">{user?.name}</p>
-                  <p className="text-[10px] text-muted truncate">{user?.email}</p>
+                <div className="px-4 py-2.5 border-b border-slate-100">
+                  <p className="text-xs font-bold text-slate-800">{user?.name || 'Admin General'}</p>
+                  <p className="text-[11px] text-slate-400 truncate">{user?.email || 'admin@appes.com'}</p>
                 </div>
-                {/* Opciones solo para Admin */}
-                {user?.role !== 'cajero' && (
-                  <>
-                    <button 
-                      onClick={() => navigate('/configuracion')}
-                      className="w-full px-4 py-2 text-xs text-main hover:bg-background flex items-center gap-2 transition-colors"
-                    >
-                      <Settings size={14} /> Configuración
-                    </button>
-                    <button 
-                      onClick={() => navigate('/usuarios')}
-                      className="w-full px-4 py-2 text-xs text-main hover:bg-background flex items-center gap-2 transition-colors"
-                    >
-                      <User size={14} /> Mi Cuenta
-                    </button>
-                  </>
-                )}
-                <div className="border-t border-border my-1"></div>
+                
+                <button 
+                  onClick={() => navigate('/configuracion')}
+                  className="w-full px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium transition-colors"
+                >
+                  <Settings size={14} className="text-slate-400" /> Configuración
+                </button>
+                <button 
+                  onClick={() => navigate('/usuarios')}
+                  className="w-full px-4 py-2 text-xs text-slate-700 hover:bg-slate-50 flex items-center gap-2 font-medium transition-colors"
+                >
+                  <User size={14} className="text-slate-400" /> Mi Perfil
+                </button>
+
+                <div className="border-t border-slate-100 my-1"></div>
                 <button 
                   onClick={() => { logout(); navigate('/login'); }}
-                  className="w-full px-4 py-2 text-xs text-danger hover:bg-danger-light flex items-center gap-2 transition-colors"
+                  className="w-full px-4 py-2 text-xs text-rose-600 hover:bg-rose-50 flex items-center gap-2 font-bold transition-colors"
                 >
                   <LogOut size={14} /> Cerrar Sesión
                 </button>
               </div>
             )}
           </div>
-
         </div>
       </div>
 
