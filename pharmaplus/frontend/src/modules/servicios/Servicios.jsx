@@ -472,20 +472,144 @@ const Servicios = () => {
         </div>
       )}
 
-      {/* ─── SLEEK GREEN HEADER BANNER ────────────────────────────────────────── */}
-      <div className="bg-[#16a085] rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
-        <div className="flex items-center gap-3 z-10">
-          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Gestión de Servicios de Salud</h2>
-        </div>
+      {/* ─── BANNER SUPERIOR CORPORATIVO SERVICIOS (PHARMA.ERP) ─── */}
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#072a23] via-[#0f6c59] to-[#16a085] text-white p-7 sm:p-10 lg:p-12 shadow-2xl border border-[#16a085]/40 min-h-[290px] flex flex-col justify-between shrink-0">
         
-        <div className="shrink-0 h-16 md:h-20 flex items-center justify-center z-10">
-          <img 
-            src="/modules/servicios.png" 
-            alt="Servicios" 
-            className="h-full w-auto max-w-[260px] object-contain rounded-xl drop-shadow-md"
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
+        {/* Imagen Farmacéutica Corporativa en Alta Visibilidad */}
+        <div 
+          className="absolute inset-0 opacity-40 mix-blend-luminosity bg-cover bg-right sm:bg-center pointer-events-none transition-all duration-700" 
+          style={{ backgroundImage: "url('/erp-banner.jpg')" }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#072a23]/90 via-[#0f6c59]/65 to-transparent pointer-events-none"></div>
+
+        <div className="absolute top-0 right-0 p-8 opacity-15 font-mono text-4xl font-black tracking-widest uppercase select-none pointer-events-none hidden md:block">
+          CLINICAL SERVICES & HEALTHCARE DISPENSARY
         </div>
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          
+          <div className="space-y-4 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-950/60 backdrop-blur-md border border-emerald-400/40 text-emerald-200 text-xs font-bold tracking-wider uppercase shadow-sm">
+              <span>✦</span>
+              <span>ATENCIÓN CLÍNICA & SERVICIOS • PHARMAPLUS</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight drop-shadow-md">
+              Gestión de Servicios de Salud
+            </h1>
+            
+            <p className="text-sm sm:text-base text-emerald-100/90 font-medium">
+              Toma de presión, pruebas de glucosa, vacunación, inyecciones, chequeos preventivos y citas clínicas.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2.5 pt-2">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/25 border border-emerald-300/40 text-white text-xs font-bold shadow-sm backdrop-blur-md">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                {total} Servicios Disponibles
+              </span>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                Personal Médico & Enfermería 24/7
+              </span>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                Cabina de Salud Piantini
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 z-10">
+            <button
+              onClick={openNewServiceModal}
+              className="px-5 py-3 rounded-2xl bg-white text-[#12876f] hover:bg-emerald-50 active:scale-95 text-xs sm:text-sm font-black shadow-xl transition-all flex items-center gap-2"
+            >
+              <Plus size={17} /> Nuevo Servicio
+            </button>
+            <button
+              onClick={() => setIsBookingModalOpen(true)}
+              className="px-5 py-3 rounded-2xl bg-black/40 hover:bg-black/60 active:scale-95 text-white text-xs sm:text-sm font-bold border border-emerald-300/40 backdrop-blur-md transition-all flex items-center gap-2 shadow-lg"
+            >
+              <Calendar size={17} /> Agendar Cita
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ─── 4 TARJETAS KPI LIMPIAS Y ESPACIOSAS SERVICIOS ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+        
+        {/* Card 1: Servicios Activos */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#e8f6f3] text-[#16a085] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+              <HeartPulse size={22} />
+            </div>
+            <div className="truncate">
+              <p className="text-xs font-bold text-slate-500">Servicios Clínicos</p>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+                {total} Activos
+              </h3>
+              <p className="text-[11px] font-bold text-[#16a085] mt-0.5 truncate">
+                <span>Enfermería y toma de muestras</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 2: Vacunación & Inyectables */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#eafaf1] text-[#27ae60] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+              <Syringe size={22} />
+            </div>
+            <div className="truncate">
+              <p className="text-xs font-bold text-slate-500">Vacunas & Dosis</p>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+                100% Certificadas
+              </h3>
+              <p className="text-[11px] font-bold text-[#27ae60] mt-0.5 truncate">
+                <span>✓ Cadena de frío estricta</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 3: Laboratorio Rápido */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#ebf5fb] text-[#3498db] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+              <TestTube size={22} />
+            </div>
+            <div className="truncate">
+              <p className="text-xs font-bold text-slate-500">Pruebas Rápidas</p>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+                Glucosa & Perfil
+              </h3>
+              <p className="text-[11px] font-bold text-[#3498db] mt-0.5 truncate">
+                <span>Resultados en 5 min</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Card 4: Tiempo Promedio de Atención */}
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#fef5e7] text-[#f39c12] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+              <Clock size={22} />
+            </div>
+            <div className="truncate">
+              <p className="text-xs font-bold text-slate-500">Tiempo de Espera</p>
+              <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+                ~ 10 Minutos
+              </h3>
+              <p className="text-[11px] font-bold text-[#16a085] mt-0.5 truncate">
+                <span>✓ Atención ágil y prioritaria</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* ─── ACTIONS BAR ────────────────────────────────────────── */}
