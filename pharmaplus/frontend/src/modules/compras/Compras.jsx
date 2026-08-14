@@ -678,7 +678,7 @@ const Compras = () => {
             </div>
 
             <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight drop-shadow-md">
-              Gestión de Compras & Proveedores
+              Gestión de Compras & Abastecimiento
             </h1>
             
             <p className="text-sm sm:text-base text-emerald-100/90 font-medium">
