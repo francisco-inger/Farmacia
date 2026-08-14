@@ -119,83 +119,105 @@ const Header = ({ toggleSidebar }) => {
 
   return (
     <>
-      <div className="h-16 bg-white border-b border-slate-100/90 flex items-center justify-between px-6 sticky top-0 z-20">
+      <div className="h-16 bg-surface border-b border-border flex items-center justify-between px-6 sticky top-0 z-20">
         
-        {/* Left side: Search input with shortcut icon (Just like image) */}
-        <div className="flex-1 max-w-md">
+        {/* Left side: Menu toggle & Page Title */}
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={toggleSidebar}
+            className="text-muted hover:text-main p-1.5 rounded-lg hover:bg-background transition-colors"
+            title="Contraer/Expandir menú"
+          >
+            <Menu size={20} />
+          </button>
+          <div>
+            <h2 className="text-lg font-bold text-main leading-tight">{title}</h2>
+            <p className="text-xs text-muted leading-tight">{subtitle}</p>
+          </div>
+        </div>
+
+        {/* Middle: Search Bar */}
+        <div className="flex-1 max-w-xl mx-8">
           <div className="relative flex items-center">
-            <Search size={15} className="absolute left-3.5 text-slate-400" />
             <input 
               type="text" 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               onKeyDown={handleSearch}
-              placeholder="Buscar en appes.erp..." 
-              className="w-full bg-slate-100/70 hover:bg-slate-100 focus:bg-white border border-slate-200/60 rounded-xl py-2 pl-9 pr-14 text-xs font-medium text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+              placeholder="Buscar productos, clientes, recetas, servicios..." 
+              className="w-full bg-background border border-border rounded-full py-2 pl-4 pr-12 text-sm focus:outline-none focus:border-primary transition-colors"
             />
-            <div className="absolute right-3 flex items-center gap-1">
-              <span className="text-[10px] text-slate-400 font-mono bg-white px-1.5 py-0.5 rounded border border-slate-200 shadow-2xs">⌘K</span>
+            <div className="absolute right-3 flex items-center gap-2 text-muted">
+              <button onClick={handleSearch} className="hover:text-primary transition-colors" title="Buscar">
+                <Search size={16} />
+              </button>
+              <button 
+                onClick={handleVoiceSearch} 
+                className={`transition-all p-1 rounded-full ${
+                  isListening ? 'text-rose-600 bg-rose-50 animate-pulse' : 'hover:text-primary'
+                }`} 
+                title={isListening ? 'Escuchando voz...' : 'Búsqueda por voz'}
+              >
+                <Mic size={16} />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Right side: Actions & User pill */}
+        {/* Right side: Actions & User */}
         <div className="flex items-center gap-3">
           
-          {/* Escanear Button */}
-          <button
-            onClick={() => navigate('/pos')}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl border border-slate-200/80 transition-all shadow-2xs"
-          >
-            <span className="text-sm">📷</span>
-            <span>Escanear</span>
-          </button>
-
-          {/* Notifications Button with count */}
+          {/* Notifications Button */}
           <button 
             onClick={() => setIsNotifOpen(true)}
-            className="relative p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-xl transition-colors"
+            className="relative p-2 text-muted hover:text-main hover:bg-background rounded-full transition-colors"
             title="Centro de Notificaciones"
           >
-            <Bell size={18} />
+            <Bell size={20} />
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[9px] font-extrabold flex items-center justify-center border-2 border-white">
-                {unreadCount}
+              <span className="absolute top-1 right-1 w-4 h-4 bg-primary text-white text-[9px] font-bold flex items-center justify-center rounded-full border border-surface shadow-xs">
+                {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
           </button>
 
-          {/* Ayuda / Pregunta */}
-          <button
-            onClick={() => navigate('/ia')}
-            className="p-2 text-rose-500 hover:bg-rose-50 rounded-xl font-bold text-sm transition-colors"
-            title="Centro de Ayuda / IA"
-          >
-            ?
-          </button>
-
-          {/* System Settings Shortcut */}
-          <button
-            onClick={() => navigate('/configuracion')}
-            className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-50 rounded-xl transition-colors"
-            title="Ajustes y Parámetros"
-          >
-            <Settings size={18} />
-          </button>
-
-          {/* User Dropdown Header Profile (Exact like screenshot) */}
-          <div className="relative pl-2 border-l border-slate-200">
-            <button
-              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              className="flex items-center gap-2.5 p-1 rounded-xl hover:bg-slate-50 transition-colors text-left"
+          {/* AI Quick Button — solo Admin */}
+          {user?.role !== 'cajero' && (
+            <button 
+              onClick={() => navigate('/ia')}
+              className="p-2 text-primary hover:bg-primary-light rounded-full transition-colors relative"
+              title="Asistente IA"
             >
-              <div className="w-8 h-8 rounded-lg bg-[#2563eb] text-white flex items-center justify-center font-bold text-xs shadow-sm">
-                AD
+              <BotMessageSquare size={20} />
+              <span className="absolute top-1 right-1 w-2 h-2 bg-success rounded-full"></span>
+            </button>
+          )}
+
+          {/* Fullscreen */}
+          <button 
+            onClick={toggleFullscreen}
+            className="p-2 text-muted hover:text-main hover:bg-background rounded-full transition-colors hidden sm:block"
+            title="Pantalla Completa"
+          >
+            <Maximize size={18} />
+          </button>
+
+          <div className="w-px h-6 bg-border mx-1"></div>
+
+          {/* User Profile Menu */}
+          <div className="relative">
+            <button 
+              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+              className="flex items-center gap-2 hover:bg-background p-1.5 rounded-lg transition-colors text-left"
+            >
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm shadow-xs">
+                {user?.name?.charAt(0) || 'A'}
               </div>
-              <div className="hidden md:block text-left pr-1">
-                <p className="text-xs font-bold text-slate-800 leading-tight">Admin General</p>
-                <p className="text-[10px] text-slate-400 font-medium leading-tight">admin@appes.com</p>
+              <div className="hidden md:block">
+                <p className="text-sm font-bold text-main leading-none">{user?.name || 'Admin Farmacia'}</p>
+                <p className="text-[10px] text-muted leading-none mt-1 capitalize">{user?.role || 'Administrador'}</p>
               </div>
+              <ChevronDown size={14} className="text-muted ml-1" />
             </button>
 
             {/* Dropdown Menu */}

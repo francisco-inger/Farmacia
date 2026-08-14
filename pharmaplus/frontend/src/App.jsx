@@ -27,22 +27,11 @@ import Auditoria from './modules/auditoria/Auditoria';
 // ProtectedRoute — verifica autenticación y rol
 // adminOnly = true → solo el Administrador puede entrar; el Cajero va al POS
 // ─────────────────────────────────────────────────────────────────────────────
-// ─────────────────────────────────────────────────────────────────────────────
-// ProtectedRoute — verifica autenticación y rol
-// adminOnly = true → solo el Administrador puede entrar; el Cajero va al POS
-// ─────────────────────────────────────────────────────────────────────────────
 const ProtectedRoute = ({ children, adminOnly = false }) => {
   const { user, loading } = useContext(AuthContext);
 
-  if (loading) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-slate-50 flex-col gap-3">
-        <div className="w-9 h-9 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-xs font-semibold text-slate-500">Cargando PharmaPlus...</p>
-      </div>
-    );
-  }
-  if (!user) return <Navigate to="/login" replace />;
+  if (loading) return <div className="flex h-screen items-center justify-center">Cargando...</div>;
+  if (!user)   return <Navigate to="/login" replace />;
   if (adminOnly && user.role === 'cajero') return <Navigate to="/pos" replace />;
 
   return children;
@@ -53,15 +42,8 @@ const ProtectedRoute = ({ children, adminOnly = false }) => {
 // ─────────────────────────────────────────────────────────────────────────────
 const RootRedirect = () => {
   const { user, loading } = useContext(AuthContext);
-  if (loading) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-slate-50 flex-col gap-3">
-        <div className="w-9 h-9 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-xs font-semibold text-slate-500">Iniciando sistema...</p>
-      </div>
-    );
-  }
-  if (!user) return <Navigate to="/login" replace />;
+  if (loading) return <div className="flex h-screen items-center justify-center">Inicializando...</div>;
+  if (!user)   return <Navigate to="/login" replace />;
   return <Navigate to={user.role === 'cajero' ? '/pos' : '/dashboard'} replace />;
 };
 
@@ -70,14 +52,8 @@ const RootRedirect = () => {
 // ─────────────────────────────────────────────────────────────────────────────
 const LoginRoute = () => {
   const { user, loading } = useContext(AuthContext);
-  if (loading) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-slate-50 flex-col gap-3">
-        <div className="w-9 h-9 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-  if (user) return <Navigate to={user.role === 'cajero' ? '/pos' : '/dashboard'} replace />;
+  if (loading) return <div className="flex h-screen items-center justify-center">Cargando...</div>;
+  if (user)    return <Navigate to={user.role === 'cajero' ? '/pos' : '/dashboard'} replace />;
   return <Login />;
 };
 
@@ -92,7 +68,7 @@ const AppRoutes = () => (
     {/* POS — Admin y Cajero (pantalla completa sin layout lateral) */}
     <Route path="/pos" element={<ProtectedRoute><POS /></ProtectedRoute>} />
 
-    {/* Layout principal — protegido a nivel de layout */}
+    {/* Layout principal */}
     <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
       {/* Raíz → redirige según rol */}
       <Route index element={<RootRedirect />} />
@@ -100,22 +76,22 @@ const AppRoutes = () => (
       {/* Cajas — Admin y Cajero */}
       <Route path="cajas" element={<Caja />} />
 
-      {/* ── Módulos del Sistema ─────────────────────────────────────────── */}
-      <Route path="dashboard"     element={<Dashboard />} />
-      <Route path="productos"     element={<Productos />} />
-      <Route path="inventario"    element={<Inventario />} />
-      <Route path="clientes"      element={<Clientes />} />
-      <Route path="servicios"     element={<Servicios />} />
-      <Route path="compras"       element={<Compras />} />
-      <Route path="proveedores"   element={<Proveedores />} />
-      <Route path="facturacion"   element={<DgiiFiscal />} />
-      <Route path="rrhh"          element={<RRHH />} />
-      <Route path="integraciones" element={<Integraciones />} />
-      <Route path="ia"            element={<AsistenteIA />} />
-      <Route path="reportes"      element={<Reportes />} />
-      <Route path="usuarios"      element={<Usuarios />} />
-      <Route path="auditoria"     element={<Auditoria />} />
-      <Route path="configuracion" element={<Configuracion />} />
+      {/* ── Solo Administrador ─────────────────────────────────────────── */}
+      <Route path="dashboard"     element={<ProtectedRoute adminOnly><Dashboard /></ProtectedRoute>} />
+      <Route path="productos"     element={<ProtectedRoute adminOnly><Productos /></ProtectedRoute>} />
+      <Route path="inventario"    element={<ProtectedRoute adminOnly><Inventario /></ProtectedRoute>} />
+      <Route path="clientes"      element={<ProtectedRoute adminOnly><Clientes /></ProtectedRoute>} />
+      <Route path="servicios"     element={<ProtectedRoute adminOnly><Servicios /></ProtectedRoute>} />
+      <Route path="compras"       element={<ProtectedRoute adminOnly><Compras /></ProtectedRoute>} />
+      <Route path="proveedores"   element={<ProtectedRoute adminOnly><Proveedores /></ProtectedRoute>} />
+      <Route path="facturacion"   element={<ProtectedRoute adminOnly><DgiiFiscal /></ProtectedRoute>} />
+      <Route path="rrhh"          element={<ProtectedRoute adminOnly><RRHH /></ProtectedRoute>} />
+      <Route path="integraciones" element={<ProtectedRoute adminOnly><Integraciones /></ProtectedRoute>} />
+      <Route path="ia"            element={<ProtectedRoute adminOnly><AsistenteIA /></ProtectedRoute>} />
+      <Route path="reportes"      element={<ProtectedRoute adminOnly><Reportes /></ProtectedRoute>} />
+      <Route path="usuarios"      element={<ProtectedRoute adminOnly><Usuarios /></ProtectedRoute>} />
+      <Route path="auditoria"     element={<ProtectedRoute adminOnly><Auditoria /></ProtectedRoute>} />
+      <Route path="configuracion" element={<ProtectedRoute adminOnly><Configuracion /></ProtectedRoute>} />
     </Route>
 
     {/* Página de acceso denegado */}

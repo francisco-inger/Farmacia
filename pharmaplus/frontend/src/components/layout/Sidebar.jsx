@@ -78,30 +78,26 @@ const Sidebar = ({ isOpen }) => {
     <div className={`h-screen flex flex-col bg-surface border-r border-border overflow-hidden shrink-0 transition-all duration-300 ${isOpen ? 'w-64' : 'w-20'}`}>
       
       {/* Logo Area */}
-      <div className="h-16 flex items-center px-4 border-b border-slate-100/80 overflow-hidden bg-white">
-        <div className="flex items-center gap-3 w-full">
-          <div className="w-9 h-9 rounded-xl bg-[#2563eb] text-white flex items-center justify-center shadow-md shadow-blue-500/20 shrink-0">
-            <Pill size={20} className="rotate-45" />
+      <div className="h-16 flex items-center justify-center px-4 border-b border-border overflow-hidden">
+        <div className="flex items-center gap-2 w-full justify-center">
+          <div className="bg-primary text-white p-1.5 rounded flex items-center justify-center shrink-0">
+            <Pill size={20} />
           </div>
           {isOpen && (
             <div className="whitespace-nowrap overflow-hidden transition-all duration-300">
-              <div className="flex items-center gap-1.5 leading-none">
-                <span className="font-extrabold text-slate-900 tracking-tight text-base">PHARMA<span className="text-[#2563eb]">.ERP</span></span>
-              </div>
-              <p className="text-[10px] font-semibold text-slate-400 leading-tight mt-0.5 tracking-wider uppercase">
-                Enterprise Suite 2026
-              </p>
+              <h1 className="font-bold text-main leading-tight text-lg">PharmaPlus</h1>
+              <p className="text-[10px] text-muted leading-tight">Sistema de Gestión</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Navigation */}
-      <div className="flex-1 overflow-y-auto py-3 px-3 custom-scrollbar space-y-1">
+      <div className="flex-1 overflow-y-auto py-4 px-3 custom-scrollbar">
         {menuGroups.map((group, idx) => (
-          <div key={idx} className="mb-4">
+          <div key={idx} className="mb-6">
             {isOpen && (
-              <h3 className="text-[10px] font-extrabold text-slate-400 mb-1.5 px-3 uppercase tracking-wider">
+              <h3 className="text-[10px] font-bold text-primary mb-2 px-3 uppercase tracking-wider">
                 {group.title}
               </h3>
             )}
@@ -117,45 +113,61 @@ const Sidebar = ({ isOpen }) => {
                     <div className="flex items-center gap-1">
                       <NavLink
                         to={item.path}
-                        end={!hasSubItems}
+                        end
                         className={({ isActive }) =>
-                          `flex-1 flex items-center ${isOpen ? 'justify-between px-3.5' : 'justify-center px-0'} py-2.5 rounded-xl text-xs font-bold transition-all duration-150 ${
+                          `flex-1 flex items-center ${isOpen ? 'justify-between px-3' : 'justify-center px-0'} py-2.5 rounded-lg text-sm font-medium transition-colors ${
                             isActive
-                              ? 'bg-[#2563eb] text-white shadow-md shadow-blue-500/25'
-                              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                              ? 'bg-primary text-white shadow-sm'
+                              : 'text-main hover:bg-background hover:text-primary'
                           }`
                         }
                         title={!isOpen ? item.label : undefined}
                       >
                         <div className="flex items-center gap-3">
-                          <item.icon size={18} className="shrink-0" />
-                          {isOpen && <span className="whitespace-nowrap">{item.label}</span>}
+                          <item.icon size={20} className="shrink-0" />
+                          {isOpen && <span className="whitespace-nowrap font-bold">{item.label}</span>}
                         </div>
-                        {isOpen && hasSubItems && (
-                          <span onClick={(e) => toggleExpand(item.path, e)} className="p-0.5">
-                            {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} className="opacity-60" />}
-                          </span>
-                        )}
                         {isOpen && item.badge && !hasSubItems && (
-                          <span className="bg-blue-50 text-[#2563eb] text-[9px] px-1.5 py-0.5 rounded-md font-extrabold uppercase border border-blue-200/60 shrink-0">
+                          <span className="bg-success-light text-success text-[10px] px-1.5 py-0.5 rounded font-bold border border-success/20 shrink-0">
                             {item.badge}
                           </span>
                         )}
                       </NavLink>
+
+                      {/* Toggle button for subItems – only visible when sidebar is open */}
+                      {isOpen && hasSubItems && (
+                        <button
+                          onClick={(e) => toggleExpand(item.path, e)}
+                          className={`p-1.5 rounded-md transition-colors shrink-0 ${
+                            isCurrentPath
+                              ? 'text-primary hover:bg-primary-light'
+                              : 'text-muted hover:bg-background hover:text-primary'
+                          }`}
+                          title={isExpanded ? 'Colapsar menú' : 'Expandir menú'}
+                        >
+                          {isExpanded
+                            ? <ChevronDown size={14} />
+                            : <ChevronRight size={14} />
+                          }
+                        </button>
+                      )}
                     </div>
 
-                    {/* Sub-items */}
+                    {/* Sub-items – only visible when expanded AND sidebar is open */}
                     {isOpen && hasSubItems && isExpanded && (
-                      <ul className="mt-1 ml-4 border-l-2 border-slate-200 space-y-0.5 pl-3 py-1 overflow-hidden">
+                      <ul
+                        className="mt-1 ml-4 border-l-2 space-y-0.5 pl-3 py-1 overflow-hidden"
+                        style={{ borderColor: 'var(--primary)', borderLeftColor: 'var(--primary-light)' }}
+                      >
                         {item.subItems.map((sub, sIdx) => (
                           <li key={sIdx}>
                             <NavLink
                               to={sub.path}
                               className={({ isActive }) =>
-                                `block text-[11px] py-1.5 px-2 rounded-lg font-medium transition-colors ${
+                                `block text-xs py-1.5 px-2 rounded-md font-medium transition-colors ${
                                   isActive
-                                    ? 'bg-blue-50 text-[#2563eb] font-bold'
-                                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                                    ? 'bg-primary-light text-primary font-bold'
+                                    : 'text-muted hover:text-main hover:bg-background'
                                 }`
                               }
                             >
@@ -173,40 +185,19 @@ const Sidebar = ({ isOpen }) => {
         ))}
       </div>
 
-      {/* Plan / Enterprise Status Widget (Inspired by reference) */}
-      {isOpen && (
-        <div className="p-3 mx-3 mb-2 rounded-xl bg-gradient-to-br from-slate-50 to-slate-100/80 border border-slate-200/70">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1.5">
-              👑 Plan Empresarial
-            </span>
-            <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#16a085]/10 text-[#12876f]">
-              Avanzado
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-[10px] text-slate-500 font-medium mb-1">
-            <span>Uso del sistema</span>
-            <span className="font-bold text-slate-700">68%</span>
-          </div>
-          <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-            <div className="h-full bg-gradient-to-r from-[#12876f] to-[#16a085] rounded-full w-[68%]" />
-          </div>
-        </div>
-      )}
-
       {/* User Area Bottom */}
-      <div className={`p-3.5 border-t border-slate-100 bg-white ${!isOpen && 'flex flex-col items-center gap-2'}`}>
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#16a085] text-white flex items-center justify-center font-bold text-xs shadow-sm">
-              {user?.name?.charAt(0) || 'A'}
+      <div className={`p-4 border-t border-border bg-background/50 ${!isOpen && 'flex flex-col items-center gap-2'}`}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white font-bold shrink-0">
+              {user?.name?.charAt(0) || 'U'}
             </div>
             {isOpen && (
               <div className="overflow-hidden whitespace-nowrap">
-                <p className="text-xs font-bold text-slate-800 truncate leading-tight">{user?.name || 'Admin General'}</p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                  <span className="text-[10px] text-slate-400 font-medium">{user?.role || 'Administrador'}</span>
+                <p className="text-sm font-bold text-main truncate">{user?.name}</p>
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-success"></span>
+                  <span className="text-xs text-muted">En línea</span>
                 </div>
               </div>
             )}
@@ -215,10 +206,10 @@ const Sidebar = ({ isOpen }) => {
         <button
           onClick={handleLogout}
           title="Cerrar sesión"
-          className={`flex items-center justify-center gap-2 w-full py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition-colors ${!isOpen && 'px-0'}`}
+          className={`flex items-center justify-center gap-2 w-full py-2 text-sm text-danger hover:bg-danger-light rounded-lg border border-transparent hover:border-danger/20 transition-colors ${!isOpen && 'px-0'}`}
         >
-          <LogOut size={16} className="shrink-0" />
-          {isOpen && <span>Cerrar Sesión</span>}
+          <LogOut size={20} className="shrink-0" />
+          {isOpen && <span>Salir</span>}
         </button>
       </div>
     </div>
