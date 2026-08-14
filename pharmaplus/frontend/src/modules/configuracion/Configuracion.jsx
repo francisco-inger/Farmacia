@@ -1280,7 +1280,7 @@ const Configuracion = () => {
   };
 
   return (
-    <div className="h-full flex flex-col gap-5 overflow-y-auto pr-1 relative">
+    <div className="flex flex-col gap-5 relative">
       
       {/* ─── TOAST NOTIFICATION ───────────────────────────────────────────── */}
       {toastMessage && (

@@ -173,7 +173,7 @@ const Auditoria = () => {
   const totalPages = Math.ceil(total / limit) || 1;
 
   return (
-    <div className="h-full flex flex-col gap-5 overflow-y-auto pr-1">
+    <div className="flex flex-col gap-5">
       
       {/* Header Banner */}
       <div className="bg-[#2c3e50] rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">

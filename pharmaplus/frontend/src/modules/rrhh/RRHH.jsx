@@ -376,7 +376,7 @@ const RRHH = () => {
 
   /* ══════════════════════════════════════════════════════════════════════════ */
   return (
-    <div className="h-full flex flex-col gap-4 overflow-y-auto pr-1 relative">
+    <div className="flex flex-col gap-4 relative">
 
       {/* Toast */}
       {toastMessage && (

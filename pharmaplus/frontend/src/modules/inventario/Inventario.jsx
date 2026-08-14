@@ -346,7 +346,7 @@ const Inventario = () => {
   const endItem = Math.min(total, page * limit);
 
   return (
-    <div className="h-full flex flex-col gap-5 overflow-y-auto pr-1">
+    <div className="flex flex-col gap-5">
       {/* ─── BANNER SUPERIOR CORPORATIVO INVENTARIO (PHARMA.ERP) ─── */}
       <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#072a23] via-[#0f6c59] to-[#16a085] text-white p-7 sm:p-10 lg:p-12 shadow-2xl border border-[#16a085]/40 min-h-[290px] flex flex-col justify-between">
         
