@@ -242,38 +242,78 @@ const DgiiFiscal = () => {
         </div>
       )}
 
-      {/* ── Header ──────────────────────────────────────────────────────────── */}
-      <div className="card p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-xl font-extrabold text-main tracking-tight">Módulo DGII / Fiscal</h1>
-            <span className="flex items-center gap-1 text-[10px] font-extrabold bg-success-light text-success border border-success/20 px-2 py-0.5 rounded-full">
-              <ShieldCheck size={11} /> DGII Sincronizado
-            </span>
+      {/* ─── BANNER SUPERIOR CORPORATIVO DGII / FISCAL (PHARMAPLUS ERP) ─── */}
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#0d3f34] via-[#12876f] to-[#16a085] text-white p-6 sm:p-7 shadow-xl border border-[#16a085]/30">
+        
+        <div className="absolute inset-0 opacity-15 mix-blend-screen bg-cover bg-center pointer-events-none" style={{ backgroundImage: "url('/erp-banner.jpg')" }}></div>
+        <div className="absolute top-0 right-0 p-8 opacity-10 font-mono text-3xl font-black tracking-widest uppercase select-none pointer-events-none">
+          DGII FISCAL COMPLIANCE & E-CF SYSTEM
+        </div>
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          
+          <div className="space-y-2.5 max-w-xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-950/40 backdrop-blur-md border border-emerald-400/30 text-emerald-200 text-[11px] font-bold tracking-wider uppercase">
+              <span>✦</span>
+              <span>FACTURACIÓN & DGII • PHARMAPLUS</span>
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
+              Gestión Fiscal & Facturación Electrónica
+            </h1>
+            
+            <p className="text-xs sm:text-sm text-emerald-100/80 font-medium">
+              Comprobantes Fiscales (NCF), Facturación Electrónica e-CF, Reportes 606/607/608 y cumplimiento DGII.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 text-xs font-bold shadow-sm">
+                <ShieldCheck size={13} className="text-emerald-300" />
+                DGII Sincronizado
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                RNC: 1-31-89472-3
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                Ambiente: Producción e-CF
+              </span>
+            </div>
           </div>
-          <p className="text-xs text-muted mt-0.5">Gestione su información fiscal y comprobantes en tiempo real</p>
+
+          <div className="flex flex-wrap items-center gap-2.5 z-10">
+            <button
+              onClick={() => setModalComprobante(true)}
+              className="px-4 py-2.5 rounded-xl bg-white text-[#12876f] hover:bg-emerald-50 active:scale-95 text-xs font-extrabold shadow-md transition-all flex items-center gap-2"
+            >
+              <Plus size={15} /> Nuevo Comprobante
+            </button>
+            <button
+              onClick={() => setActiveTab('secuencias')}
+              className="px-4 py-2.5 rounded-xl bg-emerald-950/50 hover:bg-emerald-950/70 active:scale-95 text-white text-xs font-bold border border-emerald-300/30 transition-all flex items-center gap-2"
+            >
+              <Bookmark size={15} /> Secuencias NCF
+            </button>
+            <button
+              onClick={() => setActiveTab('configuracion')}
+              className="px-4 py-2.5 rounded-xl bg-emerald-950/50 hover:bg-emerald-950/70 active:scale-95 text-white text-xs font-bold border border-emerald-300/30 transition-all flex items-center gap-2"
+            >
+              <Settings size={15} /> Configuración Fiscal
+            </button>
+          </div>
+
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <button onClick={() => setActiveTab('configuracion')}
-            className="btn btn-outline text-sm">
-            <Settings size={16} /> Configuración Fiscal
-          </button>
-          <button onClick={() => setModalComprobante(true)}
-            className="btn btn-primary text-sm">
-            <Plus size={16} /> Nuevo Comprobante
-          </button>
-        </div>
+
       </div>
 
       {/* ── Tabs ─────────────────────────────────────────────────────────────── */}
-      <div className="flex gap-1 border-b border-border overflow-x-auto pb-0 custom-scrollbar">
+      <div className="flex gap-1 border-b border-slate-200 overflow-x-auto pb-0 custom-scrollbar">
         {tabs.map(t => {
           const Icon = t.icon;
           const active = activeTab === t.id;
           return (
             <button key={t.id} onClick={() => setActiveTab(t.id)}
-              className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold border-b-2 transition-all whitespace-nowrap rounded-t-lg -mb-px ${
-                active ? 'border-primary text-primary bg-primary-light' : 'border-transparent text-muted hover:text-main hover:bg-background'
+              className={`flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-bold border-b-2 transition-all whitespace-nowrap rounded-t-xl -mb-px ${
+                active ? 'border-[#16a085] text-[#12876f] bg-[#e8f6f3]/60' : 'border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50'
               }`}>
               <Icon size={14} /> {t.label}
             </button>
@@ -285,42 +325,124 @@ const DgiiFiscal = () => {
       {activeTab === 'resumen' && (
         <div className="flex flex-col gap-5">
 
-          {/* KPI Cards */}
+          {/* KPI Cards con Curvas SVG */}
           {loading ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="card p-4 animate-pulse">
-                  <div className="h-3 bg-border rounded w-3/4 mb-3" />
-                  <div className="h-6 bg-border rounded w-1/2 mb-2" />
-                  <div className="h-2.5 bg-border rounded w-2/3" />
+                <div key={i} className="bg-white rounded-3xl p-5 border border-slate-100 shadow-sm animate-pulse">
+                  <div className="h-3 bg-slate-100 rounded w-3/4 mb-3" />
+                  <div className="h-6 bg-slate-100 rounded w-1/2 mb-2" />
+                  <div className="h-2.5 bg-slate-100 rounded w-2/3" />
                 </div>
               ))}
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-              {[
-                { label: 'Ventas del Mes', value: fmt(kpis.ventas_mes), sub: kpis.ventas_growth, icon: FileText, iconCls: 'bg-primary-light text-primary', tab: null },
-                { label: 'ITBIS Generado', value: fmt(kpis.itbis_generado), sub: kpis.itbis_growth, icon: Calculator, iconCls: 'bg-success-light text-success', tab: null },
-                { label: 'Comprobantes', value: kpis.comprobantes_emitidos ?? 0, sub: kpis.comprobantes_growth, icon: FileText, iconCls: 'bg-[#ebf5fb] text-info', tab: 'comprobantes' },
-                { label: 'NCF Disponibles', value: (kpis.ncf_disponibles ?? 0).toLocaleString(), sub: 'Ver secuencias →', icon: Bookmark, iconCls: 'bg-warning-light text-warning', tab: 'secuencias' },
-                { label: 'Alertas Fiscales', value: kpis.alertas ?? 0, sub: kpis.alertas > 0 ? 'Ver detalles →' : 'Sin alertas', icon: AlertTriangle, iconCls: kpis.alertas > 0 ? 'bg-danger-light text-danger' : 'bg-success-light text-success', tab: 'secuencias' },
-              ].map((k, i) => (
-                <div key={i} className={`card p-4 flex flex-col justify-between hover:border-primary/40 transition-all ${k.tab ? 'cursor-pointer' : ''}`}
-                  onClick={k.tab ? () => setActiveTab(k.tab) : undefined}>
-                  <div className="flex items-center justify-between mb-2">
-                    <p className="text-[11px] font-bold text-muted">{k.label}</p>
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${k.iconCls}`}>
-                      <k.icon size={17} />
-                    </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              
+              {/* Card 1: Ventas Fiscales Mes */}
+              <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md hover:shadow-lg transition-all flex flex-col justify-between overflow-hidden relative group">
+                <div className="flex items-center gap-3 z-10">
+                  <div className="w-10 h-10 rounded-2xl bg-[#e8f6f3] text-[#16a085] flex items-center justify-center font-bold shadow-2xs group-hover:scale-105 transition-transform">
+                    <FileText size={18} />
                   </div>
-                  <p className="text-xl font-extrabold text-main leading-none">{k.value}</p>
-                  {k.sub && (
-                    <p className={`text-[10px] font-bold mt-2 flex items-center gap-0.5 ${k.tab ? 'text-primary' : 'text-success'}`}>
-                      {!k.tab && <ArrowUpRight size={12} />}{k.sub}
-                    </p>
-                  )}
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-500">Ventas Fiscales Mes</p>
+                    <h3 className="text-lg font-black text-slate-900 leading-tight mt-0.5">{fmt(kpis.ventas_mes)}</h3>
+                    <p className="text-[10px] font-bold text-[#16a085] mt-0.5">{kpis.ventas_growth || '↑ Facturación Activa'}</p>
+                  </div>
                 </div>
-              ))}
+                <div className="mt-3 -mx-5 -mb-5 h-12 w-[calc(100%+2.5rem)] opacity-80">
+                  <svg viewBox="0 0 100 25" preserveAspectRatio="none" className="w-full h-full">
+                    <path d="M0,22 Q25,18 45,20 T80,8 T100,5 L100,25 L0,25 Z" fill="#e8f6f3" />
+                    <path d="M0,22 Q25,18 45,20 T80,8 T100,5" fill="none" stroke="#16a085" strokeWidth="2" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Card 2: ITBIS Generado */}
+              <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md hover:shadow-lg transition-all flex flex-col justify-between overflow-hidden relative group">
+                <div className="flex items-center gap-3 z-10">
+                  <div className="w-10 h-10 rounded-2xl bg-[#eafaf1] text-[#27ae60] flex items-center justify-center font-bold shadow-2xs group-hover:scale-105 transition-transform">
+                    <Calculator size={18} />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-500">ITBIS Generado (18%)</p>
+                    <h3 className="text-lg font-black text-slate-900 leading-tight mt-0.5">{fmt(kpis.itbis_generado)}</h3>
+                    <p className="text-[10px] font-bold text-[#27ae60] mt-0.5">{kpis.itbis_growth || '↑ ITBIS Declarable'}</p>
+                  </div>
+                </div>
+                <div className="mt-3 -mx-5 -mb-5 h-12 w-[calc(100%+2.5rem)] opacity-80">
+                  <svg viewBox="0 0 100 25" preserveAspectRatio="none" className="w-full h-full">
+                    <path d="M0,23 Q30,22 55,14 T85,8 T100,5 L100,25 L0,25 Z" fill="#eafaf1" />
+                    <path d="M0,23 Q30,22 55,14 T85,8 T100,5" fill="none" stroke="#27ae60" strokeWidth="2" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Card 3: Comprobantes Emitidos */}
+              <div onClick={() => setActiveTab('comprobantes')} className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md hover:shadow-lg transition-all flex flex-col justify-between overflow-hidden relative group cursor-pointer">
+                <div className="flex items-center gap-3 z-10">
+                  <div className="w-10 h-10 rounded-2xl bg-[#ebf5fb] text-[#3498db] flex items-center justify-center font-bold shadow-2xs group-hover:scale-105 transition-transform">
+                    <FileText size={18} />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-500">Comprobantes</p>
+                    <h3 className="text-lg font-black text-slate-900 leading-tight mt-0.5">{kpis.comprobantes_emitidos ?? 0}</h3>
+                    <p className="text-[10px] font-bold text-[#3498db] mt-0.5">Ver detalles →</p>
+                  </div>
+                </div>
+                <div className="mt-3 -mx-5 -mb-5 h-12 w-[calc(100%+2.5rem)] opacity-80">
+                  <svg viewBox="0 0 100 25" preserveAspectRatio="none" className="w-full h-full">
+                    <path d="M0,23 Q25,20 50,15 T85,9 T100,6 L100,25 L0,25 Z" fill="#ebf5fb" />
+                    <path d="M0,23 Q25,20 50,15 T85,9 T100,6" fill="none" stroke="#3498db" strokeWidth="2" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Card 4: NCF Disponibles */}
+              <div onClick={() => setActiveTab('secuencias')} className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md hover:shadow-lg transition-all flex flex-col justify-between overflow-hidden relative group cursor-pointer">
+                <div className="flex items-center gap-3 z-10">
+                  <div className="w-10 h-10 rounded-2xl bg-[#fef5e7] text-[#f39c12] flex items-center justify-center font-bold shadow-2xs group-hover:scale-105 transition-transform">
+                    <Bookmark size={18} />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-500">NCF Disponibles</p>
+                    <h3 className="text-lg font-black text-slate-900 leading-tight mt-0.5">{(kpis.ncf_disponibles ?? 0).toLocaleString()}</h3>
+                    <p className="text-[10px] font-bold text-[#f39c12] mt-0.5">Ver secuencias →</p>
+                  </div>
+                </div>
+                <div className="mt-3 -mx-5 -mb-5 h-12 w-[calc(100%+2.5rem)] opacity-80">
+                  <svg viewBox="0 0 100 25" preserveAspectRatio="none" className="w-full h-full">
+                    <path d="M0,24 Q35,23 60,16 T85,10 T100,7 L100,25 L0,25 Z" fill="#fef5e7" />
+                    <path d="M0,24 Q35,23 60,16 T85,10 T100,7" fill="none" stroke="#f39c12" strokeWidth="2" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Card 5: Estado Fiscal */}
+              <div onClick={() => setActiveTab('secuencias')} className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md hover:shadow-lg transition-all flex flex-col justify-between overflow-hidden relative group cursor-pointer">
+                <div className="flex items-center gap-3 z-10">
+                  <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-bold shadow-2xs group-hover:scale-105 transition-transform ${
+                    kpis.alertas > 0 ? 'bg-[#fdedec] text-[#e74c3c]' : 'bg-[#eafaf1] text-[#27ae60]'
+                  }`}>
+                    {kpis.alertas > 0 ? <AlertTriangle size={18} /> : <ShieldCheck size={18} />}
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-bold text-slate-500">Estado Fiscal</p>
+                    <h3 className="text-lg font-black text-slate-900 leading-tight mt-0.5">{kpis.alertas > 0 ? `${kpis.alertas} Alertas` : 'Al Día'}</h3>
+                    <p className={`text-[10px] font-bold mt-0.5 ${kpis.alertas > 0 ? 'text-[#e74c3c]' : 'text-[#27ae60]'}`}>
+                      {kpis.alertas > 0 ? 'Revisar secuencias' : '✓ Todo en orden'}
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-3 -mx-5 -mb-5 h-12 w-[calc(100%+2.5rem)] opacity-80">
+                  <svg viewBox="0 0 100 25" preserveAspectRatio="none" className="w-full h-full">
+                    <path d="M0,23 Q30,22 55,14 T85,8 T100,5 L100,25 L0,25 Z" fill={kpis.alertas > 0 ? '#fdedec' : '#eafaf1'} />
+                    <path d="M0,23 Q30,22 55,14 T85,8 T100,5" fill="none" stroke={kpis.alertas > 0 ? '#e74c3c' : '#27ae60'} strokeWidth="2" />
+                  </svg>
+                </div>
+              </div>
+
             </div>
           )}
 
