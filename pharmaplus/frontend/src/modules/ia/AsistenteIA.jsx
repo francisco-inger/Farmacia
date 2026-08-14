@@ -195,7 +195,7 @@ const AsistenteIA = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-[#072a23]/90 via-[#0f6c59]/65 to-transparent pointer-events-none"></div>
 
         <div className="absolute top-0 right-0 p-8 opacity-15 font-mono text-4xl font-black tracking-widest uppercase select-none pointer-events-none hidden md:block">
-          CLINICAL PHARMACOLOGY & NEURAL ERP COPILOT
+          PHARMAPLUS DATABASE & ERP COPILOT
         </div>
 
         <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
@@ -203,27 +203,27 @@ const AsistenteIA = () => {
           <div className="space-y-3 max-w-2xl">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-950/60 backdrop-blur-md border border-emerald-400/40 text-emerald-200 text-xs font-bold tracking-wider uppercase shadow-sm">
               <span>✦</span>
-              <span>COPILOTO CLÍNICO & GESTIÓN INTEGRAL • PHARMAPLUS</span>
+              <span>COPILOTO DE GESTIÓN & BASE DE DATOS • PHARMAPLUS</span>
             </div>
 
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white leading-tight drop-shadow-md">
-              Asistente Inteligente & Orientación Clínica
+              Asistente Inteligente del Sistema
             </h1>
 
             <p className="text-xs sm:text-sm text-emerald-100/90 font-medium leading-relaxed max-w-xl drop-shadow">
-              Consultas médicas farmacológicas, orientación de dosis, búsqueda de stock en catálogo, ventas del día y administración por comandos en lenguaje natural.
+              Consultas en tiempo real de inventario, stock, ventas, compras, clientes, precios y ejecución de operaciones en la base de datos.
             </p>
 
             <div className="flex flex-wrap items-center gap-2.5 pt-1">
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
                 <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
-                Motor IA Activo
+                Exclusivo del Sistema
               </span>
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
                 SQL Directo a Base de Datos
               </span>
               <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
-                Atención 24/7
+                Gestión en Vivo
               </span>
             </div>
           </div>
@@ -290,7 +290,7 @@ const AsistenteIA = () => {
           {/* Status Box */}
           <div className="p-2.5 border-t border-border bg-background/50 text-[11px] text-muted flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-success"></span>
-            <span>Asistente Clínico Operativo</span>
+            <span>Conectado a Base de Datos</span>
           </div>
         </div>
 
@@ -301,16 +301,10 @@ const AsistenteIA = () => {
         <div className="px-4 py-2.5 bg-background/60 border-b border-border flex items-center gap-2 overflow-x-auto custom-scrollbar text-xs">
           <span className="font-bold text-muted text-[11px] shrink-0">Consultas Rápidas:</span>
           <button 
-            onClick={() => handleSendMessage('¿Qué me recomiendas para el dolor de cabeza?')}
-            className="px-3 py-1.5 rounded-xl bg-surface border border-emerald-200 text-emerald-800 hover:bg-emerald-50 transition-all shrink-0 font-semibold shadow-2xs"
-          >
-            🩺 Dolor de Cabeza / Gripe
-          </button>
-          <button 
-            onClick={() => handleSendMessage('¿Cuáles son los medicamentos con stock bajo?')}
+            onClick={() => handleSendMessage('¿Cuáles son los productos con stock bajo?')}
             className="px-3 py-1.5 rounded-xl bg-surface border border-amber-200 text-amber-800 hover:bg-amber-50 transition-all shrink-0 font-semibold shadow-2xs"
           >
-            ⚠️ Stock Bajo Farmacia
+            ⚠️ Stock Bajo
           </button>
           <button 
             onClick={() => handleSendMessage('¿Cuánto se ha vendido hoy?')}
@@ -319,16 +313,22 @@ const AsistenteIA = () => {
             📊 Ventas de Hoy
           </button>
           <button 
-            onClick={() => handleSendMessage('¿Qué servicios clínicos tienen disponibles?')}
-            className="px-3 py-1.5 rounded-xl bg-surface border border-purple-200 text-purple-800 hover:bg-purple-50 transition-all shrink-0 font-semibold shadow-2xs"
+            onClick={() => handleSendMessage('Listar los clientes registrados')}
+            className="px-3 py-1.5 rounded-xl bg-surface border border-emerald-200 text-emerald-800 hover:bg-emerald-50 transition-all shrink-0 font-semibold shadow-2xs"
           >
-            💉 Servicios Clínicos
+            👥 Clientes
           </button>
           <button 
-            onClick={() => handleSendMessage('Horarios de atención y entregas a domicilio')}
+            onClick={() => handleSendMessage('¿Cuáles son las órdenes de compra recientes?')}
+            className="px-3 py-1.5 rounded-xl bg-surface border border-purple-200 text-purple-800 hover:bg-purple-50 transition-all shrink-0 font-semibold shadow-2xs"
+          >
+            📦 Órdenes de Compra
+          </button>
+          <button 
+            onClick={() => handleSendMessage('¿Cuál es el estado de las cajas?')}
             className="px-3 py-1.5 rounded-xl bg-surface border border-slate-200 text-slate-700 hover:bg-slate-50 transition-all shrink-0 font-semibold shadow-2xs"
           >
-            🛵 Horarios & Delivery
+            💰 Estado de Cajas
           </button>
         </div>
 
@@ -339,18 +339,11 @@ const AsistenteIA = () => {
               <div className="w-16 h-16 rounded-2xl bg-[#e8f6f3] text-[#16a085] flex items-center justify-center mb-4 shadow-sm border border-[#16a085]/30">
                 <Sparkles size={32} />
               </div>
-              <h3 className="text-lg font-black text-slate-800 mb-2">¡Hola! Soy tu Asistente Clínico y de Gestión PharmaPlus</h3>
+              <h3 className="text-lg font-black text-slate-800 mb-2">Asistente Inteligente del Sistema PharmaPlus</h3>
               <p className="text-xs text-slate-500 leading-relaxed mb-6">
-                Puedo responder cualquier pregunta médica o de farmacia, orientar a tus clientes sobre síntomas y medicamentos, o consultar ventas, inventario, precios y compras en tiempo real.
+                Consultas y operaciones exclusivas sobre los datos de PharmaPlus (stock, ventas, compras, precios, clientes y auditoría en tiempo real).
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full text-left">
-                <button 
-                  onClick={() => handleSendMessage('¿Qué medicamento tienen para el dolor de estómago o acidez?')}
-                  className="p-3 bg-surface border border-border hover:border-emerald-500 rounded-xl text-xs text-slate-600 hover:text-emerald-700 transition-all flex items-center gap-2"
-                >
-                  <Sparkles size={16} className="text-emerald-600 shrink-0" />
-                  "¿Qué tienen para el dolor de estómago o acidez?"
-                </button>
                 <button 
                   onClick={() => handleSendMessage('¿Cuáles son los productos con stock bajo en el almacén?')}
                   className="p-3 bg-surface border border-border hover:border-emerald-500 rounded-xl text-xs text-slate-600 hover:text-emerald-700 transition-all flex items-center gap-2"
@@ -366,11 +359,18 @@ const AsistenteIA = () => {
                   "¿Cuánto dinero se ha vendido hoy?"
                 </button>
                 <button 
-                  onClick={() => handleSendMessage('¿Qué antibióticos están registrados en el catálogo?')}
+                  onClick={() => handleSendMessage('Mostrar los clientes registrados en el sistema')}
                   className="p-3 bg-surface border border-border hover:border-emerald-500 rounded-xl text-xs text-slate-600 hover:text-emerald-700 transition-all flex items-center gap-2"
                 >
                   <Users size={16} className="text-emerald-600 shrink-0" />
-                  "¿Qué antibióticos tienen disponibles?"
+                  "Listar clientes registrados"
+                </button>
+                <button 
+                  onClick={() => handleSendMessage('¿Cuáles son los lotes y fechas de vencimiento?')}
+                  className="p-3 bg-surface border border-border hover:border-emerald-500 rounded-xl text-xs text-slate-600 hover:text-emerald-700 transition-all flex items-center gap-2"
+                >
+                  <Database size={16} className="text-emerald-600 shrink-0" />
+                  "Lotes y fechas de vencimiento"
                 </button>
               </div>
             </div>
