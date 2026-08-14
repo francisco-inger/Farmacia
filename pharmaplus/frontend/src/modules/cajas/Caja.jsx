@@ -584,126 +584,78 @@ const Caja = () => {
 
       </div>
 
-      {/* ─── 4 TARJETAS KPI CON CURVAS FLUIDAS ─── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* ─── 4 TARJETAS KPI LIMPIAS Y ESPACIOSAS ─── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         
         {/* Card 1: Ventas del día */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden relative group">
-          <div className="flex items-center gap-3 z-10">
-            <div className="w-11 h-11 rounded-2xl bg-[#e8f6f3] text-[#16a085] flex items-center justify-center font-bold text-lg shadow-2xs group-hover:scale-105 transition-transform">
-              <Wallet size={20} />
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#e8f6f3] text-[#16a085] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+              <Wallet size={22} />
             </div>
-            <div>
+            <div className="truncate">
               <p className="text-xs font-bold text-slate-500">Ventas del día</p>
               <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
                 RD$ {kpis.ventas.toLocaleString('es-DO', { minimumFractionDigits: 2 })}
               </h3>
-              <p className="text-[11px] font-bold text-[#16a085] flex items-center gap-1 mt-0.5">
+              <p className="text-[11px] font-bold text-[#16a085] mt-0.5 truncate">
                 <span>{kpis.count} transacciones</span> <span className="text-slate-400 font-normal">completadas</span>
               </p>
             </div>
           </div>
-          <div className="mt-4 -mx-5 -mb-5 h-16 w-[calc(100%+2.5rem)] opacity-90">
-            <svg viewBox="0 0 100 25" preserveAspectRatio="none" className="w-full h-full">
-              <defs>
-                <linearGradient id="gradCaja1" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#16a085" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#16a085" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-              <path d="M0,22 Q25,18 45,20 T80,8 T100,5 L100,25 L0,25 Z" fill="url(#gradCaja1)" />
-              <path d="M0,22 Q25,18 45,20 T80,8 T100,5" fill="none" stroke="#16a085" strokeWidth="2.2" strokeLinecap="round" />
-            </svg>
-          </div>
         </div>
 
         {/* Card 2: Ingresos Totales */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden relative group">
-          <div className="flex items-center gap-3 z-10">
-            <div className="w-11 h-11 rounded-2xl bg-[#eafaf1] text-[#27ae60] flex items-center justify-center font-bold text-lg shadow-2xs group-hover:scale-105 transition-transform">
-              <ArrowDownCircle size={20} />
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#eafaf1] text-[#27ae60] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+              <ArrowDownCircle size={22} />
             </div>
-            <div>
+            <div className="truncate">
               <p className="text-xs font-bold text-slate-500">Ingresos Totales</p>
               <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
                 RD$ {kpis.ingresos.toLocaleString('es-DO', { minimumFractionDigits: 2 })}
               </h3>
-              <p className="text-[11px] font-bold text-[#27ae60] flex items-center gap-1 mt-0.5">
+              <p className="text-[11px] font-bold text-[#27ae60] mt-0.5 truncate">
                 <span>↑ Efectivo + Otros</span> <span className="text-slate-400 font-normal">en turno</span>
               </p>
             </div>
           </div>
-          <div className="mt-4 -mx-5 -mb-5 h-16 w-[calc(100%+2.5rem)] opacity-90">
-            <svg viewBox="0 0 100 25" preserveAspectRatio="none" className="w-full h-full">
-              <defs>
-                <linearGradient id="gradCaja2" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#27ae60" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#27ae60" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-              <path d="M0,23 Q30,22 55,14 T85,8 T100,5 L100,25 L0,25 Z" fill="url(#gradCaja2)" />
-              <path d="M0,23 Q30,22 55,14 T85,8 T100,5" fill="none" stroke="#27ae60" strokeWidth="2.2" strokeLinecap="round" />
-            </svg>
-          </div>
         </div>
 
         {/* Card 3: Egresos / Gastos */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden relative group">
-          <div className="flex items-center gap-3 z-10">
-            <div className="w-11 h-11 rounded-2xl bg-[#fdedec] text-[#e74c3c] flex items-center justify-center font-bold text-lg shadow-2xs group-hover:scale-105 transition-transform">
-              <ArrowUpCircle size={20} />
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#fdedec] text-[#e74c3c] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+              <ArrowUpCircle size={22} />
             </div>
-            <div>
+            <div className="truncate">
               <p className="text-xs font-bold text-slate-500">Egresos / Gastos</p>
               <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
                 RD$ {kpis.egresos.toLocaleString('es-DO', { minimumFractionDigits: 2 })}
               </h3>
-              <p className="text-[11px] font-bold text-[#e74c3c] flex items-center gap-1 mt-0.5">
+              <p className="text-[11px] font-bold text-[#e74c3c] mt-0.5 truncate">
                 <span>↓ Salidas registradas</span>
               </p>
             </div>
           </div>
-          <div className="mt-4 -mx-5 -mb-5 h-16 w-[calc(100%+2.5rem)] opacity-90">
-            <svg viewBox="0 0 100 25" preserveAspectRatio="none" className="w-full h-full">
-              <defs>
-                <linearGradient id="gradCaja3" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#e74c3c" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#e74c3c" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-              <path d="M0,24 Q35,23 60,16 T85,10 T100,7 L100,25 L0,25 Z" fill="url(#gradCaja3)" />
-              <path d="M0,24 Q35,23 60,16 T85,10 T100,7" fill="none" stroke="#e74c3c" strokeWidth="2.2" strokeLinecap="round" />
-            </svg>
-          </div>
         </div>
 
         {/* Card 4: Balance en Caja */}
-        <div className="bg-white rounded-3xl p-5 border border-slate-100 shadow-md hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden relative group">
-          <div className="flex items-center gap-3 z-10">
-            <div className="w-11 h-11 rounded-2xl bg-[#ebf5fb] text-[#3498db] flex items-center justify-center font-bold text-lg shadow-2xs group-hover:scale-105 transition-transform">
-              <Banknote size={20} />
+        <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#ebf5fb] text-[#3498db] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+              <Banknote size={22} />
             </div>
-            <div>
+            <div className="truncate">
               <p className="text-xs font-bold text-slate-500">Balance en Caja</p>
               <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
                 RD$ {kpis.balance.toLocaleString('es-DO', { minimumFractionDigits: 2 })}
               </h3>
-              <p className="text-[11px] font-bold text-[#16a085] flex items-center gap-1 mt-0.5">
+              <p className="text-[11px] font-bold text-[#16a085] mt-0.5 truncate">
                 <span>✓ Estado: {currentRegister?.status === 'abierta' ? 'Abierta' : 'Cerrada'}</span>
               </p>
             </div>
-          </div>
-          <div className="mt-4 -mx-5 -mb-5 h-16 w-[calc(100%+2.5rem)] opacity-90">
-            <svg viewBox="0 0 100 25" preserveAspectRatio="none" className="w-full h-full">
-              <defs>
-                <linearGradient id="gradCaja4" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#3498db" stopOpacity="0.25" />
-                  <stop offset="100%" stopColor="#3498db" stopOpacity="0.0" />
-                </linearGradient>
-              </defs>
-              <path d="M0,23 Q25,20 50,15 T85,9 T100,6 L100,25 L0,25 Z" fill="url(#gradCaja4)" />
-              <path d="M0,23 Q25,20 50,15 T85,9 T100,6" fill="none" stroke="#3498db" strokeWidth="2.2" strokeLinecap="round" />
-            </svg>
           </div>
         </div>
 
