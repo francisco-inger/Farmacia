@@ -738,23 +738,23 @@ const POS = () => {
       <div className="w-20 bg-white border-r border-slate-200 flex flex-col items-center py-5 shrink-0 justify-between">
         <div className="flex flex-col items-center gap-4 w-full">
           {/* Logo */}
-          <div className="w-12 h-12 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg mb-2">
+          <div className="w-12 h-12 bg-gradient-to-tr from-[#12876f] to-[#16a085] text-white rounded-2xl flex items-center justify-center shadow-lg shadow-[#16a085]/25 mb-2">
             <ShoppingCart size={22} />
           </div>
 
           {/* POS mode button - Active */}
           <button 
-            className="w-12 h-12 rounded-xl bg-primary-light text-primary flex flex-col items-center justify-center transition-colors"
+            className="w-12 h-12 rounded-2xl bg-[#e8f6f3] text-[#12876f] border border-[#16a085]/20 flex flex-col items-center justify-center transition-all shadow-xs"
             title="Terminal POS"
           >
             <Printer size={18} />
-            <span className="text-[9px] font-bold mt-0.5">POS</span>
+            <span className="text-[9px] font-extrabold mt-0.5">POS</span>
           </button>
 
           {/* Cash Register movements / Cajas */}
           <button 
             onClick={() => navigate('/cajas')}
-            className="w-12 h-12 rounded-xl text-slate-600 hover:bg-slate-100 flex flex-col items-center justify-center transition-colors"
+            className="w-12 h-12 rounded-2xl text-slate-600 hover:bg-slate-100 flex flex-col items-center justify-center transition-colors"
             title="Cajas y Cierres"
           >
             <Banknote size={18} />
@@ -764,7 +764,7 @@ const POS = () => {
           {/* Arqueo de caja rápida */}
           <button 
             onClick={triggerCloseRegister}
-            className="w-12 h-12 rounded-xl text-slate-600 hover:bg-slate-100 flex flex-col items-center justify-center transition-colors"
+            className="w-12 h-12 rounded-2xl text-slate-600 hover:bg-slate-100 flex flex-col items-center justify-center transition-colors"
             title="Arqueo / Cierre de Caja"
           >
             <Lock size={18} />
@@ -777,7 +777,7 @@ const POS = () => {
           {user?.role !== 'cajero' && (
             <button 
               onClick={() => navigate('/dashboard')}
-              className="w-12 h-12 rounded-xl text-slate-500 hover:bg-slate-100 flex flex-col items-center justify-center transition-colors"
+              className="w-12 h-12 rounded-2xl text-slate-500 hover:bg-slate-100 flex flex-col items-center justify-center transition-colors"
               title="Volver al Dashboard"
             >
               <Home size={18} />
@@ -788,7 +788,7 @@ const POS = () => {
           {/* Botón de Cerrar Sesión directo */}
           <button
             onClick={() => { logout(); navigate('/login'); }}
-            className="w-12 h-12 rounded-xl text-rose-600 hover:bg-rose-50 border border-rose-200/50 flex flex-col items-center justify-center transition-colors shadow-xs"
+            className="w-12 h-12 rounded-2xl text-rose-600 hover:bg-rose-50 border border-rose-200/50 flex flex-col items-center justify-center transition-colors shadow-xs"
             title="Cerrar Sesión"
           >
             <LogOut size={18} />
