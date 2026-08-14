@@ -747,6 +747,47 @@ function generateLocalResponse(message, contextStr, db) {
     return `👤 **Usuarios y Roles del Sistema (${users.length}):**\n${list}`;
   }
 
+  // ─── DEFINICIONES Y CONCEPTOS DE SALUD (QUÉ ES X) ───
+  if (/^qu[eé] es\b/i.test(lower) || /^para qu[eé] sirve\b/i.test(lower) || /^c[oó]mo funciona\b/i.test(lower)) {
+    const topic = message.replace(/^(qu[eé] es|para qu[eé] sirve|c[oó]mo funciona)\s*(el|la|los|las|un|una)?\s*/i, '').replace(/[?¿!¡.]/g, '').trim();
+    
+    // Buscar si es un producto de la base de datos
+    const matched = db.prepare(`SELECT name, code, stock, sale_price, description FROM products WHERE is_active = 1 AND (name LIKE ? OR code LIKE ?) LIMIT 1`).get(`%${topic}%`, `%${topic}%`);
+    if (matched) {
+      return `💊 **${matched.name}** (Código: ${matched.code})\n\n• **Descripción/Uso:** Medicamento o producto farmacéutico formulado para el tratamiento y alivio terapéutico.\n• **Stock Actual en Farmacia:** ${matched.stock} unidades\n• **Precio de Venta:** RD$ ${matched.sale_price.toFixed(2)}\n\n💡 *Recomendación:* Siga la posología recomendada por su médico o la indicada en el prospecto del empaque.`;
+    }
+
+    return `📚 **Información sobre "${topic}":**\n\n**${topic}** es un concepto o tratamiento dentro del ámbito de la salud y el bienestar. En farmacología y medicina, es fundamental conocer su aplicación terapéutica adecuada, sus posibles contraindicaciones y la dosis recomendada.\n\nEn **PharmaPlus** contamos con una amplia variedad de medicamentos, suplementos y servicios de asesoría para acompañarte en tu tratamiento.\n\n¿Deseas saber si disponemos de algún producto específico relacionado con **${topic}** en nuestro inventario?`;
+  }
+
+  // ─── PREGUNTAS GENERALES DE VIDA, NUTRICIÓN Y BIENESTAR ───
+  if (/agua|hidrataci[oó]n|cu[aá]nta agua/i.test(lower)) {
+    return `💧 **Recomendación de Hidratación:**\n\nSe recomienda consumir entre **2 y 2.5 litros de agua al día** (aproximadamente 8 vasos) para mantener el correcto funcionamiento renal, digestivo y celular.\n\n💡 *Tip PharmaPlus:* Si tomas medicamentos o practicas deporte, incrementa la ingesta de líquidos.`;
+  }
+
+  if (/vitamina|suplemento|defensa|inmunidad|energ[ií]a/i.test(lower)) {
+    const prods = db.prepare(`SELECT name, code, stock, sale_price FROM products WHERE (name LIKE '%vitamina%' OR name LIKE '%complejo%' OR name LIKE '%zinc%') AND is_active = 1`).all();
+    const list = prods.length > 0 ? prods.map(p => `• **${p.name}** — RD$ ${p.sale_price.toFixed(2)} (Stock: ${p.stock})`).join('\n') : '• Vitamina C 500mg\n• Complejo B';
+    return `✨ **Suplementos y Fortalecimiento Inmune:**\n\nLas vitaminas como la **Vitamina C**, **Vitamina D3**, **Complejo B** y minerales como el **Zinc** son esenciales para la energía celular y la respuesta inmunológica.\n\n💊 **Disponibles en Farmacia:**\n${list}`;
+  }
+
+  if (/vacuna|vacunaci[oó]n|dosis/i.test(lower)) {
+    return `💉 **Información sobre Vacunación en PharmaPlus:**\n\nLas vacunas son fundamentales para prevenir enfermedades infecciosas graves como la Influenza, Tétanos y Hepatitis.\n\nEn nuestro módulo de **Servicios Clínicos** disponemos de personal capacitado para la aplicación segura de vacunas y registro de dosis.`;
+  }
+
+  // ─── PREGUNTAS DE DIÁLOGO ABIERTO (OPINIÓN, SALUDO, CHARLA GENERAL) ───
+  if (/qui[eé]n te cre[oó]|qui[eé]n te hizo|desarrollador|creador/i.test(lower)) {
+    return `Fui desarrollado como parte del ecosistema integral de **PharmaPlus 2026**, diseñado para brindar atención personalizada a pacientes y optimizar la gestión de farmacias modernas. 😊`;
+  }
+
+  if (/chiste|broma|cu[eé]ntame algo/i.test(lower)) {
+    return `😄 ¿Sabías por qué los medicamentos siempre están tranquilos?\n¡Porque tienen la **dosis exacta de paciencia**! 💊✨\n\n¡Estoy aquí para responder cualquier pregunta seria o consulta sobre tu salud y tu farmacia!`;
+  }
+
+  if (/adi[oó]s|hasta luego|chao|nos vemos/i.test(lower)) {
+    return `¡Hasta luego! 👋 Que tengas un excelente día. Recuerda que en **PharmaPlus** estamos para cuidar de tu salud siempre. 😊`;
+  }
+
   // ─── BÚSQUEDA FUZZY DE PRODUCTO ───
   const cleanMsg = message.trim();
   if (cleanMsg.length > 2) {
@@ -762,8 +803,8 @@ function generateLocalResponse(message, contextStr, db) {
     }
   }
 
-  // ─── RESPUESTA INTELIGENTE / DIÁLOGO DIRECTO CON EL CLIENTE ───
-  return `Comprendo tu inquietud sobre **"${message}"**. 😊\n\nComo tu asistente farmacéutico en **PharmaPlus**, puedo orientarte tanto en salud como en la gestión de la farmacia:\n\n🩺 **Atención a Clientes y Pacientes:**\n• Alivio de síntomas comunes (dolor de cabeza, gripe, fiebre, acidez, alergias).\n• Consulta de dosis recomendadas, medicamentos y servicios clínicos.\n\n📊 **Consultas Rápidas del Sistema:**\n• **Ventas:** *"¿Cuánto se vendió hoy?"* o *"Ventas de ayer"*\n• **Inventario:** *"¿Cuáles productos tienen stock bajo?"* o *"Catálogo"*\n• **Cajas:** *"Estado de cajas"* o *"Movimientos"*\n• **Compras & Facturas:** *"Compras pendientes"* o *"Facturas recientes"*\n\n¿Deseas consultar algún producto o área en particular?`;
+  // ─── RESPUESTA UNIVERSAL A CUALQUIER PREGUNTA GENÉRICA ───
+  return `Respecto a tu consulta: **"${message}"** 💬✨\n\nComo asistente inteligente de **PharmaPlus**, puedo dialogar sobre cualquier tema relacionado con salud, bienestar o administración:\n\n1. **Orientación de Salud & Fármacos:** Puedes preguntarme sobre síntomas, medicamentos, posología, prevención o cuidados generales.\n2. **Consultas de la Farmacia:** Pregúntame sobre precios, productos disponibles en stock, ventas del día o servicios clínicos.\n\n¿Te gustaría que profundice en algún detalle médico o que busque algún producto en el catálogo? 😊`;
 }
 
 // ─── CONVERSATIONS API ───────────────────────────────────────────────────────
