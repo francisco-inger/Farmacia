@@ -182,80 +182,120 @@ const AsistenteIA = () => {
   };
 
   return (
-    <div className="flex h-[calc(100vh-100px)] gap-6 animate-fade-in">
+    <div className="flex flex-col gap-5 relative h-[calc(100vh-100px)] animate-fade-in">
       
-      {/* Sidebar - Conversation History */}
-      <div className="w-64 bg-surface rounded-2xl border border-border flex flex-col shrink-0 overflow-hidden shadow-xs">
-        <div className="p-4 border-b border-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Sparkles size={18} className="text-primary" />
-            <h3 className="font-bold text-sm text-main">Conversaciones</h3>
-          </div>
-          <button 
-            onClick={handleNewConversation}
-            className="p-1.5 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors shadow-xs"
-            title="Nueva Conversación"
-          >
-            <Plus size={16} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-1.5 custom-scrollbar">
-          {conversations.length === 0 ? (
-            <p className="text-xs text-muted text-center py-6">No hay chats anteriores</p>
-          ) : (
-            conversations.map(c => (
-              <button
-                key={c.id}
-                onClick={() => selectConversation(c.id)}
-                className={`w-full text-left p-3 rounded-xl text-xs flex items-center gap-2.5 transition-all ${
-                  activeConvId === c.id 
-                  ? 'bg-primary text-white font-bold shadow-xs' 
-                  : 'text-main hover:bg-background'
-                }`}
-              >
-                <MessageSquare size={14} className="shrink-0" />
-                <span className="truncate flex-1">{c.title || 'Conversación'}</span>
-              </button>
-            ))
-          )}
-        </div>
-
-        {/* Status Box */}
-        <div className="p-3 border-t border-border bg-background/50 text-[11px] text-muted flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-success"></span>
-          <span>Asistente de Gestión Activo</span>
-        </div>
-      </div>
-
-      {/* Main Chat Box */}
-      <div className="flex-1 bg-surface rounded-2xl border border-border flex flex-col overflow-hidden shadow-xs">
+      {/* ─── BANNER SUPERIOR CORPORATIVO ASISTENTE IA (PHARMA.ERP) ─── */}
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#072a23] via-[#0f6c59] to-[#16a085] text-white p-6 sm:p-8 lg:p-10 shadow-2xl border border-[#16a085]/40 min-h-[220px] flex flex-col justify-between shrink-0">
         
-        {/* Chat Header */}
-        <div className="p-4 border-b border-border flex items-center justify-between bg-surface">
-          <div className="flex items-center gap-3">
-            <img 
-              src="/modules/reportes.png" 
-              alt="IA" 
-              className="w-12 h-12 rounded-xl object-cover border border-emerald-100 shadow-sm shrink-0"
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="font-bold text-main text-base leading-tight">Asistente PharmaPlus</h2>
-              </div>
-              <p className="text-xs text-success font-semibold flex items-center gap-1">
-                <Database size={12} /> Gestión integrada de inventario, ventas y clientes
-              </p>
+        {/* Imagen Farmacéutica Corporativa en Alta Visibilidad */}
+        <div 
+          className="absolute inset-0 opacity-40 mix-blend-luminosity bg-cover bg-right sm:bg-center pointer-events-none transition-all duration-700" 
+          style={{ backgroundImage: "url('/erp-banner.jpg')" }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#072a23]/90 via-[#0f6c59]/65 to-transparent pointer-events-none"></div>
+
+        <div className="absolute top-0 right-0 p-8 opacity-15 font-mono text-4xl font-black tracking-widest uppercase select-none pointer-events-none hidden md:block">
+          CLINICAL PHARMACOLOGY & NEURAL ERP COPILOT
+        </div>
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+          
+          <div className="space-y-3 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-950/60 backdrop-blur-md border border-emerald-400/40 text-emerald-200 text-xs font-bold tracking-wider uppercase shadow-sm">
+              <span>✦</span>
+              <span>COPILOTO CLÍNICO & GESTIÓN INTEGRAL • PHARMAPLUS</span>
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-white leading-tight drop-shadow-md">
+              Asistente Inteligente & Orientación Clínica
+            </h1>
+
+            <p className="text-xs sm:text-sm text-emerald-100/90 font-medium leading-relaxed max-w-xl drop-shadow">
+              Consultas médicas farmacológicas, orientación de dosis, búsqueda de stock en catálogo, ventas del día y administración por comandos en lenguaje natural.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2.5 pt-1">
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+                Motor IA Activo
+              </span>
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                SQL Directo a Base de Datos
+              </span>
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                Atención 24/7
+              </span>
             </div>
           </div>
-          <button 
-            onClick={() => setMessages([])} 
-            className="p-2 text-muted hover:text-main hover:bg-background rounded-lg text-xs flex items-center gap-1 transition-colors"
-          >
-            <RefreshCw size={14} /> Limpiar pantalla
-          </button>
+
+          <div className="flex flex-wrap items-center gap-3 z-10">
+            <button
+              onClick={handleNewConversation}
+              className="px-5 py-2.5 rounded-2xl bg-white text-[#12876f] hover:bg-emerald-50 active:scale-95 text-xs font-black shadow-xl transition-all flex items-center gap-2"
+            >
+              <Plus size={16} /> Nueva Conversación
+            </button>
+            <button
+              onClick={() => setMessages([])}
+              className="px-4 py-2.5 rounded-2xl bg-black/40 hover:bg-black/60 active:scale-95 text-white text-xs font-bold border border-emerald-300/40 backdrop-blur-md transition-all flex items-center gap-2 shadow-lg"
+            >
+              <RefreshCw size={15} /> Limpiar Chat
+            </button>
+          </div>
+
         </div>
+
+      </div>
+
+      {/* ─── CHAT MAIN INTERFACE ─── */}
+      <div className="flex flex-1 gap-5 min-h-0 overflow-hidden">
+        
+        {/* Sidebar - Conversation History */}
+        <div className="w-64 bg-surface rounded-2xl border border-border flex flex-col shrink-0 overflow-hidden shadow-xs">
+          <div className="p-3.5 border-b border-border flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles size={16} className="text-primary" />
+              <h3 className="font-bold text-xs text-main uppercase tracking-wider">Historial de Chats</h3>
+            </div>
+            <button 
+              onClick={handleNewConversation}
+              className="p-1.5 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors shadow-xs"
+              title="Nueva Conversación"
+            >
+              <Plus size={15} />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-2.5 flex flex-col gap-1 custom-scrollbar">
+            {conversations.length === 0 ? (
+              <p className="text-xs text-muted text-center py-6">No hay chats anteriores</p>
+            ) : (
+              conversations.map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => selectConversation(c.id)}
+                  className={`w-full text-left p-2.5 rounded-xl text-xs flex items-center gap-2 transition-all ${
+                    activeConvId === c.id 
+                    ? 'bg-primary text-white font-bold shadow-xs' 
+                    : 'text-main hover:bg-background'
+                  }`}
+                >
+                  <MessageSquare size={13} className="shrink-0" />
+                  <span className="truncate flex-1">{c.title || 'Conversación'}</span>
+                </button>
+              ))
+            )}
+          </div>
+
+          {/* Status Box */}
+          <div className="p-2.5 border-t border-border bg-background/50 text-[11px] text-muted flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-success"></span>
+            <span>Asistente Clínico Operativo</span>
+          </div>
+        </div>
+
+        {/* Main Chat Box */}
+        <div className="flex-1 bg-surface rounded-2xl border border-border flex flex-col overflow-hidden shadow-xs">
 
         {/* Preset Action Chips */}
         <div className="px-4 py-2.5 bg-background/60 border-b border-border flex items-center gap-2 overflow-x-auto custom-scrollbar text-xs">
@@ -403,6 +443,8 @@ const AsistenteIA = () => {
               <Send size={14} />
             </button>
           </form>
+        </div>
+
         </div>
 
       </div>
