@@ -71,68 +71,73 @@ const Dashboard = () => {
     <div className="flex flex-col gap-6 p-1 sm:p-2">
       
       {/* ─── BANNER SUPERIOR CORPORATIVO (CON PALETA DE COLOR ORIGINAL #16a085 / #12876f) ─── */}
-      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#0d3f34] via-[#12876f] to-[#16a085] text-white p-6 sm:p-8 shadow-xl border border-[#16a085]/30">
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#072a23] via-[#0f6c59] to-[#16a085] text-white p-7 sm:p-10 lg:p-12 shadow-2xl border border-[#16a085]/40 min-h-[290px] flex flex-col justify-between">
         
-        {/* Marca de agua / Background Image */}
-        <div className="absolute inset-0 opacity-15 mix-blend-screen bg-cover bg-center pointer-events-none" style={{ backgroundImage: "url('/erp-banner.jpg')" }}></div>
-        <div className="absolute top-0 right-0 p-8 opacity-10 font-mono text-3xl font-black tracking-widest uppercase select-none pointer-events-none">
-          GLOBAL ERP ENTERPRISE ANALYTICS SYSTEM
+        {/* Imagen Farmacéutica Corporativa en Alta Visibilidad */}
+        <div 
+          className="absolute inset-0 opacity-40 mix-blend-luminosity bg-cover bg-right sm:bg-center pointer-events-none transition-all duration-700" 
+          style={{ backgroundImage: "url('/erp-banner.jpg')" }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#072a23]/90 via-[#0f6c59]/65 to-transparent pointer-events-none"></div>
+
+        <div className="absolute top-0 right-0 p-8 opacity-15 font-mono text-4xl font-black tracking-widest uppercase select-none pointer-events-none hidden md:block">
+          GLOBAL PHARMACEUTICAL ERP SYSTEM
         </div>
 
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
           
           {/* Lado Izquierdo: Saludo & Badges */}
-          <div className="space-y-3 max-w-xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg bg-emerald-950/40 backdrop-blur-md border border-emerald-400/30 text-emerald-200 text-[11px] font-bold tracking-wider uppercase">
+          <div className="space-y-4 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-950/60 backdrop-blur-md border border-emerald-400/40 text-emerald-200 text-xs font-bold tracking-wider uppercase shadow-sm">
               <span>✦</span>
-              <span>PANEL DE CONTROL • PHARMAPLUS</span>
+              <span>PANEL DE CONTROL & DIRECCIÓN • PHARMAPLUS</span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight drop-shadow-md">
               Buenos días, <span className="text-emerald-200">Admin General</span>
             </h1>
             
-            <p className="text-xs sm:text-sm text-emerald-100/80 font-medium">
-              viernes, 14 de agosto de 2026
+            <p className="text-sm sm:text-base text-emerald-100/90 font-medium">
+              viernes, 14 de agosto de 2026 • Centro de Control Operativo
             </p>
 
             {/* Status Pills */}
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-400/40 text-emerald-100 text-xs font-bold shadow-sm">
-                <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></span>
+            <div className="flex flex-wrap items-center gap-2.5 pt-2">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/25 border border-emerald-300/40 text-white text-xs font-bold shadow-sm backdrop-blur-md">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse"></span>
                 Conexión SQLite Activa
               </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
                 Todos los 11 módulos en línea
               </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-950/60 border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
                 Ciclo Fiscal 2026
               </span>
             </div>
           </div>
 
           {/* Lado Derecho: Floating Stat Widgets */}
-          <div className="flex flex-col sm:flex-row lg:flex-col gap-3 min-w-[240px]">
+          <div className="flex flex-col sm:flex-row lg:flex-col gap-3.5 min-w-[270px]">
             {/* Widget 1 */}
-            <div className="p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-lg flex items-center justify-between gap-4">
+            <div className="p-4 rounded-2xl bg-black/35 backdrop-blur-lg border border-white/20 shadow-xl flex items-center justify-between gap-5 hover:bg-black/45 transition-all">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-100">Eficiencia Operativa</p>
-                <h4 className="text-xl font-extrabold text-white leading-tight mt-0.5">+18.4%</h4>
-                <p className="text-[10px] text-emerald-200/70 font-medium">Automatización de procesos</p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-200">Eficiencia Operativa</p>
+                <h4 className="text-2xl font-black text-white leading-tight mt-0.5">+18.4%</h4>
+                <p className="text-[11px] text-emerald-100/80 font-medium">Automatización de procesos</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/30 flex items-center justify-center text-emerald-200 shrink-0">
-                <Activity size={20} />
+              <div className="w-11 h-11 rounded-2xl bg-emerald-500/30 border border-emerald-400/40 flex items-center justify-center text-emerald-200 shrink-0 shadow-inner">
+                <Activity size={22} />
               </div>
             </div>
 
             {/* Widget 2 */}
-            <div className="p-3.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 shadow-lg flex items-center justify-between gap-4">
+            <div className="p-4 rounded-2xl bg-black/35 backdrop-blur-lg border border-white/20 shadow-xl flex items-center justify-between gap-5 hover:bg-black/45 transition-all">
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-100">Seguridad de Datos</p>
-                <h4 className="text-xl font-extrabold text-emerald-300 leading-tight mt-0.5 flex items-center gap-1.5">
-                  <ShieldCheck size={18} /> Protegido
+                <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-200">Seguridad de Datos</p>
+                <h4 className="text-2xl font-black text-emerald-300 leading-tight mt-0.5 flex items-center gap-2">
+                  <ShieldCheck size={20} /> Protegido
                 </h4>
-                <p className="text-[10px] text-emerald-200/70 font-medium">Encriptación AES-256 & 2FA</p>
+                <p className="text-[11px] text-emerald-100/80 font-medium">Encriptación AES-256 & 2FA</p>
               </div>
             </div>
           </div>
