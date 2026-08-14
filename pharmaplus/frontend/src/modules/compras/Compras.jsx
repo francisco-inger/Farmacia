@@ -1254,32 +1254,6 @@ const Compras = () => {
                 </button>
               </div>
             </div>
-
-            {/* Estado de compras summary */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-4">
-              <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Estado de Compras</p>
-              <div className="space-y-3">
-                {[
-                  { label: 'Recibidas', count: recibidas, color: 'bg-emerald-500', total: purchases.length },
-                  { label: 'Pendientes', count: pendientes, color: 'bg-amber-400', total: purchases.length },
-                  { label: 'Parciales', count: parciales, color: 'bg-sky-400', total: purchases.length },
-                  { label: 'Canceladas', count: canceladas, color: 'bg-rose-400', total: purchases.length },
-                ].map(item => (
-                  <div key={item.label} className="flex flex-col gap-1">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-slate-600 font-medium">{item.label}</span>
-                      <span className="font-bold text-slate-800">{item.count}</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full ${item.color} rounded-full transition-all duration-500`}
-                        style={{ width: item.total > 0 ? `${(item.count / item.total) * 100}%` : '0%' }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </div>
       </div>
