@@ -197,76 +197,150 @@ const Clientes = () => {
   const tierCounts = stats?.tiers?.reduce((acc, t) => { acc[t.tier] = t.count; return acc; }, {}) || {};
 
   return (
-    <div className="h-full flex flex-col gap-5 overflow-auto pb-4">
+    <div className="h-full flex flex-col gap-5 overflow-y-auto pr-1">
 
-      {/* ── Hero Banner ── */}
-      <div className="relative bg-gradient-to-br from-[#16a085] via-[#1abc9c] to-[#27ae60] rounded-2xl p-5 text-white shadow-lg overflow-hidden shrink-0">
-        <div className="absolute inset-0 opacity-10"
-          style={{ backgroundImage: 'radial-gradient(circle at 80% 50%, white 0%, transparent 60%)' }} />
-        <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-black tracking-tight">Directorio y Fidelización de Clientes</h1>
-            <p className="text-sm text-white/80 mt-0.5">Gestiona clientes, puntos y niveles de lealtad</p>
-          </div>
-          <img
-            src="/modules/clientes.png"
-            alt="Clientes"
-            className="h-16 w-auto object-contain rounded-xl drop-shadow-md opacity-90"
-            onError={(e) => { e.target.style.display = 'none'; }}
-          />
+      {/* ─── BANNER SUPERIOR CORPORATIVO CLIENTES (PHARMA.ERP) ─── */}
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#072a23] via-[#0f6c59] to-[#16a085] text-white p-7 sm:p-10 lg:p-12 shadow-2xl border border-[#16a085]/40 min-h-[290px] flex flex-col justify-between shrink-0">
+        
+        {/* Imagen Farmacéutica Corporativa en Alta Visibilidad */}
+        <div 
+          className="absolute inset-0 opacity-40 mix-blend-luminosity bg-cover bg-right sm:bg-center pointer-events-none transition-all duration-700" 
+          style={{ backgroundImage: "url('/erp-banner.jpg')" }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#072a23]/90 via-[#0f6c59]/65 to-transparent pointer-events-none"></div>
+
+        <div className="absolute top-0 right-0 p-8 opacity-15 font-mono text-4xl font-black tracking-widest uppercase select-none pointer-events-none hidden md:block">
+          PATIENT CRM & LOYALTY PROGRAM
         </div>
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          
+          <div className="space-y-4 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-950/60 backdrop-blur-md border border-emerald-400/40 text-emerald-200 text-xs font-bold tracking-wider uppercase shadow-sm">
+              <span>✦</span>
+              <span>DIRECTORIO & PROGRAMA DE LEALTAD • PHARMAPLUS</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight drop-shadow-md">
+              Gestión de Clientes & Fidelización
+            </h1>
+            
+            <p className="text-sm sm:text-base text-emerald-100/90 font-medium">
+              Historial de compras, puntos acumulados, niveles Oro/Plata/Bronce y perfiles de pacientes.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2.5 pt-2">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-500/25 border border-emerald-300/40 text-white text-xs font-bold shadow-sm backdrop-blur-md">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                {stats?.total || total} Pacientes / Clientes
+              </span>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                {(stats?.totalPoints || 0).toLocaleString()} Puntos Emitidos
+              </span>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                Club PharmaPlus 2026
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 z-10">
+            <button
+              onClick={() => openModal()}
+              className="px-5 py-3 rounded-2xl bg-white text-[#12876f] hover:bg-emerald-50 active:scale-95 text-xs sm:text-sm font-black shadow-xl transition-all flex items-center gap-2"
+            >
+              <Plus size={17} /> Nuevo Cliente
+            </button>
+            <button
+              onClick={() => { setFilterTier(filterTier === 'Oro' ? '' : 'Oro'); setPage(1); }}
+              className={`px-5 py-3 rounded-2xl text-xs sm:text-sm font-bold border backdrop-blur-md transition-all flex items-center gap-2 shadow-lg ${
+                filterTier === 'Oro'
+                  ? 'bg-amber-500 text-white border-amber-400'
+                  : 'bg-black/40 hover:bg-black/60 text-emerald-100 border-emerald-300/40'
+              }`}
+            >
+              <Crown size={17} /> {filterTier === 'Oro' ? 'Ver Todos' : 'Filtrar Clientes VIP'}
+            </button>
+          </div>
+
+        </div>
+
       </div>
 
-      {/* ── KPI Cards ── */}
+      {/* ─── 4 TARJETAS KPI LIMPIAS Y ESPACIOSAS CLIENTES ─── */}
       {stats && (
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 shrink-0">
-          <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3 shadow-sm">
-            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
-              <Users size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] text-slate-500 font-semibold">Total Clientes</p>
-              <p className="text-2xl font-black text-slate-800">{stats.total}</p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3 shadow-sm">
-            <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center shrink-0">
-              <Star size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] text-slate-500 font-semibold">Puntos Repartidos</p>
-              <p className="text-2xl font-black text-purple-700">{(stats.totalPoints || 0).toLocaleString()}</p>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl border border-slate-200 p-4 flex items-center gap-3 shadow-sm">
-            <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
-              <TrendingUp size={20} />
-            </div>
-            <div>
-              <p className="text-[11px] text-slate-500 font-semibold">Ventas Totales</p>
-              <p className="text-xl font-black text-emerald-700">RD$ {(stats.totalSpent || 0).toLocaleString('es-DO', { maximumFractionDigits: 0 })}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+          
+          {/* Card 1: Total Clientes */}
+          <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-12 h-12 rounded-2xl bg-[#e8f6f3] text-[#16a085] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+                <Users size={22} />
+              </div>
+              <div className="truncate">
+                <p className="text-xs font-bold text-slate-500">Total Pacientes</p>
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+                  {stats.total}
+                </h3>
+                <p className="text-[11px] font-bold text-[#16a085] mt-0.5 truncate">
+                  <span>Directorio registrado</span>
+                </p>
+              </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
-            <p className="text-[11px] text-slate-500 font-semibold mb-1.5">Por Nivel</p>
-            <div className="flex flex-col gap-1">
-              {['Oro', 'Plata', 'Bronce'].map(t => {
-                const cfg = TIERS[t];
-                const Icon = cfg.icon;
-                return (
-                  <div key={t} className="flex items-center justify-between text-xs">
-                    <span className={`flex items-center gap-1 font-bold ${cfg.text}`}>
-                      <Icon size={10} /> {t}
-                    </span>
-                    <span className="font-black text-slate-700">{tierCounts[t] || 0}</span>
-                  </div>
-                );
-              })}
+          {/* Card 2: Puntos Repartidos */}
+          <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-12 h-12 rounded-2xl bg-[#f5eef8] text-[#8e44ad] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+                <Star size={22} />
+              </div>
+              <div className="truncate">
+                <p className="text-xs font-bold text-slate-500">Puntos Club</p>
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+                  {(stats.totalPoints || 0).toLocaleString()} Pts
+                </h3>
+                <p className="text-[11px] font-bold text-[#8e44ad] mt-0.5 truncate">
+                  <span>Canjeables en POS</span>
+                </p>
+              </div>
             </div>
           </div>
+
+          {/* Card 3: Ventas Históricas */}
+          <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-12 h-12 rounded-2xl bg-[#eafaf1] text-[#27ae60] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+                <TrendingUp size={22} />
+              </div>
+              <div className="truncate">
+                <p className="text-xs font-bold text-slate-500">Ventas Acumuladas</p>
+                <h3 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight leading-tight mt-0.5">
+                  RD$ {(stats.totalSpent || 0).toLocaleString('es-DO', { maximumFractionDigits: 0 })}
+                </h3>
+                <p className="text-[11px] font-bold text-[#27ae60] mt-0.5 truncate">
+                  <span>Facturado por clientes</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 4: Segmentación por Nivel */}
+          <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-xs hover:shadow-md transition-all flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5 min-w-0 w-full">
+              <div className="w-12 h-12 rounded-2xl bg-[#fef5e7] text-[#f39c12] flex items-center justify-center font-bold text-lg shrink-0 shadow-2xs">
+                <Crown size={22} />
+              </div>
+              <div className="w-full">
+                <p className="text-xs font-bold text-slate-500 mb-1">Nivel de Fidelidad</p>
+                <div className="flex items-center justify-between gap-2 text-xs font-bold">
+                  <span className="text-[#16a085] flex items-center gap-1"><Crown size={11} /> {tierCounts['Oro'] || 0} Oro</span>
+                  <span className="text-[#3498db] flex items-center gap-1"><Gem size={11} /> {tierCounts['Plata'] || 0} Plata</span>
+                  <span className="text-[#d68910] flex items-center gap-1"><Shield size={11} /> {tierCounts['Bronce'] || 0} Bronce</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       )}
 
