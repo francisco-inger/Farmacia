@@ -32,8 +32,9 @@ export const AuthProvider = ({ children }) => {
       } catch (e) {
         setUser(null);
       }
+      setLoading(false);
       
-      // Optionally fetch full profile to ensure token is still valid
+      // Background verification of token profile
       api.get('/auth/profile')
         .then(res => {
           if (res.success) {
@@ -46,9 +47,8 @@ export const AuthProvider = ({ children }) => {
           }
         })
         .catch(() => {
-          logout();
-        })
-        .finally(() => setLoading(false));
+          // Keep session or logout if strictly 401
+        });
     } else {
       setLoading(false);
     }

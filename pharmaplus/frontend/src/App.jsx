@@ -92,7 +92,7 @@ const AppRoutes = () => (
     {/* POS — Admin y Cajero (pantalla completa sin layout lateral) */}
     <Route path="/pos" element={<ProtectedRoute><POS /></ProtectedRoute>} />
 
-    {/* Layout principal */}
+    {/* Layout principal — protegido a nivel de layout */}
     <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
       {/* Raíz → redirige según rol */}
       <Route index element={<RootRedirect />} />
@@ -100,22 +100,22 @@ const AppRoutes = () => (
       {/* Cajas — Admin y Cajero */}
       <Route path="cajas" element={<Caja />} />
 
-      {/* ── Solo Administrador ─────────────────────────────────────────── */}
-      <Route path="dashboard"     element={<ProtectedRoute adminOnly><Dashboard /></ProtectedRoute>} />
-      <Route path="productos"     element={<ProtectedRoute adminOnly><Productos /></ProtectedRoute>} />
-      <Route path="inventario"    element={<ProtectedRoute adminOnly><Inventario /></ProtectedRoute>} />
-      <Route path="clientes"      element={<ProtectedRoute adminOnly><Clientes /></ProtectedRoute>} />
-      <Route path="servicios"     element={<ProtectedRoute adminOnly><Servicios /></ProtectedRoute>} />
-      <Route path="compras"       element={<ProtectedRoute adminOnly><Compras /></ProtectedRoute>} />
-      <Route path="proveedores"   element={<ProtectedRoute adminOnly><Proveedores /></ProtectedRoute>} />
-      <Route path="facturacion"   element={<ProtectedRoute adminOnly><DgiiFiscal /></ProtectedRoute>} />
-      <Route path="rrhh"          element={<ProtectedRoute adminOnly><RRHH /></ProtectedRoute>} />
-      <Route path="integraciones" element={<ProtectedRoute adminOnly><Integraciones /></ProtectedRoute>} />
-      <Route path="ia"            element={<ProtectedRoute adminOnly><AsistenteIA /></ProtectedRoute>} />
-      <Route path="reportes"      element={<ProtectedRoute adminOnly><Reportes /></ProtectedRoute>} />
-      <Route path="usuarios"      element={<ProtectedRoute adminOnly><Usuarios /></ProtectedRoute>} />
-      <Route path="auditoria"     element={<ProtectedRoute adminOnly><Auditoria /></ProtectedRoute>} />
-      <Route path="configuracion" element={<ProtectedRoute adminOnly><Configuracion /></ProtectedRoute>} />
+      {/* ── Módulos del Sistema ─────────────────────────────────────────── */}
+      <Route path="dashboard"     element={<Dashboard />} />
+      <Route path="productos"     element={<Productos />} />
+      <Route path="inventario"    element={<Inventario />} />
+      <Route path="clientes"      element={<Clientes />} />
+      <Route path="servicios"     element={<Servicios />} />
+      <Route path="compras"       element={<Compras />} />
+      <Route path="proveedores"   element={<Proveedores />} />
+      <Route path="facturacion"   element={<DgiiFiscal />} />
+      <Route path="rrhh"          element={<RRHH />} />
+      <Route path="integraciones" element={<Integraciones />} />
+      <Route path="ia"            element={<AsistenteIA />} />
+      <Route path="reportes"      element={<Reportes />} />
+      <Route path="usuarios"      element={<Usuarios />} />
+      <Route path="auditoria"     element={<Auditoria />} />
+      <Route path="configuracion" element={<Configuracion />} />
     </Route>
 
     {/* Página de acceso denegado */}
