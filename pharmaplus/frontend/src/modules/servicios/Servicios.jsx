@@ -37,6 +37,11 @@ const Servicios = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
+  // Client Search Picker Modal
+  const [isClientPickerOpen, setIsClientPickerOpen] = useState(false);
+  const [clientSearchQuery, setClientSearchQuery] = useState('');
+  const [clientPickerTarget, setClientPickerTarget] = useState('service'); // 'service' | 'booking'
+
   // Clients & Employee List for Booking
   const [clientsList, setClientsList] = useState([]);
 
@@ -1143,17 +1148,29 @@ const Servicios = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 flex flex-col gap-1">
               <label className="text-xs font-semibold text-slate-700">Cliente (Paciente) *</label>
-              <select
-                className="input text-sm"
-                value={serviceForm.client_id}
-                onChange={(e) => setServiceForm({ ...serviceForm, client_id: e.target.value })}
-                required
+              <button
+                type="button"
+                onClick={() => {
+                  setClientPickerTarget('service');
+                  setClientSearchQuery('');
+                  setIsClientPickerOpen(true);
+                }}
+                className={`input text-sm flex items-center justify-between text-left transition-all ${
+                  serviceForm.client_id
+                    ? 'border-[#16a085] bg-emerald-50/40 text-slate-900 font-bold'
+                    : 'text-slate-400 font-normal hover:bg-slate-50'
+                }`}
               >
-                <option value="">-- Seleccionar Cliente --</option>
-                {clientsList.map(c => (
-                  <option key={c.id} value={c.id}>{c.name} {c.cedula ? `(${c.cedula})` : ''}</option>
-                ))}
-              </select>
+                <span className="truncate">
+                  {serviceForm.client_id
+                    ? (() => {
+                        const cl = clientsList.find(c => String(c.id) === String(serviceForm.client_id));
+                        return cl ? `${cl.name} ${cl.cedula ? `(${cl.cedula})` : ''}` : 'Cliente seleccionado';
+                      })()
+                    : 'Buscar o seleccionar paciente / cliente...'}
+                </span>
+                <Search size={15} className="text-slate-400 shrink-0 ml-2" />
+              </button>
             </div>
 
             <div className="flex flex-col gap-1">
@@ -1219,17 +1236,29 @@ const Servicios = () => {
 
           <div className="flex flex-col gap-1">
             <label className="font-semibold text-slate-700">Seleccionar Paciente / Cliente *</label>
-            <select
-              required
-              className="input text-xs"
-              value={bookingForm.client_id}
-              onChange={(e) => setBookingForm({ ...bookingForm, client_id: e.target.value })}
+            <button
+              type="button"
+              onClick={() => {
+                setClientPickerTarget('booking');
+                setClientSearchQuery('');
+                setIsClientPickerOpen(true);
+              }}
+              className={`input text-xs flex items-center justify-between text-left transition-all ${
+                bookingForm.client_id
+                  ? 'border-[#16a085] bg-emerald-50/40 text-slate-900 font-bold'
+                  : 'text-slate-400 font-normal hover:bg-slate-50'
+              }`}
             >
-              <option value="">Seleccionar Paciente</option>
-              {clientsList.map(c => (
-                <option key={c.id} value={c.id}>{c.name} ({c.cedula || 'Sin cédula'})</option>
-              ))}
-            </select>
+              <span className="truncate">
+                {bookingForm.client_id
+                  ? (() => {
+                      const cl = clientsList.find(c => String(c.id) === String(bookingForm.client_id));
+                      return cl ? `${cl.name} (${cl.cedula || 'Sin cédula'})` : 'Paciente seleccionado';
+                    })()
+                  : 'Buscar paciente por nombre o cédula...'}
+              </span>
+              <Search size={14} className="text-slate-400 shrink-0 ml-2" />
+            </button>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -1304,6 +1333,78 @@ const Servicios = () => {
               Eliminar Definitivamente
             </button>
           </div>
+        </div>
+      </Modal>
+
+      {/* ─── MODAL: BUSCADOR RÁPIDO DE PACIENTES / CLIENTES ─── */}
+      <Modal
+        isOpen={isClientPickerOpen}
+        onClose={() => setIsClientPickerOpen(false)}
+        title="Buscar y Seleccionar Paciente / Cliente"
+        maxWidth="max-w-md"
+      >
+        <div className="flex flex-col gap-3 text-slate-700">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input
+              type="text"
+              placeholder="Buscar por nombre, cédula o teléfono..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 pl-10 text-xs font-medium focus:bg-white focus:border-[#16a085] focus:outline-none transition-all shadow-inner"
+              value={clientSearchQuery}
+              onChange={(e) => setClientSearchQuery(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          <div className="max-h-64 overflow-y-auto space-y-1.5 custom-scrollbar pr-1">
+            {clientsList
+              .filter(c => 
+                !clientSearchQuery || 
+                (c.name && c.name.toLowerCase().includes(clientSearchQuery.toLowerCase())) ||
+                (c.cedula && c.cedula.includes(clientSearchQuery)) ||
+                (c.phone && c.phone.includes(clientSearchQuery)) ||
+                (c.email && c.email.toLowerCase().includes(clientSearchQuery.toLowerCase()))
+              )
+              .map(c => {
+                const currentVal = clientPickerTarget === 'service' ? serviceForm.client_id : bookingForm.client_id;
+                const isSelected = String(currentVal) === String(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => {
+                      if (clientPickerTarget === 'service') {
+                        setServiceForm(prev => ({ ...prev, client_id: c.id }));
+                      } else {
+                        setBookingForm(prev => ({ ...prev, client_id: c.id }));
+                      }
+                      setIsClientPickerOpen(false);
+                    }}
+                    className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-emerald-50 border-[#16a085] text-slate-900 font-bold shadow-2xs'
+                        : 'bg-white border-slate-200/80 hover:bg-slate-50 text-slate-700 font-medium'
+                    }`}
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">{c.name}</p>
+                      <p className="text-[10px] text-slate-400 font-mono">
+                        Cédula: {c.cedula || 'Sin cédula'} • Tel: {c.phone || '—'}
+                      </p>
+                    </div>
+                    <span className="text-[10px] text-emerald-600 font-mono font-semibold">ID #{c.id}</span>
+                  </button>
+                );
+              })}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsClientPickerOpen(false)}
+            className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
+          >
+            Cerrar
+          </button>
         </div>
       </Modal>
 
