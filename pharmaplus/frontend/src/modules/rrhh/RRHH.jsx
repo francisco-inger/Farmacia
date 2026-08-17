@@ -68,6 +68,8 @@ const RRHH = () => {
   const [isScanModalOpen, setIsScanModalOpen]           = useState(false);
   const [isCarnetModalOpen, setIsCarnetModalOpen]       = useState(false);
   const [isAttModalOpen, setIsAttModalOpen]             = useState(false);
+  const [isEmployeePickerOpen, setIsEmployeePickerOpen] = useState(false);
+  const [employeeSearchQuery, setEmployeeSearchQuery]   = useState('');
   const [toastMessage, setToastMessage]                 = useState(null);
 
   /* ── Formularios ─────────────────────────────────────────────────────────── */
@@ -1184,11 +1186,22 @@ const RRHH = () => {
         <div className="flex flex-col gap-4 text-xs">
           <div className="flex flex-col gap-1">
             <label className="font-semibold text-slate-700">Empleado *</label>
-            <select className="input text-xs" value={attForm.employee_id}
-              onChange={e => setAttForm(p => ({ ...p, employee_id: e.target.value }))}>
-              <option value="">— Seleccionar empleado —</option>
-              {employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
-            </select>
+            <button
+              type="button"
+              onClick={() => { setEmployeeSearchQuery(''); setIsEmployeePickerOpen(true); }}
+              className={`input text-xs flex items-center justify-between text-left transition-all ${
+                attForm.employee_id
+                  ? 'border-[#16a085] bg-emerald-50/40 text-slate-900 font-bold'
+                  : 'text-slate-400 font-normal hover:bg-slate-50'
+              }`}
+            >
+              <span className="truncate">
+                {attForm.employee_id
+                  ? (employees.find(e => String(e.id) === String(attForm.employee_id))?.name || 'Empleado seleccionado')
+                  : 'Buscar o seleccionar empleado...'}
+              </span>
+              <Search size={14} className="text-slate-400 shrink-0 ml-2" />
+            </button>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-1">
@@ -1376,6 +1389,74 @@ const RRHH = () => {
         onScan={handleBarcodeScanned}
         title="Lector de QR / Carnet de Empleado"
       />
+
+      {/* Modal: Buscador Rápido de Empleados */}
+      <Modal
+        isOpen={isEmployeePickerOpen}
+        onClose={() => setIsEmployeePickerOpen(false)}
+        title="Buscar y Seleccionar Empleado"
+        maxWidth="max-w-md"
+      >
+        <div className="flex flex-col gap-3 text-slate-700">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input
+              type="text"
+              placeholder="Buscar por nombre, cédula, cargo o departamento..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 pl-10 text-xs font-medium focus:bg-white focus:border-[#16a085] focus:outline-none transition-all shadow-inner"
+              value={employeeSearchQuery}
+              onChange={(e) => setEmployeeSearchQuery(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          <div className="max-h-64 overflow-y-auto space-y-1.5 custom-scrollbar pr-1">
+            {employees
+              .filter(e => 
+                !employeeSearchQuery || 
+                (e.name && e.name.toLowerCase().includes(employeeSearchQuery.toLowerCase())) ||
+                (e.cedula && e.cedula.includes(employeeSearchQuery)) ||
+                (e.position && e.position.toLowerCase().includes(employeeSearchQuery.toLowerCase())) ||
+                (e.department && e.department.toLowerCase().includes(employeeSearchQuery.toLowerCase()))
+              )
+              .map(e => {
+                const isSelected = String(attForm.employee_id) === String(e.id);
+                return (
+                  <button
+                    key={e.id}
+                    type="button"
+                    onClick={() => {
+                      setAttForm(prev => ({ ...prev, employee_id: e.id }));
+                      setIsEmployeePickerOpen(false);
+                    }}
+                    className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-emerald-50 border-[#16a085] text-slate-900 font-bold shadow-2xs'
+                        : 'bg-white border-slate-200/80 hover:bg-slate-50 text-slate-700 font-medium'
+                    }`}
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">{e.name}</p>
+                      <p className="text-[10px] text-slate-400">
+                        {e.position || 'Colaborador'} • <span className="font-semibold text-slate-600">{e.department}</span> {e.cedula ? `• Céd: ${e.cedula}` : ''}
+                      </p>
+                    </div>
+                    <span className="text-[10px] text-emerald-600 font-mono font-semibold">ID #{e.id}</span>
+                  </button>
+                );
+              })}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsEmployeePickerOpen(false)}
+            className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
+          >
+            Cerrar
+          </button>
+        </div>
+      </Modal>
+
     </div>
   );
 };
