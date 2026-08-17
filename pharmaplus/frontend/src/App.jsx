@@ -111,6 +111,15 @@ const AppRoutes = () => (
 // App — AuthProvider envuelve todo correctamente
 // ─────────────────────────────────────────────────────────────────────────────
 function App() {
+  React.useEffect(() => {
+    const savedTheme = localStorage.getItem('pharmaplus_theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   return (
     <AuthProvider>
       <BrowserRouter>

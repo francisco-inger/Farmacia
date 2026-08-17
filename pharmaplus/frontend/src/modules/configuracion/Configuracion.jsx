@@ -1384,8 +1384,20 @@ const Configuracion = () => {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setCustomizationSettings({ ...customizationSettings, darkMode: !customizationSettings.darkMode })}
-                  className={`w-11 h-6 rounded-full transition-colors relative p-0.5 shrink-0 ${
+                  onClick={() => {
+                    const nextDark = !customizationSettings.darkMode;
+                    setCustomizationSettings(prev => ({ ...prev, darkMode: nextDark }));
+                    if (nextDark) {
+                      document.documentElement.classList.add('dark');
+                      localStorage.setItem('pharmaplus_theme', 'dark');
+                      showToast('Modo oscuro activado', 'info');
+                    } else {
+                      document.documentElement.classList.remove('dark');
+                      localStorage.setItem('pharmaplus_theme', 'light');
+                      showToast('Modo claro activado', 'info');
+                    }
+                  }}
+                  className={`w-11 h-6 rounded-full transition-colors relative p-0.5 shrink-0 cursor-pointer ${
                     customizationSettings.darkMode ? 'bg-emerald-600' : 'bg-slate-300'
                   }`}
                 >
@@ -1607,9 +1619,11 @@ const Configuracion = () => {
                       setCustomizationSettings(prev => ({ ...prev, darkMode: nextDark }));
                       if (nextDark) {
                         document.documentElement.classList.add('dark');
+                        localStorage.setItem('pharmaplus_theme', 'dark');
                         showToast('Modo oscuro activado', 'info');
                       } else {
                         document.documentElement.classList.remove('dark');
+                        localStorage.setItem('pharmaplus_theme', 'light');
                         showToast('Modo claro activado', 'info');
                       }
                     }}
