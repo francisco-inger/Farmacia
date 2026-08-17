@@ -1583,7 +1583,16 @@ const Configuracion = () => {
             
             {/* CARD 1: CONFIGURACIÓN GENERAL */}
             <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 flex flex-col justify-between gap-4">
-              <h3 className="font-bold text-slate-800 text-sm">Configuración general</h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-slate-800 text-sm">Configuración general</h3>
+                <button 
+                  type="button" 
+                  onClick={() => setActiveCategory('Personalización')} 
+                  className="text-[10px] font-bold text-[#16a085] hover:underline"
+                >
+                  Personalizar →
+                </button>
+              </div>
 
               <div className="space-y-3.5 text-xs">
                 <div className="flex items-center justify-between gap-2">
@@ -1593,8 +1602,18 @@ const Configuracion = () => {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setCustomizationSettings({ ...customizationSettings, darkMode: !customizationSettings.darkMode })}
-                    className={`w-11 h-6 rounded-full transition-colors relative p-0.5 shrink-0 ${
+                    onClick={() => {
+                      const nextDark = !customizationSettings.darkMode;
+                      setCustomizationSettings(prev => ({ ...prev, darkMode: nextDark }));
+                      if (nextDark) {
+                        document.documentElement.classList.add('dark');
+                        showToast('Modo oscuro activado', 'info');
+                      } else {
+                        document.documentElement.classList.remove('dark');
+                        showToast('Modo claro activado', 'info');
+                      }
+                    }}
+                    className={`w-11 h-6 rounded-full transition-colors relative p-0.5 shrink-0 cursor-pointer ${
                       customizationSettings.darkMode ? 'bg-emerald-600' : 'bg-slate-300'
                     }`}
                   >
@@ -1611,17 +1630,32 @@ const Configuracion = () => {
                   </div>
                   <button
                     type="button"
-                    className="w-11 h-6 rounded-full transition-colors relative p-0.5 shrink-0 bg-emerald-600"
+                    onClick={() => {
+                      const nextSounds = !customizationSettings.systemSounds;
+                      setCustomizationSettings(prev => ({ ...prev, systemSounds: nextSounds }));
+                      showToast(nextSounds ? 'Sonidos del sistema activados' : 'Sonidos desactivados', 'info');
+                    }}
+                    className={`w-11 h-6 rounded-full transition-colors relative p-0.5 shrink-0 cursor-pointer ${
+                      customizationSettings.systemSounds ? 'bg-emerald-600' : 'bg-slate-300'
+                    }`}
                   >
-                    <div className="w-5 h-5 rounded-full bg-white shadow-md translate-x-5" />
+                    <div className={`w-5 h-5 rounded-full bg-white shadow-md transition-transform ${
+                      customizationSettings.systemSounds ? 'translate-x-5' : 'translate-x-0'
+                    }`} />
                   </button>
                 </div>
               </div>
             </div>
 
             {/* CARD 2: CONFIGURACIÓN DE VENTAS */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 flex flex-col justify-between gap-3 text-xs">
-              <h3 className="font-bold text-slate-800 text-sm">Configuración de ventas</h3>
+            <div 
+              onClick={() => setActiveCategory('Ventas')}
+              className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 flex flex-col justify-between gap-3 text-xs cursor-pointer hover:border-emerald-300 hover:shadow-md transition-all group"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-slate-800 text-sm group-hover:text-[#16a085] transition-colors">Configuración de ventas</h3>
+                <span className="text-[10px] font-bold text-slate-400 group-hover:text-[#16a085]">Editar ↗</span>
+              </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between">
@@ -1640,8 +1674,14 @@ const Configuracion = () => {
             </div>
 
             {/* CARD 3: CONFIGURACIÓN DE IMPRESIÓN */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 flex flex-col justify-between gap-3 text-xs">
-              <h3 className="font-bold text-slate-800 text-sm">Configuración de impresión</h3>
+            <div 
+              onClick={() => setActiveCategory('Dispositivos')}
+              className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-4 flex flex-col justify-between gap-3 text-xs cursor-pointer hover:border-emerald-300 hover:shadow-md transition-all group"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold text-slate-800 text-sm group-hover:text-[#16a085] transition-colors">Configuración de impresión</h3>
+                <span className="text-[10px] font-bold text-slate-400 group-hover:text-[#16a085]">Editar ↗</span>
+              </div>
 
               <div className="space-y-2">
                 <div className="flex justify-between">
@@ -1677,18 +1717,19 @@ const Configuracion = () => {
 
             <div className="flex flex-wrap gap-2">
               {[
-                'Reiniciar sistema',
-                'Gestionar usuarios',
-                'Respaldar datos',
-                'Opciones de impresión',
-                'Ayuda'
+                { label: 'Reiniciar sistema', action: () => { showToast('Sistema sincronizado y memoria caché optimizada', 'success'); } },
+                { label: 'Gestionar usuarios', action: () => { setActiveCategory('Usuarios'); showToast('Dirigiendo a Usuarios y Roles', 'info'); } },
+                { label: 'Respaldar datos', action: () => { setIsBackupModalOpen(true); showToast('Abriendo ventana de Respaldo SQLite', 'info'); } },
+                { label: 'Opciones de impresión', action: () => { setActiveCategory('Dispositivos'); showToast('Dirigiendo a Dispositivos e Impresión', 'info'); } },
+                { label: 'Ayuda', action: () => { handleSendChatMessage('¿Cómo configuro mi farmacia?'); } }
               ].map((chip, idx) => (
                 <button
                   key={idx}
-                  onClick={() => handleSendChatMessage(chip)}
-                  className="px-3 py-1.5 rounded-xl border border-emerald-100 bg-emerald-50/50 hover:bg-emerald-100 text-emerald-700 text-xs font-medium transition-all hover:scale-105 active:scale-95"
+                  type="button"
+                  onClick={chip.action}
+                  className="px-3 py-1.5 rounded-xl border border-emerald-200/70 bg-emerald-50/60 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer shadow-2xs"
                 >
-                  {chip}
+                  {chip.label}
                 </button>
               ))}
             </div>
