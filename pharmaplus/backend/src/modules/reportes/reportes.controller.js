@@ -7,14 +7,22 @@ function getSalesReport(req, res) {
   if (period === 'daily') { groupBy = "DATE(s.created_at)"; dateFormat = "%Y-%m-%d"; }
   else if (period === 'monthly') { groupBy = "strftime('%Y-%m', s.created_at)"; dateFormat = "%Y-%m"; }
   else { groupBy = "strftime('%Y', s.created_at)"; dateFormat = "%Y"; }
-  let where = [`s.status = 'completada'`]; const params = [];
+  
+  let where = [`(s.status = 'completada' OR s.status = 'completado' OR s.status IS NULL)`];
+  const params = [];
   if (date_from) { where.push(`DATE(s.created_at) >= ?`); params.push(date_from); }
   if (date_to) { where.push(`DATE(s.created_at) <= ?`); params.push(date_to); }
+  
   const data = db.prepare(`
-    SELECT ${groupBy} as period, COUNT(*) as transactions, SUM(s.total) as revenue, SUM(s.discount) as discounts, AVG(s.total) as avg_ticket
+    SELECT ${groupBy} as period, COUNT(*) as transactions, COALESCE(SUM(s.total), 0) as revenue, COALESCE(SUM(s.discount), 0) as discounts, COALESCE(AVG(s.total), 0) as avg_ticket
     FROM sales s WHERE ${where.join(' AND ')} GROUP BY ${groupBy} ORDER BY period ASC
   `).all(params) || [];
-  const summary = db.prepare(`SELECT COUNT(*) as total_sales, SUM(total) as total_revenue, AVG(total) as avg_ticket, SUM(discount) as total_discounts FROM sales s WHERE ${where.join(' AND ')}`).get(params) || { total_sales: 0, total_revenue: 0, avg_ticket: 0, total_discounts: 0 };
+
+  const summary = db.prepare(`
+    SELECT COUNT(*) as total_sales, COALESCE(SUM(total), 0) as total_revenue, COALESCE(AVG(total), 0) as avg_ticket, COALESCE(SUM(discount), 0) as total_discounts 
+    FROM sales s WHERE ${where.join(' AND ')}
+  `).get(params) || { total_sales: 0, total_revenue: 0, avg_ticket: 0, total_discounts: 0 };
+
   return res.json({ success: true, data, summary });
 }
 
@@ -22,11 +30,20 @@ function getInventoryReport(req, res) {
   const db = getDb();
   const products = db.prepare(`
     SELECT p.id, p.name, p.code, p.stock, p.min_stock, p.cost_price, p.sale_price,
-      (p.stock * p.cost_price) as stock_value, c.name as category,
+      (COALESCE(p.stock, 0) * COALESCE(p.cost_price, 0)) as stock_value, c.name as category,
       CASE WHEN p.stock = 0 THEN 'agotado' WHEN p.stock <= p.min_stock THEN 'bajo' ELSE 'normal' END as status
     FROM products p LEFT JOIN categories c ON p.category_id = c.id WHERE p.is_active = 1 ORDER BY p.stock ASC
   `).all() || [];
-  const summary = db.prepare(`SELECT SUM(stock * cost_price) as total_value, SUM(stock * sale_price) as total_sale_value, COUNT(*) as total_products, SUM(CASE WHEN stock = 0 THEN 1 ELSE 0 END) as out_of_stock, SUM(CASE WHEN stock > 0 AND stock <= min_stock THEN 1 ELSE 0 END) as low_stock FROM products WHERE is_active = 1`).get() || { total_value: 0, total_sale_value: 0, total_products: 0, out_of_stock: 0, low_stock: 0 };
+
+  const summary = db.prepare(`
+    SELECT COALESCE(SUM(stock * cost_price), 0) as total_value, 
+           COALESCE(SUM(stock * sale_price), 0) as total_sale_value, 
+           COUNT(*) as total_products, 
+           SUM(CASE WHEN stock = 0 THEN 1 ELSE 0 END) as out_of_stock, 
+           SUM(CASE WHEN stock > 0 AND stock <= min_stock THEN 1 ELSE 0 END) as low_stock 
+    FROM products WHERE is_active = 1
+  `).get() || { total_value: 0, total_sale_value: 0, total_products: 0, out_of_stock: 0, low_stock: 0 };
+
   return res.json({ success: true, data: products, summary });
 }
 

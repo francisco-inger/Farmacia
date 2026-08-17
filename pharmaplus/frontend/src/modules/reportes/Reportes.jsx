@@ -57,24 +57,30 @@ const Reportes = () => {
       if (dateFrom) queryParams += `&date_from=${dateFrom}`;
       if (dateTo) queryParams += `&date_to=${dateTo}`;
 
+      // Cargar siempre en paralelo los resúmenes globales para que los 4 KPIs superiores nunca queden en 0
+      const [salesRes, invRes] = await Promise.all([
+        api.get(`/reportes/ventas${queryParams}`),
+        api.get('/reportes/inventario')
+      ]);
+
+      const salesPayload = salesRes?.data || salesRes;
+      const invPayload = invRes?.data || invRes;
+
+      if (salesPayload?.summary) setSalesSummary(salesPayload.summary);
+      if (invPayload?.summary) setInventorySummary(invPayload.summary);
+
       if (activeTab === 'ventas') {
-        const res = await api.get(`/reportes/ventas${queryParams}`);
-        const payload = res.data || res;
-        setSalesData(payload.data || []);
-        setSalesSummary(payload.summary || {});
+        setSalesData(salesPayload?.data || []);
       } else if (activeTab === 'inventario') {
-        const res = await api.get(`/reportes/inventario`);
-        const payload = res.data || res;
-        setInventoryData(payload.data || []);
-        setInventorySummary(payload.summary || {});
+        setInventoryData(invPayload?.data || []);
       } else if (activeTab === 'top_productos') {
         const res = await api.get(`/reportes/top-productos${queryParams}`);
-        const payload = res.data || res;
-        setTopProductsData(payload.data || []);
+        const payload = res?.data || res;
+        setTopProductsData(payload.data || payload || []);
       } else if (activeTab === 'caja') {
         const res = await api.get(`/reportes/caja${queryParams}`);
-        const payload = res.data || res;
-        setCashData(payload.data || []);
+        const payload = res?.data || res;
+        setCashData(payload.data || payload || []);
       }
     } catch (err) {
       console.error('Error cargando reportes:', err);
