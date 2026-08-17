@@ -19,6 +19,12 @@ const Productos = () => {
   const [currentProduct, setCurrentProduct] = useState(null);
   const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
 
+  // Search Modals for Category & Supplier Picker
+  const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
+  const [isSupplierPickerOpen, setIsSupplierPickerOpen] = useState(false);
+  const [supplierSearchQuery, setSupplierSearchQuery] = useState('');
+
   const handleBarcodeScanned = (code) => {
     playScannerBeep();
     if (isModalOpen) {
@@ -59,10 +65,24 @@ const Productos = () => {
     description: ''
   });
 
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedSupplier, setSelectedSupplier] = useState('');
+  const [selectedStockStatus, setSelectedStockStatus] = useState('');
+  const [filterRecipe, setFilterRecipe] = useState(false);
+  const [filterControlled, setFilterControlled] = useState(false);
+  const [showFilterPanel, setShowFilterPanel] = useState(false);
+
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const res = await api.get(`/products?page=${page}&limit=15&search=${searchTerm}`);
+      let query = `/products?page=${page}&limit=15&search=${encodeURIComponent(searchTerm)}`;
+      if (selectedCategory) query += `&category_id=${selectedCategory}`;
+      if (selectedSupplier) query += `&supplier_id=${selectedSupplier}`;
+      if (selectedStockStatus) query += `&stock_status=${selectedStockStatus}`;
+      if (filterRecipe) query += `&requires_recipe=1`;
+      if (filterControlled) query += `&is_controlled=1`;
+
+      const res = await api.get(query);
       setProducts(res.data || []);
       setTotal(res.pagination?.total || 0);
     } catch (err) {
@@ -71,6 +91,24 @@ const Productos = () => {
       setLoading(false);
     }
   };
+
+  const clearAllFilters = () => {
+    setSelectedCategory('');
+    setSelectedSupplier('');
+    setSelectedStockStatus('');
+    setFilterRecipe(false);
+    setFilterControlled(false);
+    setSearchTerm('');
+    setPage(1);
+  };
+
+  const activeFiltersCount = [
+    selectedCategory,
+    selectedSupplier,
+    selectedStockStatus,
+    filterRecipe,
+    filterControlled
+  ].filter(Boolean).length;
 
   const fetchCategoriesAndSuppliers = async () => {
     try {
@@ -90,7 +128,7 @@ const Productos = () => {
       fetchProducts();
     }, 300);
     return () => clearTimeout(delayDebounceFn);
-  }, [searchTerm, page]);
+  }, [searchTerm, page, selectedCategory, selectedSupplier, selectedStockStatus, filterRecipe, filterControlled]);
 
   useEffect(() => {
     fetchCategoriesAndSuppliers();
@@ -365,29 +403,142 @@ const Productos = () => {
       </div>
 
       {/* Actions Row */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 w-full">
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
-            <input 
-              type="text" 
-              placeholder="Buscar por código de barras o nombre..." 
-              className="input pl-9 pr-9"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            <ScanLine 
-              onClick={() => setIsCameraScannerOpen(true)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 cursor-pointer transition-colors" 
-              size={16} 
-              title="Escanear código con la cámara" 
-            />
+      <div className="flex flex-col gap-3 w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 w-full">
+          <div className="flex items-center gap-2 w-full sm:w-auto flex-1 max-w-md">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" size={16} />
+              <input 
+                type="text" 
+                placeholder="Buscar por código de barras o nombre..." 
+                className="input pl-9 pr-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <ScanLine 
+                onClick={() => setIsCameraScannerOpen(true)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600 cursor-pointer transition-colors" 
+                size={16} 
+                title="Escanear código con la cámara" 
+              />
+            </div>
+            <button 
+              type="button"
+              onClick={() => setShowFilterPanel(prev => !prev)} 
+              title="Filtros avanzados"
+              className={`p-2.5 rounded-xl border font-semibold flex items-center gap-1.5 transition-all cursor-pointer ${
+                showFilterPanel || activeFiltersCount > 0
+                  ? 'bg-emerald-50 border-[#16a085] text-[#16a085] shadow-xs'
+                  : 'btn-outline text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <Filter size={18} />
+              {activeFiltersCount > 0 && (
+                <span className="w-5 h-5 rounded-full bg-[#16a085] text-white text-[10px] font-bold flex items-center justify-center">
+                  {activeFiltersCount}
+                </span>
+              )}
+            </button>
           </div>
-          <button className="btn btn-outline p-2.5"><Filter size={18} /></button>
+          
+          <button onClick={() => openModal()} className="btn btn-primary w-full sm:w-auto shadow-md">
+            <Plus size={18} /> Nuevo Producto
+          </button>
         </div>
-        <button onClick={() => openModal()} className="btn btn-primary w-full sm:w-auto">
-          <Plus size={18} /> Nuevo Producto
-        </button>
+
+        {/* ─── PANEL DESPLEGABLE DE FILTROS AVANZADOS DE PRODUCTOS ─── */}
+        {showFilterPanel && (
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-4 shadow-sm animate-fade-in flex flex-col gap-3.5">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+              <span className="text-xs font-black text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                <Filter size={14} className="text-[#16a085]" /> Filtros del Catálogo de Fármacos
+              </span>
+              {activeFiltersCount > 0 && (
+                <button
+                  type="button"
+                  onClick={clearAllFilters}
+                  className="text-xs font-bold text-rose-600 hover:underline"
+                >
+                  Limpiar Filtros ({activeFiltersCount})
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
+              
+              {/* Categoría */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[11px] font-bold text-slate-500 uppercase">Categoría</label>
+                <select
+                  className="input py-2 text-xs"
+                  value={selectedCategory}
+                  onChange={(e) => { setSelectedCategory(e.target.value); setPage(1); }}
+                >
+                  <option value="">Todas las categorías</option>
+                  {categories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Proveedor / Laboratorio */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[11px] font-bold text-slate-500 uppercase">Proveedor / Lab</label>
+                <select
+                  className="input py-2 text-xs"
+                  value={selectedSupplier}
+                  onChange={(e) => { setSelectedSupplier(e.target.value); setPage(1); }}
+                >
+                  <option value="">Todos los proveedores</option>
+                  {suppliers.map(sup => (
+                    <option key={sup.id} value={sup.id}>{sup.company_name || sup.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Estado de Stock */}
+              <div className="flex flex-col gap-1">
+                <label className="text-[11px] font-bold text-slate-500 uppercase">Nivel de Inventario</label>
+                <select
+                  className="input py-2 text-xs"
+                  value={selectedStockStatus}
+                  onChange={(e) => { setSelectedStockStatus(e.target.value); setPage(1); }}
+                >
+                  <option value="">Todo el inventario</option>
+                  <option value="available">Stock Adecuado (Óptimo)</option>
+                  <option value="low">Stock Bajo (Crítico)</option>
+                  <option value="out">Agotado (0 unidades)</option>
+                </select>
+              </div>
+
+              {/* Checkboxes de Regulaciones */}
+              <div className="flex flex-col gap-2 justify-center col-span-1 sm:col-span-2 lg:col-span-2 pt-2 sm:pt-4">
+                <div className="flex flex-wrap gap-4 items-center">
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 select-none">
+                    <input
+                      type="checkbox"
+                      checked={filterRecipe}
+                      onChange={(e) => { setFilterRecipe(e.target.checked); setPage(1); }}
+                      className="rounded text-[#16a085] focus:ring-[#16a085] w-4 h-4"
+                    />
+                    <span>Requiere Receta</span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-700 select-none">
+                    <input
+                      type="checkbox"
+                      checked={filterControlled}
+                      onChange={(e) => { setFilterControlled(e.target.checked); setPage(1); }}
+                      className="rounded text-amber-600 focus:ring-amber-500 w-4 h-4"
+                    />
+                    <span>Medicamento Controlado</span>
+                  </label>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Table Area */}
@@ -439,35 +590,46 @@ const Productos = () => {
               />
             </div>
 
-            {/* Categoría */}
+            {/* Categoría Selector con Buscador */}
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-700">Categoría *</label>
-              <select
-                required
-                className="input text-sm"
-                value={formData.category_id}
-                onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+              <label className="text-xs font-semibold text-slate-700">Categoría del Producto *</label>
+              <button
+                type="button"
+                onClick={() => { setCategorySearchQuery(''); setIsCategoryPickerOpen(true); }}
+                className={`input text-sm flex items-center justify-between text-left transition-all ${
+                  formData.category_id 
+                    ? 'border-[#16a085] bg-emerald-50/40 text-slate-900 font-bold' 
+                    : 'text-slate-400 font-normal hover:bg-slate-50'
+                }`}
               >
-                <option value="">Seleccionar Categoría</option>
-                {categories.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+                <span className="truncate">
+                  {formData.category_id 
+                    ? (categories.find(c => String(c.id) === String(formData.category_id))?.name || 'Categoría seleccionada')
+                    : 'Buscar o seleccionar categoría...'}
+                </span>
+                <Search size={15} className="text-slate-400 shrink-0 ml-2" />
+              </button>
             </div>
 
-            {/* PROVEEDOR DEL PRODUCTO */}
+            {/* PROVEEDOR DEL PRODUCTO con Buscador */}
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-emerald-800">Proveedor del Producto *</label>
-              <select
-                className="input text-sm border-emerald-300 bg-emerald-50/30 font-medium"
-                value={formData.supplier_id}
-                onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
+              <label className="text-xs font-bold text-emerald-800">Proveedor / Distribuidor *</label>
+              <button
+                type="button"
+                onClick={() => { setSupplierSearchQuery(''); setIsSupplierPickerOpen(true); }}
+                className={`input text-sm flex items-center justify-between text-left transition-all border-emerald-300 ${
+                  formData.supplier_id 
+                    ? 'bg-emerald-50 text-slate-900 font-bold shadow-2xs' 
+                    : 'bg-emerald-50/20 text-slate-400 font-normal hover:bg-emerald-50/40'
+                }`}
               >
-                <option value="">Seleccionar Proveedor</option>
-                {suppliers.map(s => (
-                  <option key={s.id} value={s.id}>{s.company_name || s.name}</option>
-                ))}
-              </select>
+                <span className="truncate">
+                  {formData.supplier_id 
+                    ? (suppliers.find(s => String(s.id) === String(formData.supplier_id))?.company_name || suppliers.find(s => String(s.id) === String(formData.supplier_id))?.name || 'Proveedor seleccionado')
+                    : 'Buscar o seleccionar distribuidor...'}
+                </span>
+                <Search size={15} className="text-emerald-600 shrink-0 ml-2" />
+              </button>
             </div>
 
             {/* FECHA DE VENCIMIENTO */}
@@ -709,6 +871,126 @@ const Productos = () => {
         onScan={handleBarcodeScanned}
         title="Lector de Código de Productos"
       />
+
+      {/* MODAL: Buscador Rápido de Categorías */}
+      <Modal
+        isOpen={isCategoryPickerOpen}
+        onClose={() => setIsCategoryPickerOpen(false)}
+        title="Seleccionar Categoría del Fármaco"
+        maxWidth="max-w-md"
+      >
+        <div className="flex flex-col gap-3 text-slate-700">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input
+              type="text"
+              placeholder="Buscar categoría clínica..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 pl-10 text-xs font-medium focus:bg-white focus:border-[#16a085] focus:outline-none transition-all shadow-inner"
+              value={categorySearchQuery}
+              onChange={(e) => setCategorySearchQuery(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          <div className="max-h-64 overflow-y-auto space-y-1.5 custom-scrollbar pr-1">
+            {categories
+              .filter(c => !categorySearchQuery || c.name.toLowerCase().includes(categorySearchQuery.toLowerCase()))
+              .map(c => {
+                const isSelected = String(formData.category_id) === String(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, category_id: c.id }));
+                      setIsCategoryPickerOpen(false);
+                    }}
+                    className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-emerald-50 border-[#16a085] text-[#16a085] font-bold shadow-2xs'
+                        : 'bg-white border-slate-200/80 hover:bg-slate-50 text-slate-700 font-medium'
+                    }`}
+                  >
+                    <span className="text-xs">{c.name}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">ID #{c.id}</span>
+                  </button>
+                );
+              })}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsCategoryPickerOpen(false)}
+            className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
+          >
+            Cerrar
+          </button>
+        </div>
+      </Modal>
+
+      {/* MODAL: Buscador Rápido de Proveedores / Distribuidores */}
+      <Modal
+        isOpen={isSupplierPickerOpen}
+        onClose={() => setIsSupplierPickerOpen(false)}
+        title="Seleccionar Proveedor / Laboratorio"
+        maxWidth="max-w-md"
+      >
+        <div className="flex flex-col gap-3 text-slate-700">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input
+              type="text"
+              placeholder="Buscar por nombre o RNC del proveedor..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 pl-10 text-xs font-medium focus:bg-white focus:border-[#16a085] focus:outline-none transition-all shadow-inner"
+              value={supplierSearchQuery}
+              onChange={(e) => setSupplierSearchQuery(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          <div className="max-h-64 overflow-y-auto space-y-1.5 custom-scrollbar pr-1">
+            {suppliers
+              .filter(s => 
+                !supplierSearchQuery || 
+                (s.company_name && s.company_name.toLowerCase().includes(supplierSearchQuery.toLowerCase())) ||
+                (s.name && s.name.toLowerCase().includes(supplierSearchQuery.toLowerCase())) ||
+                (s.rnc && s.rnc.includes(supplierSearchQuery))
+              )
+              .map(s => {
+                const isSelected = String(formData.supplier_id) === String(s.id);
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({ ...prev, supplier_id: s.id }));
+                      setIsSupplierPickerOpen(false);
+                    }}
+                    className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-emerald-50 border-[#16a085] text-slate-900 font-bold shadow-2xs'
+                        : 'bg-white border-slate-200/80 hover:bg-slate-50 text-slate-700 font-medium'
+                    }`}
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">{s.company_name || s.name}</p>
+                      <p className="text-[10px] text-slate-400 font-mono">RNC: {s.rnc || '—'} • Tel: {s.phone || '—'}</p>
+                    </div>
+                    <span className="text-[10px] text-emerald-600 font-mono font-semibold">ID #{s.id}</span>
+                  </button>
+                );
+              })}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsSupplierPickerOpen(false)}
+            className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
+          >
+            Cerrar
+          </button>
+        </div>
+      </Modal>
 
     </div>
   );

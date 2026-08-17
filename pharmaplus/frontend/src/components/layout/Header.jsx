@@ -25,11 +25,20 @@ const Header = ({ toggleSidebar }) => {
 
   return (
     <>
-      <div className="h-16 bg-white border-b border-slate-100/90 flex items-center justify-between px-6 sticky top-0 z-20 shadow-2xs">
+      <div className="h-16 bg-white border-b border-slate-100/90 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-20 shadow-2xs">
         
-        {/* Left side: Search input with shortcut icon */}
-        <div className="flex-1 max-w-md">
-          <div className="relative flex items-center">
+        {/* Left side: Toggle button + Search input */}
+        <div className="flex items-center gap-3 flex-1 max-w-lg">
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            title="Alternar barra lateral"
+            className="p-2 rounded-xl border border-slate-200/80 bg-slate-50/70 hover:bg-emerald-50 hover:text-[#16a085] hover:border-emerald-200 text-slate-600 transition-all active:scale-95 shadow-2xs shrink-0 cursor-pointer"
+          >
+            <Menu size={18} />
+          </button>
+
+          <div className="relative flex items-center flex-1">
             <Search size={15} className="text-slate-400 absolute left-3.5" />
             <input 
               type="text" 

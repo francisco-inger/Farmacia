@@ -55,6 +55,10 @@ const Compras = () => {
 
   // Modals & Popovers
   const [isNewPurchaseModalOpen, setIsNewPurchaseModalOpen] = useState(false);
+  const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
+  const [modalSupplierSearch, setModalSupplierSearch] = useState('');
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [modalProductSearch, setModalProductSearch] = useState('');
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isScanModalOpen, setIsScanModalOpen] = useState(false);
@@ -1281,10 +1285,22 @@ const Compras = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-slate-600">Proveedor *</label>
-              <select className="input text-xs" value={purchaseForm.supplier_id} onChange={e => setPurchaseForm(prev => ({ ...prev, supplier_id: e.target.value }))} required>
-                <option value="">Seleccionar proveedor</option>
-                {suppliersList.map(s => <option key={s.id} value={s.id}>{s.company_name}</option>)}
-              </select>
+              <button
+                type="button"
+                onClick={() => { setModalSupplierSearch(''); setIsSupplierModalOpen(true); }}
+                className={`input text-xs flex items-center justify-between text-left transition-all ${
+                  purchaseForm.supplier_id 
+                    ? 'border-[#16a085] bg-emerald-50 text-slate-900 font-bold' 
+                    : 'text-slate-400 hover:bg-slate-50'
+                }`}
+              >
+                <span className="truncate">
+                  {purchaseForm.supplier_id 
+                    ? (suppliersList.find(s => String(s.id) === String(purchaseForm.supplier_id))?.company_name || 'Proveedor seleccionado')
+                    : 'Buscar o seleccionar proveedor...'}
+                </span>
+                <Search size={14} className="text-slate-400 shrink-0 ml-2" />
+              </button>
             </div>
             <div className="flex flex-col gap-1">
               <label className="font-semibold text-slate-600">Método de Pago</label>
@@ -1312,10 +1328,22 @@ const Compras = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
               <div>
                 <label className="font-semibold text-slate-600 block mb-1">Producto *</label>
-                <select className="input text-xs" value={selectedProductId} onChange={e => { setSelectedProductId(e.target.value); const prod = productsList.find(p => String(p.id) === e.target.value); if (prod) setItemUnitCost(prod.cost_price || prod.price || 25); }}>
-                  <option value="">Seleccionar producto</option>
-                  {productsList.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+                <button
+                  type="button"
+                  onClick={() => { setModalProductSearch(''); setIsProductModalOpen(true); }}
+                  className={`input text-xs w-full flex items-center justify-between text-left transition-all ${
+                    selectedProductId 
+                      ? 'border-[#16a085] bg-white text-slate-900 font-bold' 
+                      : 'text-slate-400 bg-white hover:bg-slate-50'
+                  }`}
+                >
+                  <span className="truncate">
+                    {selectedProductId 
+                      ? (productsList.find(p => String(p.id) === String(selectedProductId))?.name || 'Producto seleccionado')
+                      : 'Buscar medicamento o producto...'}
+                  </span>
+                  <Search size={14} className="text-slate-400 shrink-0 ml-2" />
+                </button>
               </div>
               <div>
                 <label className="font-semibold text-slate-600 block mb-1">Cantidad</label>
@@ -1555,6 +1583,141 @@ const Compras = () => {
           showToast(`Factura/Código detectado: ${code}`, 'success');
         }}
       />
+
+      {/* ─── MODAL DE BÚSQUEDA RÁPIDA DE PROVEEDORES (ORDEN DE COMPRA) ─── */}
+      <Modal
+        isOpen={isSupplierModalOpen}
+        onClose={() => setIsSupplierModalOpen(false)}
+        title="Seleccionar Proveedor / Distribuidor"
+        maxWidth="max-w-md"
+      >
+        <div className="flex flex-col gap-3 text-slate-700">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input
+              type="text"
+              placeholder="Buscar por nombre de proveedor o RNC..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 pl-10 text-xs font-medium focus:bg-white focus:border-[#16a085] focus:outline-none transition-all shadow-inner"
+              value={modalSupplierSearch}
+              onChange={(e) => setModalSupplierSearch(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          <div className="max-h-64 overflow-y-auto space-y-1.5 custom-scrollbar pr-1">
+            {suppliersList
+              .filter(s => 
+                !modalSupplierSearch || 
+                (s.company_name && s.company_name.toLowerCase().includes(modalSupplierSearch.toLowerCase())) ||
+                (s.name && s.name.toLowerCase().includes(modalSupplierSearch.toLowerCase())) ||
+                (s.rnc && s.rnc.includes(modalSupplierSearch))
+              )
+              .map(s => {
+                const isSelected = String(purchaseForm.supplier_id) === String(s.id);
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      setPurchaseForm(prev => ({ ...prev, supplier_id: s.id }));
+                      setIsSupplierModalOpen(false);
+                    }}
+                    className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-emerald-50 border-[#16a085] text-slate-900 font-bold shadow-2xs'
+                        : 'bg-white border-slate-200/80 hover:bg-slate-50 text-slate-700 font-medium'
+                    }`}
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">{s.company_name || s.name}</p>
+                      <p className="text-[10px] text-slate-400 font-mono">RNC: {s.rnc || '—'} • Tel: {s.phone || '—'}</p>
+                    </div>
+                    <span className="text-[10px] text-emerald-600 font-mono font-semibold">ID #{s.id}</span>
+                  </button>
+                );
+              })}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsSupplierModalOpen(false)}
+            className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
+          >
+            Cerrar
+          </button>
+        </div>
+      </Modal>
+
+      {/* ─── MODAL DE BÚSQUEDA RÁPIDA DE PRODUCTOS (ORDEN DE COMPRA) ─── */}
+      <Modal
+        isOpen={isProductModalOpen}
+        onClose={() => setIsProductModalOpen(false)}
+        title="Buscar y Seleccionar Producto"
+        maxWidth="max-w-lg"
+      >
+        <div className="flex flex-col gap-3 text-slate-700">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input
+              type="text"
+              placeholder="Buscar por nombre, código de barras o principio activo..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 pl-10 text-xs font-medium focus:bg-white focus:border-[#16a085] focus:outline-none transition-all shadow-inner"
+              value={modalProductSearch}
+              onChange={(e) => setModalProductSearch(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          <div className="max-h-72 overflow-y-auto space-y-1.5 custom-scrollbar pr-1">
+            {productsList
+              .filter(p => 
+                !modalProductSearch || 
+                (p.name && p.name.toLowerCase().includes(modalProductSearch.toLowerCase())) ||
+                (p.code && p.code.toLowerCase().includes(modalProductSearch.toLowerCase())) ||
+                (p.barcode && p.barcode.includes(modalProductSearch)) ||
+                (p.active_ingredient && p.active_ingredient.toLowerCase().includes(modalProductSearch.toLowerCase()))
+              )
+              .map(p => {
+                const isSelected = String(selectedProductId) === String(p.id);
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => {
+                      setSelectedProductId(p.id);
+                      setItemUnitCost(p.cost_price || p.price || 25);
+                      setIsProductModalOpen(false);
+                    }}
+                    className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-emerald-50 border-[#16a085] text-slate-900 font-bold shadow-2xs'
+                        : 'bg-white border-slate-200/80 hover:bg-slate-50 text-slate-700 font-medium'
+                    }`}
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">{p.name}</p>
+                      <p className="text-[10px] text-slate-400">
+                        {p.code ? `Código: ${p.code}` : ''} {p.active_ingredient ? `• ${p.active_ingredient}` : ''} • Stock actual: <strong className="text-slate-700">{p.stock || 0}</strong>
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-xs font-bold text-emerald-700">RD$ {Number(p.cost_price || p.price || 0).toFixed(2)}</span>
+                      <span className="text-[10px] text-slate-400 block font-mono">Costo base</span>
+                    </div>
+                  </button>
+                );
+              })}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsProductModalOpen(false)}
+            className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
+          >
+            Cerrar
+          </button>
+        </div>
+      </Modal>
 
     </div>
   );

@@ -62,6 +62,7 @@ const RRHH = () => {
 
   /* ── Modales ─────────────────────────────────────────────────────────────── */
   const [isEmployeeModalOpen, setIsEmployeeModalOpen]   = useState(false);
+  const [isDetailModalOpen, setIsDetailModalOpen]       = useState(false);
   const [isEditMode, setIsEditMode]                     = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen]       = useState(false);
   const [isScanModalOpen, setIsScanModalOpen]           = useState(false);
@@ -589,10 +590,10 @@ const RRHH = () => {
       )}
 
       {/* ── Main Content ─────────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 flex-1 items-start">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 flex-1 items-start">
 
         {/* LEFT: Tabla + Chatbot */}
-        <div className="lg:col-span-8 flex flex-col gap-5">
+        <div className="xl:col-span-8 flex flex-col gap-5 min-w-0">
 
           {/* TABLE */}
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
@@ -701,13 +702,13 @@ const RRHH = () => {
                           <td className="py-3.5 px-4 text-slate-600 font-mono">{e.hire_date || '—'}</td>
                           <td className="py-3.5 px-3 text-center">
                             <div className="inline-flex items-center gap-2">
-                              <button onClick={ev => { ev.stopPropagation(); setSelectedEmployee(e); }}
-                                className="p-1 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors" title="Ver detalle">
+                              <button onClick={ev => { ev.stopPropagation(); setSelectedEmployee(e); setIsDetailModalOpen(true); }}
+                                className="p-1.5 rounded-lg text-[#16a085] bg-emerald-50 hover:bg-[#16a085] hover:text-white transition-all shadow-2xs cursor-pointer" title="Ver expediente completo">
                                 <Eye size={16} />
                               </button>
                               <button onClick={ev => { ev.stopPropagation(); openEditModal(e); }}
-                                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors" title="Editar">
-                                <MoreVertical size={16} />
+                                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer" title="Editar empleado">
+                                <Edit3 size={15} />
                               </button>
                             </div>
                           </td>
@@ -969,7 +970,7 @@ const RRHH = () => {
         </div>
 
         {/* ── RIGHT: Detalle del empleado ────────────────────────────────────── */}
-        <div className="lg:col-span-4">
+        <div className="xl:col-span-4 w-full">
           <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 sticky top-4 flex flex-col gap-4">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100">
               <h3 className="font-bold text-slate-800 text-base">Detalle del empleado</h3>
@@ -1259,6 +1260,109 @@ const RRHH = () => {
               <button onClick={() => { setIsCarnetModalOpen(false); setIsScanModalOpen(true); }}
                 className="btn flex-1 text-xs font-bold bg-[#16a085] hover:bg-[#12876f] text-white inline-flex items-center justify-center gap-1.5">
                 <ScanLine size={16} /> Escanear QR
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal: Expediente Completo de Empleado (Eye button action) */}
+      <Modal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)}
+        title="Expediente Completo del Colaborador" maxWidth="max-w-xl">
+        {selectedEmployee && (
+          <div className="flex flex-col gap-4 text-slate-700">
+            {/* Header profile card */}
+            <div className="bg-gradient-to-r from-[#072a23] via-[#0f6c59] to-[#16a085] text-white p-5 rounded-2xl flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className={`w-14 h-14 rounded-2xl border-2 border-white/40 font-black text-xl flex items-center justify-center shadow-lg bg-white/20 text-white backdrop-blur-md`}>
+                  {selectedEmployee.initials_calc || initials(selectedEmployee.name)}
+                </div>
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white/20 text-emerald-100 text-[10px] font-bold uppercase tracking-wider mb-1">
+                    ID: #{selectedEmployee.id} • {selectedEmployee.department}
+                  </div>
+                  <h3 className="text-lg font-black text-white leading-tight">{selectedEmployee.name}</h3>
+                  <p className="text-xs text-emerald-100 font-semibold">{selectedEmployee.position}</p>
+                </div>
+              </div>
+              <span className={`px-3 py-1 rounded-xl text-xs font-black uppercase tracking-wider shrink-0 ${
+                selectedEmployee.is_active === 1
+                  ? 'bg-emerald-400 text-emerald-950 shadow-sm'
+                  : 'bg-rose-400 text-rose-950 shadow-sm'
+              }`}>
+                ● {selectedEmployee.is_active === 1 ? 'Activo' : 'Inactivo'}
+              </span>
+            </div>
+
+            {/* Info grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex flex-col gap-0.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Cédula de Identidad</span>
+                <span className="font-mono font-bold text-slate-800 text-sm">{selectedEmployee.cedula || '—'}</span>
+              </div>
+              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex flex-col gap-0.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Teléfono</span>
+                <span className="font-semibold text-slate-800 text-sm">{selectedEmployee.phone || '—'}</span>
+              </div>
+              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex flex-col gap-0.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Correo Electrónico</span>
+                <span className="font-semibold text-slate-800 truncate">{selectedEmployee.email || '—'}</span>
+              </div>
+              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex flex-col gap-0.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Salario Mensual</span>
+                <span className="font-extrabold text-emerald-700 text-sm">RD$ {fmtSalary(selectedEmployee.salary)}</span>
+              </div>
+              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex flex-col gap-0.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Fecha de Ingreso</span>
+                <span className="font-mono text-slate-700">{selectedEmployee.hire_date || '—'}</span>
+              </div>
+              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex flex-col gap-0.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Fecha de Nacimiento</span>
+                <span className="font-mono text-slate-700">{selectedEmployee.birth_date || '—'}</span>
+              </div>
+              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex flex-col gap-0.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Estado Civil</span>
+                <span className="font-semibold text-slate-700">{selectedEmployee.civil_status || '—'}</span>
+              </div>
+              <div className="p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex flex-col gap-0.5">
+                <span className="text-[10px] font-bold text-slate-400 uppercase">Contacto de Emergencia</span>
+                <span className="font-semibold text-slate-700">{selectedEmployee.emergency_contact || '—'}</span>
+              </div>
+              {selectedEmployee.address && (
+                <div className="col-span-1 sm:col-span-2 p-3 bg-slate-50 border border-slate-200/80 rounded-xl flex flex-col gap-0.5">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Dirección Residencial</span>
+                  <span className="font-semibold text-slate-800">{selectedEmployee.address}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Actions footer */}
+            <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-100">
+              <button
+                onClick={() => {
+                  setIsDetailModalOpen(false);
+                  setIsCarnetModalOpen(true);
+                }}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-[#16a085] hover:bg-[#12876f] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+              >
+                <QrCode size={15} />
+                <span>Ver Carnet QR</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsDetailModalOpen(false);
+                  openEditModal(selectedEmployee);
+                }}
+                className="py-2.5 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <Edit3 size={15} />
+                <span>Editar Empleado</span>
+              </button>
+              <button
+                onClick={() => setIsDetailModalOpen(false)}
+                className="py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-all cursor-pointer"
+              >
+                Cerrar
               </button>
             </div>
           </div>

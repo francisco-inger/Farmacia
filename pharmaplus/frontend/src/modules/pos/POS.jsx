@@ -646,20 +646,26 @@ const POS = () => {
 
           <form onSubmit={handleOpenRegisterSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-slate-600">Nombre de Caja / Terminal (Cajero)</label>
-              <select 
-                className="input text-sm py-2"
-                required
-                value={openRegisterForm.name}
-                onChange={(e) => setOpenRegisterForm(prev => ({ ...prev, name: e.target.value }))}
-              >
-                <option value="" disabled>Seleccione Cajero</option>
+              <label className="text-xs font-bold text-slate-600">Nombre de Caja / Terminal (Cajero) *</label>
+              <div className="relative">
+                <input
+                  type="text"
+                  required
+                  placeholder="Buscar cajero por nombre..."
+                  className="input text-sm py-2 pr-8 font-semibold"
+                  value={openRegisterForm.name}
+                  onChange={(e) => setOpenRegisterForm(prev => ({ ...prev, name: e.target.value }))}
+                  list="cashiers-datalist"
+                />
+                <User className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+              </div>
+              <datalist id="cashiers-datalist">
                 {cashierUsers.map(u => (
                   <option key={u.id} value={u.name}>
-                    {u.name}
+                    ID #{u.id} - {u.role || 'Cajero'}
                   </option>
                 ))}
-              </select>
+              </datalist>
             </div>
 
             <div className="flex flex-col gap-1">

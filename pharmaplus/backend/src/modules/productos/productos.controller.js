@@ -3,17 +3,44 @@ const { logAudit } = require('../../utils/audit');
 
 function getAll(req, res) {
   const db = getDb();
-  const { search, category, low_stock, page = 1, limit = 50 } = req.query;
+  const { search, category, category_id, supplier_id, low_stock, requires_recipe, is_controlled, stock_status, page = 1, limit = 50 } = req.query;
   const offset = (page - 1) * limit;
   let where = ['1=1'];
   const params = [];
+
   if (search) { 
     where.push(`(p.name LIKE ? OR p.code LIKE ? OR p.barcode LIKE ? OR p.active_ingredient LIKE ? OR s.company_name LIKE ? OR p.sanitary_register LIKE ? OR p.batch_number LIKE ?)`); 
     const s = `%${search}%`; 
     params.push(s,s,s,s,s,s,s); 
   }
-  if (category) { where.push(`p.category_id = ?`); params.push(category); }
-  if (low_stock === 'true') { where.push(`p.stock <= p.min_stock`); }
+
+  const catId = category_id || category;
+  if (catId) { 
+    where.push(`p.category_id = ?`); 
+    params.push(catId); 
+  }
+
+  if (supplier_id) {
+    where.push(`p.supplier_id = ?`);
+    params.push(supplier_id);
+  }
+
+  if (requires_recipe === '1' || requires_recipe === 'true') {
+    where.push(`p.requires_recipe = 1`);
+  }
+
+  if (is_controlled === '1' || is_controlled === 'true') {
+    where.push(`p.is_controlled = 1`);
+  }
+
+  if (stock_status === 'low' || low_stock === 'true') {
+    where.push(`p.stock <= p.min_stock AND p.stock > 0`);
+  } else if (stock_status === 'out') {
+    where.push(`p.stock = 0`);
+  } else if (stock_status === 'available') {
+    where.push(`p.stock > p.min_stock`);
+  }
+
   const whereStr = where.join(' AND ');
   const products = db.prepare(`
     SELECT p.*, c.name as category_name, c.color as category_color, s.company_name as supplier_name

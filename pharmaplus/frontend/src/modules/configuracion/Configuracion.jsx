@@ -166,22 +166,82 @@ const Configuracion = () => {
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Fetch Existing Settings from Backend
+  // Form Validation Errors State
+  const [formErrors, setFormErrors] = useState({});
+
+  // Fetch Existing Settings from Backend & Synchronize All Tabs
   useEffect(() => {
     const fetchSettingsData = async () => {
       try {
         setLoading(true);
         const res = await api.get('/configuracion');
-        if (res.success && res.data) {
-          const s = res.data;
+        const s = res?.data || res || {};
+        if (s) {
+          // Company
           setCompanyForm(prev => ({
             ...prev,
-            company_name: s.company_name?.value || prev.company_name,
-            rnc: s.rnc?.value || prev.rnc,
-            phone: s.phone?.value || prev.phone,
-            email: s.email?.value || prev.email,
-            address: s.address?.value || prev.address
+            company_name: s.company_name?.value || s.pharmacy_name?.value || prev.company_name,
+            rnc: s.rnc?.value || s.pharmacy_rnc?.value || prev.rnc,
+            trade_name: s.trade_name?.value || prev.trade_name,
+            phone: s.phone?.value || s.pharmacy_phone?.value || prev.phone,
+            email: s.email?.value || s.pharmacy_email?.value || prev.email,
+            website: s.website?.value || prev.website,
+            address: s.address?.value || s.pharmacy_address?.value || prev.address,
+            city: s.city?.value || prev.city,
+            province: s.province?.value || prev.province,
+            postal_code: s.postal_code?.value || prev.postal_code,
+            country: s.country?.value || prev.country,
+            currency: s.currency?.value || prev.currency
           }));
+
+          // Taxes
+          if (s.generalTaxRate?.value || s.itbis_rate?.value) {
+            setTaxSettings(prev => ({
+              ...prev,
+              generalTaxRate: s.generalTaxRate?.value || (s.itbis_rate?.value ? String(parseFloat(s.itbis_rate.value) * 100) : prev.generalTaxRate),
+              reducedTaxRate: s.reducedTaxRate?.value || prev.reducedTaxRate,
+              exemptTaxRate: s.exemptTaxRate?.value || prev.exemptTaxRate,
+              defaultTax: s.defaultTax?.value || prev.defaultTax,
+              includeTaxInPrice: s.includeTaxInPrice?.value !== undefined ? s.includeTaxInPrice.value === 'true' || s.includeTaxInPrice.value === '1' : prev.includeTaxInPrice,
+              dgiiTaxCompliance: s.dgiiTaxCompliance?.value !== undefined ? s.dgiiTaxCompliance.value === 'true' || s.dgiiTaxCompliance.value === '1' : prev.dgiiTaxCompliance
+            }));
+          }
+
+          // Sales
+          if (s.defaultPriceType?.value || s.allow_sale_without_stock?.value) {
+            setSalesSettings(prev => ({
+              ...prev,
+              defaultPriceType: s.defaultPriceType?.value || prev.defaultPriceType,
+              defaultDiscount: s.defaultDiscount?.value || prev.defaultDiscount,
+              maxAllowedDiscount: s.maxAllowedDiscount?.value || prev.maxAllowedDiscount,
+              defaultSeller: s.defaultSeller?.value || prev.defaultSeller,
+              allowLowStockSales: s.allow_sale_without_stock?.value ? s.allow_sale_without_stock.value === 'true' : prev.allowLowStockSales,
+              requireCustomerRNC: s.requireCustomerRNC?.value ? s.requireCustomerRNC.value === 'true' : prev.requireCustomerRNC
+            }));
+          }
+
+          // Inventory
+          if (s.lowStockThreshold?.value || s.days_before_expiry_alert?.value) {
+            setInventorySettings(prev => ({
+              ...prev,
+              lowStockThreshold: s.lowStockThreshold?.value || prev.lowStockThreshold,
+              batchExpirationDays: s.days_before_expiry_alert?.value || prev.batchExpirationDays,
+              autoReorder: s.autoReorder?.value !== undefined ? s.autoReorder.value === 'true' : prev.autoReorder,
+              requireAdjustmentNotes: s.requireAdjustmentNotes?.value !== undefined ? s.requireAdjustmentNotes.value === 'true' : prev.requireAdjustmentNotes,
+              trackBatches: s.trackBatches?.value !== undefined ? s.trackBatches.value === 'true' : prev.trackBatches
+            }));
+          }
+
+          // Devices
+          if (s.receiptPrinter?.value) {
+            setDevicesSettings(prev => ({
+              ...prev,
+              receiptPrinter: s.receiptPrinter?.value || prev.receiptPrinter,
+              paperSize: s.paperSize?.value || prev.paperSize,
+              barcodeScannerPort: s.barcodeScannerPort?.value || prev.barcodeScannerPort,
+              cashDrawerPulse: s.cashDrawerPulse?.value || prev.cashDrawerPulse
+            }));
+          }
         }
       } catch (err) {
         console.error('Error cargando configuración:', err);
@@ -192,29 +252,131 @@ const Configuracion = () => {
     fetchSettingsData();
   }, []);
 
-  // Save All Settings Handler
+  // Validation function per Category
+  const validateCategoryFields = () => {
+    const errors = {};
+
+    // Validate Company Form
+    if (activeCategory === 'Empresa') {
+      if (!companyForm.company_name?.trim()) {
+        errors.company_name = 'El nombre de la empresa es obligatorio';
+      }
+      if (!companyForm.rnc?.trim()) {
+        errors.rnc = 'El RNC o Cédula es obligatorio';
+      } else if (!/^[\d-]+$/.test(companyForm.rnc)) {
+        errors.rnc = 'El RNC solo debe contener números y guiones';
+      }
+      if (companyForm.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(companyForm.email)) {
+        errors.email = 'El formato de correo electrónico no es válido';
+      }
+      if (companyForm.phone && !/^[\d\s()+-]+$/.test(companyForm.phone)) {
+        errors.phone = 'El formato de teléfono no es válido';
+      }
+    }
+
+    // Validate Taxes
+    if (activeCategory === 'Impuestos') {
+      const tax = parseFloat(taxSettings.generalTaxRate);
+      if (isNaN(tax) || tax < 0 || tax > 100) {
+        errors.generalTaxRate = 'La tasa de ITBIS debe ser un porcentaje válido entre 0 y 100';
+      }
+    }
+
+    // Validate Sales
+    if (activeCategory === 'Ventas') {
+      const maxDisc = parseFloat(salesSettings.maxAllowedDiscount);
+      if (isNaN(maxDisc) || maxDisc < 0 || maxDisc > 100) {
+        errors.maxAllowedDiscount = 'El descuento máximo debe estar entre 0% y 100%';
+      }
+    }
+
+    // Validate Inventory
+    if (activeCategory === 'Inventario') {
+      const lowStock = parseInt(inventorySettings.lowStockThreshold, 10);
+      if (isNaN(lowStock) || lowStock < 0) {
+        errors.lowStockThreshold = 'El umbral de stock mínimo debe ser un número entero mayor o igual a 0';
+      }
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Save All Settings Handler with full synchronization
   const handleSaveSettings = async () => {
+    if (!validateCategoryFields()) {
+      showToast('Por favor corrija los campos con errores señalados', 'warning');
+      return;
+    }
+
     try {
       setSaving(true);
       const payload = {
+        // Empresa
         company_name: companyForm.company_name,
+        pharmacy_name: companyForm.company_name,
         rnc: companyForm.rnc,
+        pharmacy_rnc: companyForm.rnc,
         trade_name: companyForm.trade_name,
         phone: companyForm.phone,
+        pharmacy_phone: companyForm.phone,
         email: companyForm.email,
+        pharmacy_email: companyForm.email,
+        website: companyForm.website,
         address: companyForm.address,
+        pharmacy_address: companyForm.address,
+        city: companyForm.city,
+        province: companyForm.province,
+        postal_code: companyForm.postal_code,
+        country: companyForm.country,
         currency: companyForm.currency,
+        
+        // Impuestos
+        generalTaxRate: taxSettings.generalTaxRate,
+        itbis_rate: String(parseFloat(taxSettings.generalTaxRate || '18') / 100),
+        reducedTaxRate: taxSettings.reducedTaxRate,
+        exemptTaxRate: taxSettings.exemptTaxRate,
+        defaultTax: taxSettings.defaultTax,
+        includeTaxInPrice: taxSettings.includeTaxInPrice ? 'true' : 'false',
+        dgiiTaxCompliance: taxSettings.dgiiTaxCompliance ? 'true' : 'false',
+
+        // Ventas
+        defaultPriceType: salesSettings.defaultPriceType,
+        defaultDiscount: salesSettings.defaultDiscount,
+        maxAllowedDiscount: salesSettings.maxAllowedDiscount,
+        defaultSeller: salesSettings.defaultSeller,
+        allow_sale_without_stock: salesSettings.allowLowStockSales ? 'true' : 'false',
+        requireCustomerRNC: salesSettings.requireCustomerRNC ? 'true' : 'false',
+
+        // Inventario
+        lowStockThreshold: inventorySettings.lowStockThreshold,
+        days_before_expiry_alert: inventorySettings.batchExpirationDays,
+        autoReorder: inventorySettings.autoReorder ? 'true' : 'false',
+        requireAdjustmentNotes: inventorySettings.requireAdjustmentNotes ? 'true' : 'false',
+        trackBatches: inventorySettings.trackBatches ? 'true' : 'false',
+
+        // Facturación
+        defaultNCF: billingSettings.defaultNCF,
+        enableElectronicCF: billingSettings.enableElectronicCF ? 'true' : 'false',
+        receiptFooterNote: billingSettings.receiptFooterNote,
+        autoPrint: billingSettings.autoPrintReceipt ? '1' : '0',
+
+        // Dispositivos
+        receiptPrinter: devicesSettings.receiptPrinter,
+        paperSize: devicesSettings.paperSize,
+        barcodeScannerPort: devicesSettings.barcodeScannerPort,
+        cashDrawerPulse: devicesSettings.cashDrawerPulse,
+
+        // Personalización
         darkMode: customizationSettings.darkMode ? '1' : '0',
-        autoPrint: billingSettings.autoPrintReceipt ? '1' : '0'
+        primaryColor: customizationSettings.primaryColor
       };
 
-      try {
-        await api.put('/configuracion', payload);
-      } catch (e) {}
-
-      showToast(`Configuraciones de "${activeCategory}" guardadas exitosamente`);
+      const res = await api.put('/configuracion', payload);
+      showToast(res.message || `Configuraciones de "${activeCategory}" sincronizadas y guardadas exitosamente`, 'success');
+      setFormErrors({});
     } catch (err) {
-      showToast('Error al guardar la configuración', 'warning');
+      showToast(err.message || 'Error al guardar la configuración', 'warning');
     } finally {
       setSaving(false);
     }
@@ -385,23 +547,31 @@ const Configuracion = () => {
             <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
               <div className="md:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
                 <div className="flex flex-col gap-1">
-                  <label className="font-semibold text-slate-700">Nombre de la empresa</label>
+                  <label className="font-semibold text-slate-700">Nombre de la empresa <span className="text-rose-500">*</span></label>
                   <input
                     type="text"
-                    className="input text-xs font-bold text-slate-900"
+                    className={`input text-xs font-bold text-slate-900 ${formErrors.company_name ? 'border-rose-400 focus:border-rose-500 bg-rose-50/20' : ''}`}
                     value={companyForm.company_name}
-                    onChange={(e) => setCompanyForm({ ...companyForm, company_name: e.target.value })}
+                    onChange={(e) => {
+                      setCompanyForm({ ...companyForm, company_name: e.target.value });
+                      if (formErrors.company_name) setFormErrors({ ...formErrors, company_name: null });
+                    }}
                   />
+                  {formErrors.company_name && <p className="text-[10px] text-rose-500 font-semibold">{formErrors.company_name}</p>}
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <label className="font-semibold text-slate-700">RNC</label>
+                  <label className="font-semibold text-slate-700">RNC o Cédula <span className="text-rose-500">*</span></label>
                   <input
                     type="text"
-                    className="input text-xs font-mono font-bold text-slate-900"
+                    className={`input text-xs font-mono font-bold text-slate-900 ${formErrors.rnc ? 'border-rose-400 focus:border-rose-500 bg-rose-50/20' : ''}`}
                     value={companyForm.rnc}
-                    onChange={(e) => setCompanyForm({ ...companyForm, rnc: e.target.value })}
+                    onChange={(e) => {
+                      setCompanyForm({ ...companyForm, rnc: e.target.value });
+                      if (formErrors.rnc) setFormErrors({ ...formErrors, rnc: null });
+                    }}
                   />
+                  {formErrors.rnc && <p className="text-[10px] text-rose-500 font-semibold">{formErrors.rnc}</p>}
                 </div>
 
                 <div className="flex flex-col gap-1">
@@ -418,20 +588,28 @@ const Configuracion = () => {
                   <label className="font-semibold text-slate-700">Teléfono</label>
                   <input
                     type="text"
-                    className="input text-xs font-semibold text-slate-800"
+                    className={`input text-xs font-semibold text-slate-800 ${formErrors.phone ? 'border-rose-400 focus:border-rose-500 bg-rose-50/20' : ''}`}
                     value={companyForm.phone}
-                    onChange={(e) => setCompanyForm({ ...companyForm, phone: e.target.value })}
+                    onChange={(e) => {
+                      setCompanyForm({ ...companyForm, phone: e.target.value });
+                      if (formErrors.phone) setFormErrors({ ...formErrors, phone: null });
+                    }}
                   />
+                  {formErrors.phone && <p className="text-[10px] text-rose-500 font-semibold">{formErrors.phone}</p>}
                 </div>
 
                 <div className="flex flex-col gap-1">
                   <label className="font-semibold text-slate-700">Correo electrónico</label>
                   <input
                     type="email"
-                    className="input text-xs font-medium text-slate-800"
+                    className={`input text-xs font-medium text-slate-800 ${formErrors.email ? 'border-rose-400 focus:border-rose-500 bg-rose-50/20' : ''}`}
                     value={companyForm.email}
-                    onChange={(e) => setCompanyForm({ ...companyForm, email: e.target.value })}
+                    onChange={(e) => {
+                      setCompanyForm({ ...companyForm, email: e.target.value });
+                      if (formErrors.email) setFormErrors({ ...formErrors, email: null });
+                    }}
                   />
+                  {formErrors.email && <p className="text-[10px] text-rose-500 font-semibold">{formErrors.email}</p>}
                 </div>
 
                 <div className="flex flex-col gap-1">
@@ -1296,31 +1474,69 @@ const Configuracion = () => {
         </div>
       )}
 
-      {/* ─── SLEEK GREEN HEADER BANNER ────────────────────────────────────────── */}
-      <div className="bg-[#16a085] rounded-2xl p-5 text-white shadow-md flex flex-col sm:flex-row items-center justify-between gap-4 relative overflow-hidden">
-        <div className="flex items-center gap-3 z-10">
-          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight">Configuración General del Sistema</h2>
-        </div>
+      {/* ─── BANNER SUPERIOR CORPORATIVO CONFIGURACIÓN (PHARMA.ERP) ─── */}
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-r from-[#072a23] via-[#0f6c59] to-[#16a085] text-white p-7 sm:p-10 lg:p-12 shadow-2xl border border-[#16a085]/40 min-h-[290px] flex flex-col justify-between shrink-0">
         
-        <div className="flex items-center gap-3 shrink-0 z-10">
-          <button
-            onClick={handleSaveSettings}
-            disabled={saving}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-[#16a085] hover:bg-slate-50 disabled:opacity-50 font-bold text-xs transition-all shadow-md active:scale-95 shrink-0"
-          >
-            {saving ? <RefreshCw size={16} className="animate-spin" /> : <Save size={16} />}
-            <span>Guardar cambios</span>
-          </button>
+        {/* Imagen Específica de Centro de Servidores y Configuración ERP */}
+        <div 
+          className="absolute inset-0 opacity-45 mix-blend-luminosity bg-cover bg-right sm:bg-center pointer-events-none transition-all duration-700" 
+          style={{ backgroundImage: "url('/configuracion-banner.jpg')" }}
+        ></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-[#072a23]/92 via-[#0f6c59]/70 to-[#16a085]/40 pointer-events-none"></div>
 
-          <div className="shrink-0 h-16 md:h-20 flex items-center justify-center">
-            <img 
-              src="/modules/dashboard.png" 
-              alt="Configuración" 
-              className="h-full w-auto max-w-[240px] object-contain rounded-xl drop-shadow-md"
-              onError={(e) => { e.target.style.display = 'none'; }}
-            />
-          </div>
+        <div className="absolute top-0 right-0 p-8 opacity-15 font-mono text-4xl font-black tracking-widest uppercase select-none pointer-events-none hidden md:block">
+          ENTERPRISE SYSTEM CONFIG & PREFERENCES
         </div>
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+          
+          <div className="space-y-4 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-emerald-950/60 backdrop-blur-md border border-emerald-400/40 text-emerald-200 text-xs font-bold tracking-wider uppercase shadow-sm">
+              <span>✦</span>
+              <span>PARÁMETROS DEL SISTEMA, EMPRESA & HARDWARE • PHARMAPLUS</span>
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-white leading-tight drop-shadow-md">
+              Configuración del Sistema
+            </h1>
+
+            <p className="text-sm sm:text-base text-emerald-100/90 font-medium leading-relaxed max-w-xl drop-shadow">
+              Administración de datos fiscales, impresoras de tickets, tasas de impuestos DGII, políticas de ventas, respaldo de base de datos e integraciones.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse"></span>
+                {companyForm.company_name} ({companyForm.rnc})
+              </span>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                10 Módulos de Ajustes
+              </span>
+              <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
+                ERP 2026 Core
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3 z-10">
+            <button
+              onClick={handleSaveSettings}
+              disabled={saving}
+              className="px-5 py-3 rounded-2xl bg-white text-[#12876f] hover:bg-emerald-50 active:scale-95 text-xs sm:text-sm font-black shadow-xl transition-all flex items-center gap-2"
+            >
+              {saving ? <RefreshCw size={17} className="animate-spin" /> : <Save size={17} />}
+              <span>Guardar Cambios</span>
+            </button>
+            <button
+              onClick={() => setIsBackupModalOpen(true)}
+              className="px-5 py-3 rounded-2xl bg-black/40 hover:bg-black/60 active:scale-95 text-white text-xs sm:text-sm font-bold border border-emerald-300/40 backdrop-blur-md transition-all flex items-center gap-2 shadow-lg"
+            >
+              <ShieldCheck size={17} /> Respaldar BD
+            </button>
+          </div>
+
+        </div>
+
       </div>
 
       {/* ─── MAIN CONTENT LAYOUT (2 COLUMNS: NAV SIDEBAR + FORM WORKSPACE) ─── */}

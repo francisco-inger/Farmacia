@@ -387,122 +387,16 @@ const Dashboard = () => {
 
       </div>
 
-      {/* ─── PIE DE PÁGINA CORPORATIVO: MISIÓN, VISIÓN, VALORES & UBICACIÓN ─── */}
-      <div className="mt-4 rounded-3xl bg-white border border-slate-100 p-6 sm:p-8 shadow-sm space-y-6">
-        
-        {/* Header Corporativo del Footer */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-100 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#12876f] to-[#16a085] text-white flex items-center justify-center shadow-md shadow-[#16a085]/20">
-              <Pill size={22} className="rotate-45" />
-            </div>
-            <div>
-              <h4 className="text-base font-extrabold text-slate-800 tracking-tight">
-                PHARMAPLUS <span className="text-[#16a085]">DOMINICANA S.R.L.</span>
-              </h4>
-              <p className="text-xs text-slate-400 font-medium">
-                Red Nacional de Distribución y Dispensación Farmacéutica • RNC: 1-31-89472-3
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="px-3 py-1 rounded-xl bg-[#e8f6f3] text-[#12876f] border border-[#16a085]/20 text-xs font-bold flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-[#16a085] animate-pulse"></span>
-              Sede Principal Operativa
-            </span>
-          </div>
+      {/* ─── PIE DE PÁGINA LIMPIO CORPORATIVO ─── */}
+      <div className="mt-2 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-2 px-2 py-3">
+        <p>© 2026 PharmaPlus Enterprise Suite — Todos los derechos reservados.</p>
+        <div className="flex items-center gap-3">
+          <span className="flex items-center gap-1 text-emerald-600 font-semibold">
+            <ShieldCheck size={14} /> Cifrado AES-256 Activo
+          </span>
+          <span>•</span>
+          <span>Certificado DGII e-CF V1.0</span>
         </div>
-
-        {/* Columnas: Misión, Visión y Valores */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
-          
-          {/* Misión */}
-          <div className="p-5 rounded-2xl bg-slate-50/80 border border-slate-100 space-y-2 hover:bg-[#e8f6f3]/30 transition-colors">
-            <div className="flex items-center gap-2 text-[#16a085]">
-              <Target size={18} className="shrink-0" />
-              <h5 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">Nuestra Misión</h5>
-            </div>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Garantizar el acceso confiable, oportuno y humano a medicamentos de la más alta calidad y servicios farmacéuticos integrales, contribuyendo activamente a la salud y bienestar de las familias dominicanas.
-            </p>
-          </div>
-
-          {/* Visión */}
-          <div className="p-5 rounded-2xl bg-slate-50/80 border border-slate-100 space-y-2 hover:bg-[#e8f6f3]/30 transition-colors">
-            <div className="flex items-center gap-2 text-[#16a085]">
-              <Eye size={18} className="shrink-0" />
-              <h5 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">Nuestra Visión</h5>
-            </div>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Consolidarnos como el grupo farmacéutico líder e innovador de la República Dominicana, reconocidos por la excelencia en atención clínica, transformación digital inteligente y estándares de clase mundial.
-            </p>
-          </div>
-
-          {/* Valores */}
-          <div className="p-5 rounded-2xl bg-slate-50/80 border border-slate-100 space-y-2 hover:bg-[#e8f6f3]/30 transition-colors">
-            <div className="flex items-center gap-2 text-[#16a085]">
-              <Award size={18} className="shrink-0" />
-              <h5 className="text-xs font-extrabold uppercase tracking-wider text-slate-800">Nuestros Valores</h5>
-            </div>
-            <ul className="text-xs text-slate-600 space-y-1">
-              <li className="flex items-center gap-1.5"><span className="text-[#16a085] font-bold">✓</span> <strong>Integridad & Ética:</strong> Transparencia absoluta en cada dispensación.</li>
-              <li className="flex items-center gap-1.5"><span className="text-[#16a085] font-bold">✓</span> <strong>Calidad Certificada:</strong> Control estricto de lote y cadena de frío.</li>
-              <li className="flex items-center gap-1.5"><span className="text-[#16a085] font-bold">✓</span> <strong>Compromiso Humano:</strong> Empatía y vocación de servicio con nuestros pacientes.</li>
-            </ul>
-          </div>
-
-        </div>
-
-        {/* Barra de Contacto, Ubicación y Horarios */}
-        <div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs text-slate-500">
-          
-          <div className="flex items-start gap-2.5">
-            <MapPin size={16} className="text-[#16a085] shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold text-slate-700">Ubicación Central</p>
-              <p className="text-[11px] text-slate-500">Av. Winston Churchill #1099, Piantini, Santo Domingo, D.N.</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2.5">
-            <Phone size={16} className="text-[#16a085] shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold text-slate-700">Contacto Directo</p>
-              <p className="text-[11px] text-slate-500">(809) 567-8900 • Extensiones 101 / 102</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2.5">
-            <Clock size={16} className="text-[#16a085] shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold text-slate-700">Horario de Operaciones</p>
-              <p className="text-[11px] text-slate-500">Lunes a Domingo: 24 Horas (Dispensación Continua)</p>
-            </div>
-          </div>
-
-          <div className="flex items-start gap-2.5">
-            <Mail size={16} className="text-[#16a085] shrink-0 mt-0.5" />
-            <div>
-              <p className="font-bold text-slate-700">Canal Corporativo</p>
-              <p className="text-[11px] text-slate-500">contacto@pharmaplus.do • Soporte 24/7</p>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Copyright & Seguridad */}
-        <div className="pt-4 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between text-[11px] text-slate-400 gap-2">
-          <p>© 2026 PharmaPlus Dominicana S.R.L. — Todos los derechos reservados.</p>
-          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1 text-emerald-600 font-semibold">
-              <ShieldCheck size={14} /> Cifrado AES-256 Activo
-            </span>
-            <span>•</span>
-            <span>Certificado DGII e-CF V1.0</span>
-          </div>
-        </div>
-
       </div>
 
       {/* AI Interactive Response Modal */}
