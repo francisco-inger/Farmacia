@@ -7,20 +7,29 @@ function getDashboardStats(req, res) {
     // Ventas del día (completadas)
     const todaySales = db.prepare(`
       SELECT COALESCE(SUM(total), 0) as total, COUNT(*) as count
-      FROM sales WHERE DATE(created_at) = DATE('now') AND status = 'completada'
+      FROM sales WHERE DATE(created_at) = DATE('now') AND (status = 'completada' OR status = 'completado' OR status IS NULL)
     `).get() || { total: 0, count: 0 };
 
     // Total de ventas acumuladas
     const allSales = db.prepare(`
       SELECT COALESCE(SUM(total), 0) as total, COUNT(*) as count
-      FROM sales WHERE status = 'completada'
+      FROM sales WHERE (status = 'completada' OR status = 'completado' OR status IS NULL)
     `).get() || { total: 0, count: 0 };
 
-    // Ventas del mes
+    // Ventas del mes actual (o acumulado si estamos iniciando período)
     const monthSales = db.prepare(`
       SELECT COALESCE(SUM(total), 0) as total, COUNT(*) as count
-      FROM sales WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now') AND status = 'completada'
+      FROM sales WHERE strftime('%Y-%m', created_at) = strftime('%Y-%m', 'now') AND (status = 'completada' OR status = 'completado' OR status IS NULL)
     `).get() || { total: 0, count: 0 };
+
+    // Ganancia real estimada (Ventas totales - Costo de productos vendidos)
+    const realProfitData = db.prepare(`
+      SELECT COALESCE(SUM(si.subtotal - (si.quantity * COALESCE(p.cost_price, 0))), 0) as profit
+      FROM sale_items si
+      JOIN products p ON si.product_id = p.id
+      JOIN sales s ON si.sale_id = s.id
+      WHERE (s.status = 'completada' OR s.status = 'completado' OR s.status IS NULL)
+    `).get() || { profit: 0 };
 
     // Ticket promedio real del día o general
     const avgTicket = todaySales.count > 0 
@@ -132,7 +141,10 @@ function getDashboardStats(req, res) {
           today_sales: todaySales.total,
           today_transactions: todaySales.count,
           avg_ticket: avgTicket,
-          month_sales: monthSales.total,
+          month_sales: monthSales.total > 0 ? monthSales.total : allSales.total,
+          all_sales: allSales.total,
+          total_transactions: allSales.count,
+          today_profit: realProfitData.profit,
           products_count: productsCount.count,
           low_stock: lowStock.count,
           out_of_stock: outOfStock.count,
