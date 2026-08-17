@@ -52,6 +52,12 @@ const Inventario = () => {
   const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  // Search Pickers for Category & Supplier
+  const [isCategoryPickerOpen, setIsCategoryPickerOpen] = useState(false);
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
+  const [isSupplierPickerOpen, setIsSupplierPickerOpen] = useState(false);
+  const [supplierSearchQuery, setSupplierSearchQuery] = useState('');
+
   // Chatbot State
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState([
@@ -1125,35 +1131,46 @@ const Inventario = () => {
               />
             </div>
 
-            {/* Categoría */}
+            {/* Categoría Selector con Buscador */}
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-700">Categoría *</label>
-              <select
-                required
-                className="input text-sm"
-                value={productForm.category_id}
-                onChange={(e) => setProductForm({ ...productForm, category_id: e.target.value })}
+              <label className="text-xs font-semibold text-slate-700">Categoría del Fármaco *</label>
+              <button
+                type="button"
+                onClick={() => { setCategorySearchQuery(''); setIsCategoryPickerOpen(true); }}
+                className={`input text-sm flex items-center justify-between text-left transition-all ${
+                  productForm.category_id 
+                    ? 'border-[#16a085] bg-emerald-50/40 text-slate-900 font-bold' 
+                    : 'text-slate-400 font-normal hover:bg-slate-50'
+                }`}
               >
-                <option value="">Seleccionar Categoría</option>
-                {categories.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
+                <span className="truncate">
+                  {productForm.category_id 
+                    ? (categories.find(c => String(c.id) === String(productForm.category_id))?.name || 'Categoría seleccionada')
+                    : 'Buscar o seleccionar categoría...'}
+                </span>
+                <Search size={15} className="text-slate-400 shrink-0 ml-2" />
+              </button>
             </div>
 
-            {/* PROVEEDOR DEL PRODUCTO */}
+            {/* PROVEEDOR DEL PRODUCTO con Buscador */}
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-bold text-emerald-800">Proveedor del Producto *</label>
-              <select
-                className="input text-sm border-emerald-300 bg-emerald-50/30 font-medium"
-                value={productForm.supplier_id}
-                onChange={(e) => setProductForm({ ...productForm, supplier_id: e.target.value })}
+              <label className="text-xs font-bold text-emerald-800">Proveedor / Distribuidor *</label>
+              <button
+                type="button"
+                onClick={() => { setSupplierSearchQuery(''); setIsSupplierPickerOpen(true); }}
+                className={`input text-sm flex items-center justify-between text-left transition-all border-emerald-300 ${
+                  productForm.supplier_id 
+                    ? 'bg-emerald-50 text-slate-900 font-bold shadow-2xs' 
+                    : 'bg-emerald-50/20 text-slate-400 font-normal hover:bg-emerald-50/40'
+                }`}
               >
-                <option value="">Seleccionar Proveedor</option>
-                {suppliers.map(s => (
-                  <option key={s.id} value={s.id}>{s.company_name || s.name}</option>
-                ))}
-              </select>
+                <span className="truncate">
+                  {productForm.supplier_id 
+                    ? (suppliers.find(s => String(s.id) === String(productForm.supplier_id))?.company_name || suppliers.find(s => String(s.id) === String(productForm.supplier_id))?.name || 'Proveedor seleccionado')
+                    : 'Buscar o seleccionar distribuidor...'}
+                </span>
+                <Search size={15} className="text-emerald-600 shrink-0 ml-2" />
+              </button>
             </div>
 
             {/* FECHA DE VENCIMIENTO */}
@@ -1509,6 +1526,126 @@ const Inventario = () => {
         onScan={handleBarcodeScanned}
         title="Lector de Código de Inventario"
       />
+
+      {/* MODAL: Buscador Rápido de Categorías en Inventario */}
+      <Modal
+        isOpen={isCategoryPickerOpen}
+        onClose={() => setIsCategoryPickerOpen(false)}
+        title="Seleccionar Categoría del Fármaco"
+        maxWidth="max-w-md"
+      >
+        <div className="flex flex-col gap-3 text-slate-700">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input
+              type="text"
+              placeholder="Buscar categoría clínica..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 pl-10 text-xs font-medium focus:bg-white focus:border-[#16a085] focus:outline-none transition-all shadow-inner"
+              value={categorySearchQuery}
+              onChange={(e) => setCategorySearchQuery(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          <div className="max-h-64 overflow-y-auto space-y-1.5 custom-scrollbar pr-1">
+            {categories
+              .filter(c => !categorySearchQuery || c.name.toLowerCase().includes(categorySearchQuery.toLowerCase()))
+              .map(c => {
+                const isSelected = String(productForm.category_id) === String(c.id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => {
+                      setProductForm(prev => ({ ...prev, category_id: c.id }));
+                      setIsCategoryPickerOpen(false);
+                    }}
+                    className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-emerald-50 border-[#16a085] text-[#16a085] font-bold shadow-2xs'
+                        : 'bg-white border-slate-200/80 hover:bg-slate-50 text-slate-700 font-medium'
+                    }`}
+                  >
+                    <span className="text-xs">{c.name}</span>
+                    <span className="text-[10px] text-slate-400 font-mono">ID #{c.id}</span>
+                  </button>
+                );
+              })}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsCategoryPickerOpen(false)}
+            className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
+          >
+            Cerrar
+          </button>
+        </div>
+      </Modal>
+
+      {/* MODAL: Buscador Rápido de Proveedores en Inventario */}
+      <Modal
+        isOpen={isSupplierPickerOpen}
+        onClose={() => setIsSupplierPickerOpen(false)}
+        title="Seleccionar Proveedor / Laboratorio"
+        maxWidth="max-w-md"
+      >
+        <div className="flex flex-col gap-3 text-slate-700">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input
+              type="text"
+              placeholder="Buscar por nombre o RNC del proveedor..."
+              className="w-full bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2.5 pl-10 text-xs font-medium focus:bg-white focus:border-[#16a085] focus:outline-none transition-all shadow-inner"
+              value={supplierSearchQuery}
+              onChange={(e) => setSupplierSearchQuery(e.target.value)}
+              autoFocus
+            />
+          </div>
+
+          <div className="max-h-64 overflow-y-auto space-y-1.5 custom-scrollbar pr-1">
+            {suppliers
+              .filter(s => 
+                !supplierSearchQuery || 
+                (s.company_name && s.company_name.toLowerCase().includes(supplierSearchQuery.toLowerCase())) ||
+                (s.name && s.name.toLowerCase().includes(supplierSearchQuery.toLowerCase())) ||
+                (s.rnc && s.rnc.includes(supplierSearchQuery))
+              )
+              .map(s => {
+                const isSelected = String(productForm.supplier_id) === String(s.id);
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => {
+                      setProductForm(prev => ({ ...prev, supplier_id: s.id }));
+                      setIsSupplierPickerOpen(false);
+                    }}
+                    className={`w-full p-2.5 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-emerald-50 border-[#16a085] text-slate-900 font-bold shadow-2xs'
+                        : 'bg-white border-slate-200/80 hover:bg-slate-50 text-slate-700 font-medium'
+                    }`}
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-slate-800">{s.company_name || s.name}</p>
+                      <p className="text-[10px] text-slate-400 font-mono">RNC: {s.rnc || '—'} • Tel: {s.phone || '—'}</p>
+                    </div>
+                    <span className="text-[10px] text-emerald-600 font-mono font-semibold">ID #{s.id}</span>
+                  </button>
+                );
+              })}
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsSupplierPickerOpen(false)}
+            className="w-full py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all"
+          >
+            Cerrar
+          </button>
+        </div>
+      </Modal>
 
     </div>
   );
