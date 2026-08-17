@@ -38,34 +38,42 @@ html.dark {
 }
 
 html.dark body {
-  background-color: #0f172a !important;
+  background-color: #0b1329 !important;
   color: #f1f5f9 !important;
 }
 
 html.dark .bg-background {
-  background-color: #0f172a !important;
+  background-color: #0b1329 !important;
+}
+
+html.dark .bg-surface {
+  background-color: #111c44 !important;
 }
 
 html.dark .bg-white {
-  background-color: #1e293b !important;
+  background-color: #111c44 !important;
   color: #f1f5f9 !important;
 }
 
 html.dark .bg-slate-50,
-html.dark .bg-slate-100 {
-  background-color: #1e293b !important;
+html.dark .bg-slate-100,
+html.dark .bg-slate-100\/70 {
+  background-color: #1a2753 !important;
   color: #e2e8f0 !important;
 }
 
 html.dark .border-slate-100,
+html.dark .border-slate-100\/90,
 html.dark .border-slate-200,
+html.dark .border-slate-200\/60,
 html.dark .border-slate-200\/80,
-html.dark .border-slate-300 {
-  border-color: #334155 !important;
+html.dark .border-slate-300,
+html.dark .border-border {
+  border-color: #23336c !important;
 }
 
-html.dark .text-slate-800,
 html.dark .text-slate-900,
+html.dark .text-slate-800,
 html.dark .text-slate-700 {
   color: #f8fafc !important;
 }
@@ -82,21 +90,27 @@ html.dark .text-slate-400 {
 html.dark input,
 html.dark select,
 html.dark textarea {
-  background-color: #0f172a !important;
-  border-color: #334155 !important;
+  background-color: #0b1329 !important;
+  border-color: #23336c !important;
   color: #f8fafc !important;
 }
 
 html.dark .card {
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
+  background-color: #111c44 !important;
+  border-color: #23336c !important;
   color: #f8fafc !important;
 }
 
 html.dark .modal-content,
 html.dark [role="dialog"] {
-  background-color: #1e293b !important;
+  background-color: #111c44 !important;
   color: #f8fafc !important;
+}
+
+html.dark aside,
+html.dark .h-screen.bg-surface {
+  background-color: #0e1738 !important;
+  border-color: #23336c !important;
 }
 
 * {
