@@ -7,10 +7,7 @@ export function useBarcodeScanner(onScan) {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Ignore keystrokes if typing inside textareas or inputs with custom handlers
-      const targetTag = e.target.tagName.toLowerCase();
-
-      // Physical USB barcode scanners type very rapidly and finish with Enter
+      // Physical USB / Bluetooth barcode scanners type very rapidly and finish with Enter
       if (e.key === 'Enter') {
         if (bufferRef.current.trim().length >= 3) {
           const barcode = bufferRef.current.trim();
@@ -28,7 +25,7 @@ export function useBarcodeScanner(onScan) {
       if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
         bufferRef.current += e.key;
 
-        // Reset buffer if delay between keypresses is > 100ms (manual human typing)
+        // Reset buffer if delay between keypresses is > 150ms (manual human typing)
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
         timeoutRef.current = setTimeout(() => {
           bufferRef.current = '';

@@ -12,8 +12,12 @@ function requireRole(...roles) {
       return res.status(401).json({ success: false, message: 'No autenticado' });
     }
     const userRole = (req.user.role_name || req.user.role || '').toLowerCase();
-    const allowed = roles.map(r => r.toLowerCase());
-    if (allowed.includes(userRole) || allowed.includes('administrador') && (userRole === 'admin')) {
+    const normalizedUserRole = userRole === 'administrador' ? 'admin' : userRole;
+    const allowed = roles.map(r => {
+      const lr = r.toLowerCase();
+      return lr === 'administrador' ? 'admin' : lr;
+    });
+    if (allowed.includes(normalizedUserRole)) {
       return next();
     }
     return res.status(403).json({

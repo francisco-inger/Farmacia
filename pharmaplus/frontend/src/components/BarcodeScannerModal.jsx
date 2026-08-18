@@ -27,40 +27,95 @@ export default function BarcodeScannerModal({ isOpen, onClose, onScan, title = "
         html5QrCode = new Html5Qrcode(elementId);
         scannerRef.current = html5QrCode;
 
+        // Support standard formats and fallback to any available camera if environment facingMode fails
         const config = {
-          fps: 15,
-          qrbox: { width: 260, height: 160 },
+          fps: 20,
+          qrbox: (viewfinderWidth, viewfinderHeight) => {
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+            return {
+              width: Math.floor(minEdge * 0.8),
+              height: Math.floor(minEdge * 0.55)
+            };
+          },
           aspectRatio: 1.0,
         };
 
-        html5QrCode.start(
-          { facingMode: "environment" },
-          config,
-          (decodedText) => {
-            playScannerBeep();
-            setLastScanned(decodedText);
-            if (onScan) {
-              onScan(decodedText);
-            }
-            // Auto close after successful scan
-            setTimeout(() => {
-              if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => {
-                  html5QrCode.clear();
-                  onClose();
-                }).catch(() => onClose());
-              } else {
-                onClose();
-              }
-            }, 600);
-          },
-          (errorMessage) => {
-            // Ignore frame scan failures
+        const handleSuccess = (decodedText) => {
+          playScannerBeep();
+          setLastScanned(decodedText);
+          if (onScan) {
+            onScan(decodedText);
           }
-        ).catch((err) => {
-          console.error("Error al iniciar cámara scanner:", err);
-          setError("No se pudo acceder a la cámara. Asegúrate de permitir el acceso a la cámara y estar en una conexión HTTPS.");
-          setIsScanning(false);
+          // Auto close after successful scan
+          setTimeout(() => {
+            if (html5QrCode && html5QrCode.isScanning) {
+              html5QrCode.stop().then(() => {
+                html5QrCode.clear();
+                onClose();
+              }).catch(() => onClose());
+            } else {
+              onClose();
+            }
+          }, 600);
+        };
+
+        // Try environment camera first, then fallback to any available camera
+        Html5Qrcode.getCameras().then(devices => {
+          if (devices && devices.length) {
+            const cameraId = devices.length > 1 
+              ? (devices.find(d => d.label.toLowerCase().includes('back') || d.label.toLowerCase().includes('trasera'))?.id || devices[0].id)
+              : devices[0].id;
+
+            html5QrCode.start(
+              cameraId,
+              config,
+              handleSuccess,
+              () => {}
+            ).catch((startErr) => {
+              // Fallback to facingMode constraint
+              html5QrCode.start(
+                { facingMode: "user" },
+                config,
+                handleSuccess,
+                () => {}
+              ).catch((finalErr) => {
+                console.error("Error al iniciar cámara scanner:", finalErr);
+                setError("No se pudo iniciar la cámara web o del dispositivo. Comprueba que diste permiso de cámara en el navegador.");
+                setIsScanning(false);
+              });
+            });
+          } else {
+            // No camera device list, try direct environment
+            html5QrCode.start(
+              { facingMode: "environment" },
+              config,
+              handleSuccess,
+              () => {}
+            ).catch(() => {
+              html5QrCode.start(
+                { facingMode: "user" },
+                config,
+                handleSuccess,
+                () => {}
+              ).catch((err) => {
+                console.error("Error al iniciar cámara:", err);
+                setError("No se detectó cámara disponible o no se otorgaron permisos.");
+                setIsScanning(false);
+              });
+            });
+          }
+        }).catch(() => {
+          // getCameras failed, try direct start
+          html5QrCode.start(
+            { facingMode: "environment" },
+            config,
+            handleSuccess,
+            () => {}
+          ).catch((err) => {
+            console.error("Error directo cámara:", err);
+            setError("No se pudo acceder a la cámara. Comprueba los permisos en tu navegador.");
+            setIsScanning(false);
+          });
         });
       }, 300);
 

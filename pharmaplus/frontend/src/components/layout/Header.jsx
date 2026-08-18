@@ -4,6 +4,7 @@ import { AuthContext } from '../../context/AuthContext';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import NotificationModal from '../ui/NotificationModal';
+import BarcodeScannerModal from '../BarcodeScannerModal';
 
 const Header = ({ toggleSidebar }) => {
   const { user, logout } = useContext(AuthContext);
@@ -15,11 +16,19 @@ const Header = ({ toggleSidebar }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState(false);
+
   const handleSearch = (e) => {
     if (e.key === 'Enter' || e.type === 'click') {
       if (searchTerm.trim()) {
         navigate(`/productos?search=${encodeURIComponent(searchTerm.trim())}`);
       }
+    }
+  };
+
+  const handleHeaderScan = (scannedCode) => {
+    if (scannedCode) {
+      navigate(`/productos?search=${encodeURIComponent(scannedCode)}`);
     }
   };
 
@@ -59,8 +68,9 @@ const Header = ({ toggleSidebar }) => {
           
           {/* Escanear button */}
           <button 
-            onClick={() => navigate('/pos')}
-            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-all active:scale-[0.98]"
+            type="button"
+            onClick={() => setIsCameraScannerOpen(true)}
+            className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200/80 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-2xs transition-all active:scale-[0.98] cursor-pointer"
           >
             <span>📷</span>
             <span>Escanear</span>
@@ -155,6 +165,14 @@ const Header = ({ toggleSidebar }) => {
         isOpen={isNotifOpen} 
         onClose={() => setIsNotifOpen(false)}
         onCountChange={(count) => setUnreadCount(count)}
+      />
+
+      {/* Global Camera Scanner Modal */}
+      <BarcodeScannerModal 
+        isOpen={isCameraScannerOpen}
+        onClose={() => setIsCameraScannerOpen(false)}
+        onScan={handleHeaderScan}
+        title="Escáner Global de Productos"
       />
     </>
   );
