@@ -63,24 +63,26 @@ const Reportes = () => {
         api.get('/reportes/inventario')
       ]);
 
-      const salesPayload = salesRes?.data || salesRes;
-      const invPayload = invRes?.data || invRes;
+      const salesSummaryData = salesRes?.summary || salesRes?.data?.summary;
+      const invSummaryData = invRes?.summary || invRes?.data?.summary;
 
-      if (salesPayload?.summary) setSalesSummary(salesPayload.summary);
-      if (invPayload?.summary) setInventorySummary(invPayload.summary);
+      if (salesSummaryData) setSalesSummary(salesSummaryData);
+      if (invSummaryData) setInventorySummary(invSummaryData);
 
       if (activeTab === 'ventas') {
-        setSalesData(salesPayload?.data || []);
+        const rows = Array.isArray(salesRes?.data) ? salesRes.data : (Array.isArray(salesRes) ? salesRes : []);
+        setSalesData(rows);
       } else if (activeTab === 'inventario') {
-        setInventoryData(invPayload?.data || []);
+        const rows = Array.isArray(invRes?.data) ? invRes.data : (Array.isArray(invRes) ? invRes : []);
+        setInventoryData(rows);
       } else if (activeTab === 'top_productos') {
         const res = await api.get(`/reportes/top-productos${queryParams}`);
-        const payload = res?.data || res;
-        setTopProductsData(payload.data || payload || []);
+        const rows = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+        setTopProductsData(rows);
       } else if (activeTab === 'caja') {
         const res = await api.get(`/reportes/caja${queryParams}`);
-        const payload = res?.data || res;
-        setCashData(payload.data || payload || []);
+        const rows = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : []);
+        setCashData(rows);
       }
     } catch (err) {
       console.error('Error cargando reportes:', err);
