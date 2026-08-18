@@ -21,6 +21,8 @@ const Reportes = () => {
   const [period, setPeriod] = useState('daily'); // 'daily', 'monthly', 'yearly'
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [selectedCollaborator, setSelectedCollaborator] = useState('all');
+  const [collaborators, setCollaborators] = useState([]);
 
   // Data States
   const [salesData, setSalesData] = useState([]);
@@ -41,7 +43,7 @@ const Reportes = () => {
 
   useEffect(() => {
     fetchReportData();
-  }, [activeTab, period, dateFrom, dateTo]);
+  }, [activeTab, period, dateFrom, dateTo, selectedCollaborator]);
 
   const showToast = (msg, type = 'success') => {
     setToast({ msg, type });
@@ -56,6 +58,7 @@ const Reportes = () => {
       let queryParams = `?period=${period}`;
       if (dateFrom) queryParams += `&date_from=${dateFrom}`;
       if (dateTo) queryParams += `&date_to=${dateTo}`;
+      if (selectedCollaborator && selectedCollaborator !== 'all') queryParams += `&user_id=${selectedCollaborator}`;
 
       // Cargar siempre en paralelo los resúmenes globales para que los 4 KPIs superiores nunca queden en 0
       const [salesRes, invRes] = await Promise.all([
@@ -68,6 +71,7 @@ const Reportes = () => {
 
       if (salesSummaryData) setSalesSummary(salesSummaryData);
       if (invSummaryData) setInventorySummary(invSummaryData);
+      if (salesRes?.collaborators) setCollaborators(salesRes.collaborators);
 
       if (activeTab === 'ventas') {
         const rows = Array.isArray(salesRes?.data) ? salesRes.data : (Array.isArray(salesRes) ? salesRes : []);
@@ -107,6 +111,11 @@ const Reportes = () => {
       csvContent += 'Codigo,Producto,Unidades Vendidas,Ingreso Total,Costo Total,Ganancia Neta\n';
       topProductsData.forEach(p => {
         csvContent += `${p.code},"${p.name}",${p.total_sold},${p.total_revenue},${p.total_cost},${p.profit}\n`;
+      });
+    } else if (activeTab === 'caja') {
+      csvContent += 'ID Turno,Cajero,Apertura,Monto Inicial,Ventas Efectivo,Monto Cierre,Estado\n';
+      cashData.forEach(c => {
+        csvContent += `#C-00${c.id},"${c.user_name}",${c.opened_at},${c.initial_amount},${c.cash_sales || 0},${c.closed_amount || 0},${c.status}\n`;
       });
     }
 
@@ -179,13 +188,13 @@ const Reportes = () => {
             <div className="flex flex-wrap items-center gap-3 pt-2">
               <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse"></span>
-                {salesSummary.total_sales || 18} Facturas Procesadas
+                {salesSummary.total_sales ?? 0} Facturas Procesadas
               </span>
               <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
-                Margen Positivo +42%
+                Margen Real: {salesSummary.profit_margin_percent ?? 0}%
               </span>
               <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-emerald-400/30 text-emerald-100 text-xs font-semibold">
-                Período 2026
+                {selectedCollaborator !== 'all' ? 'Vista por Colaborador' : 'Consolidado Global'}
               </span>
             </div>
           </div>
@@ -201,6 +210,21 @@ const Reportes = () => {
               <option value="monthly" className="text-slate-800">Vista: Mensual</option>
               <option value="yearly" className="text-slate-800">Vista: Anual</option>
             </select>
+
+            {collaborators.length > 0 && (
+              <select
+                value={selectedCollaborator}
+                onChange={(e) => setSelectedCollaborator(e.target.value)}
+                className="px-3.5 py-2.5 bg-black/40 text-white font-bold border border-emerald-400/30 rounded-xl text-xs focus:outline-none"
+              >
+                <option value="all" className="text-slate-800">Todos los Colaboradores</option>
+                {collaborators.map(collab => (
+                  <option key={collab.id} value={collab.id} className="text-slate-800">
+                    {collab.name} ({collab.role_name || 'Operador'})
+                  </option>
+                ))}
+              </select>
+            )}
 
             <input
               type="date"
