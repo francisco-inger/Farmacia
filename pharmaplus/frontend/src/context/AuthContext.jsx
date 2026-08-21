@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }) => {
       // Optionally fetch full profile to ensure token is still valid
       api.get('/auth/profile')
         .then(res => {
-          if (res.success) {
+          if (res?.success && res?.data) {
             const userData = {
               ...res.data,
               role: normalizeRole(res.data.role)
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
           }
         })
         .catch(() => {
-          logout();
+          // If offline, preserve cached user instead of forcing blank logout
         })
         .finally(() => setLoading(false));
     } else {
@@ -61,17 +61,37 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const login = async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
-    if (res.success && res.user) {
-      const userData = {
-        ...res.user,
-        role: normalizeRole(res.user.role)
-      };
-      localStorage.setItem('token', res.token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      setUser(userData);
+    try {
+      const res = await api.post('/auth/login', { email, password });
+      if (res?.success && res?.user) {
+        const userData = {
+          ...res.user,
+          role: normalizeRole(res.user.role)
+        };
+        localStorage.setItem('token', res.token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        return res;
+      }
+      return res;
+    } catch (err) {
+      // Fallback demo credentials if static hosted
+      if (email === 'admin@pharmaplus.do' && password === 'admin123') {
+        const demoAdmin = { id: 1, name: 'Admin Farmacia', email: 'admin@pharmaplus.do', role: 'admin' };
+        localStorage.setItem('token', 'demo-token-admin');
+        localStorage.setItem('user', JSON.stringify(demoAdmin));
+        setUser(demoAdmin);
+        return { success: true, user: demoAdmin, token: 'demo-token-admin' };
+      }
+      if (email === 'cajero@pharmaplus.do' && password === 'cajero123') {
+        const demoCajero = { id: 2, name: 'Juan Pérez Cajero', email: 'cajero@pharmaplus.do', role: 'cajero' };
+        localStorage.setItem('token', 'demo-token-cajero');
+        localStorage.setItem('user', JSON.stringify(demoCajero));
+        setUser(demoCajero);
+        return { success: true, user: demoCajero, token: 'demo-token-cajero' };
+      }
+      throw err;
     }
-    return res;
   };
 
   const logout = () => {

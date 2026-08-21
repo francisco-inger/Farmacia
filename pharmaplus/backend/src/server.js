@@ -8,6 +8,7 @@ const { runIntegracionesMigrations } = require('./db/migrations/002_integracione
 const { runSupplierProducts } = require('./db/migrations/003_create_supplier_products');
 const { runAddSupplierFields } = require('./db/migrations/004_add_supplier_fields');
 const { runCleanRoles } = require('./db/migrations/005_clean_roles');
+const { runPharmacyFields } = require('./db/migrations/006_pharmacy_fields');
 const { up: runLoyaltyFields } = require('./db/migrations/007_add_loyalty_fields');
 const { up: runEmployeeFields } = require('./db/migrations/008_employee_fields');
 const { runSeed } = require('./db/seed');
@@ -82,9 +83,6 @@ app.use((req, res, next) => {
   next();
 });
 
-
-const { runPharmacyFields } = require('./db/migrations/006_pharmacy_fields');
-
 // Initialize Database
 console.log('📦 Inicializando base de datos...');
 try {
@@ -98,6 +96,8 @@ try {
   try { runCleanRoles(); } catch (e) { console.error('⚠️ Error running clean_roles migration:', e); }
   try { runPharmacyFields(db); } catch (e) { console.error('⚠️ Error running pharmacy_fields migration:', e); }
   try { runLoyaltyFields(db); } catch (e) { console.error('⚠️ Error running loyalty_fields migration:', e); }
+  try { runEmployeeFields(db); } catch (e) { console.error('⚠️ Error running employee_fields migration:', e); }
+  
   // Check if users exist, if not, run seed
   const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get().count;
   if (userCount === 0) {
@@ -155,19 +155,6 @@ app.get('/api/health', (req, res) => {
 app.use(errorMiddleware);
 
 // Start server
-app.listen(PORT, async () => {
+app.listen(PORT, () => {
   console.log(`🚀 PharmaPlus Backend corriendo en http://localhost:${PORT}`);
-  try {
-    runMigrations();
-    runIntegracionesMigrations();
-    runSupplierProducts();
-    runAddSupplierFields();
-    runCleanRoles();
-    runLoyaltyFields();
-    runEmployeeFields();
-    await runSeed();
-    console.log('✅ Migraciones y semillas verificadas');
-  } catch (err) {
-    console.error('⚠️ Error en migraciones de inicio:', err.message);
-  }
 });
